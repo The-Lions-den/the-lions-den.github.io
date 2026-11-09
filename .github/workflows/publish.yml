@@ -20,13 +20,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Read the league website
         run: |
@@ -41,13 +38,6 @@ jobs:
             -H "apikey: sb_publishable_bIlvRQY33E9Gg0mmUOFklQ_xnM9Ngy1" -o /dev/null \
             && echo "Supabase is awake" || echo "Supabase not reachable (not set up yet?)"
 
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-      - id: deploy
-        uses: actions/deploy-pages@v4
-
       - name: Keep the schedule switched on
         # GitHub switches off scheduled jobs after 60 days with no changes, e.g. over the summer.
         run: |
@@ -58,3 +48,18 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add .keepalive && git commit -m "Keep the schedule switched on" && git push
           fi
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
