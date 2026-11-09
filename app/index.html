@@ -523,6 +523,7 @@ function vScore(){var f=curFx();if(!f)return '<div class="card">Choose a fixture
 function vResults(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';var m=S.matches[f.id];
   if(!m)return '<div class="card">No scores recorded for this fixture yet.</div>';
   var R=result(m),h=boardHTML(m);
+  for(var st=0;st<m.rules.sets;st++)h+=setTable(m,st).replace(/ data-(cell|name)="[^"]*"/g,'');
   if(isAdmin())h+='<div class="card"><h2>Share</h2><button class="btn gold" data-act="resimg" style="margin-top:0">Results image</button><button class="btn ghost" data-act="report">Match report text</button><button class="btn ghost" data-act="copyres">Copy all scores as text</button>'+
     '</div>';
   var sg=m.sig||{},ns=(sg.away?1:0)+(sg.home?1:0);
