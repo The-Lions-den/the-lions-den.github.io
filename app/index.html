@@ -467,7 +467,7 @@ function vTeamView(f){var sel=selFor(f.id),m=S.matches[f.id],line=m?m.lineup:sel
     h+='</div>';}
   var res=(sel.reserves||[]).filter(Boolean);
   if(res.length)h+='<div class="sec" style="margin-top:14px">Reserves</div><div class="list">'+res.map(function(id){return '<div><span class="grow name">'+esc(outName(id,'teamsheet'))+'</span></div>';}).join('')+'</div>';
-  return h+'<button class="btn gold" data-act="teamsheet">Team sheet image</button></div>';}
+  return h+'</div>';}
 function setTable(m,s){
   var tg=target(m),H=homeT(m),A=awayT(m),r=m.rules,rows='',per=r.per,sf=r.hands>5;
   var blanks=function(){var x='';for(var h=0;h<r.hands;h++){x+='<td></td>';if(sf&&h===4)x+='<td class="sf"></td>';}return x;};
@@ -523,10 +523,10 @@ function vScore(){var f=curFx();if(!f)return '<div class="card">Choose a fixture
 function vResults(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';var m=S.matches[f.id];
   if(!m)return '<div class="card">No scores recorded for this fixture yet.</div>';
   var R=result(m),h=boardHTML(m);
-  h+='<div class="card"><h2>Share</h2><button class="btn gold" data-act="resimg" style="margin-top:0">Results image</button><button class="btn ghost" data-act="report">Match report text</button><button class="btn ghost" data-act="copyres">Copy all scores as text</button>'+
+  if(isAdmin())h+='<div class="card"><h2>Share</h2><button class="btn gold" data-act="resimg" style="margin-top:0">Results image</button><button class="btn ghost" data-act="report">Match report text</button><button class="btn ghost" data-act="copyres">Copy all scores as text</button>'+
     '</div>';
   var sg=m.sig||{},ns=(sg.away?1:0)+(sg.home?1:0);
-  h+='<div class="card"><h2>League result card</h2><div class="note" style="margin-top:0">'+(f.home?'Home match: the away captain normally sends the card in, but you can still make one.':'Away match: send the completed card to '+esc(S.rules.general.leagueEmail)+'.')+'</div>'+
+  if(canEdit())h+='<div class="card"><h2>League result card</h2><div class="note" style="margin-top:0">'+(f.home?'Home match: the away captain normally sends the card in, but you can still make one.':'Away match: send the completed card to '+esc(S.rules.general.leagueEmail)+'.')+'</div>'+
     '<button class="btn ghost" data-act="sign">'+(ns===2?'Captains signed ✓ (re-sign)':ns===1?'Captains sign (1 of 2 done)':'Captains sign')+'</button><button class="btn gold" data-act="leaguecard">Create league card</button></div>';
   if(!R.done)h+='<div class="note">Match not finished yet: images and averages use the scores so far.</div>';
   return h;}
@@ -1194,10 +1194,10 @@ function subsText(){var t=subsTable(),out='Lions subs (from '+fdate(subsFrom())+
   t.forEach(function(r){out+='\n'+fullName(player(r.pid))+': '+(r.owe?'owes £'+r.owe:'paid up')+' ('+r.paid+' of '+r.n+' nights paid)';});return out;}
 
 /* who can do what: every button is checked here, and the database checks again */
-var VIEW_ACTS={close:1,choosefx:1,pickfx:1,teamsheet:1,allsets:1,resimg:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,leaguecard:1,sendleague:1,copyleague:1,report:1,copyres:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,fxf:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
+var VIEW_ACTS={close:1,choosefx:1,pickfx:1,allsets:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,fxf:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
 var SCORE_ACTS={spare:1,nospare:1,vc:1,undo:1,cancelsel:1,skip:1,other:1,otherok:1};
-var EDIT_ACTS={suggest:1,clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1};
-var ADMIN_HIDE=['addfx','comps','bulkadd','editrule','addrule','savegeneral','importpaste','seedforce','subtick'];
+var EDIT_ACTS={suggest:1,clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1,leaguecard:1,sendleague:1,copyleague:1};
+var ADMIN_HIDE=['teamsheet','resimg','report','copyres','addfx','comps','bulkadd','editrule','addrule','savegeneral','importpaste','seedforce','subtick'];
 function needFor(d){if(d.tab)return 'view';if(d.v!==undefined||d.sp!==undefined||d.cell)return 'score';
   if((d.slot!==undefined&&!d.act)||d.name||d.tw)return 'edit';if(d.av||d.req!==undefined||d.nick)return 'admin';
   var a=d.act;if(!a||VIEW_ACTS[a])return 'view';if(SCORE_ACTS[a])return 'score';if(EDIT_ACTS[a])return 'edit';return 'admin';}
