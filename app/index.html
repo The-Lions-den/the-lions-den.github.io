@@ -52,6 +52,9 @@ input,select,textarea{font:inherit}
 .sync i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .sync.g i{background:#3ecf6e}.sync.o i{background:var(--gold)}
 .reqs.fxf{flex-wrap:wrap;padding-top:6px}.reqs.fxf button{width:auto;padding:0 12px}
+.k.cur{outline:3px solid var(--gold);outline-offset:-3px;background:rgba(244,196,48,.18)}
+.chg{margin-top:6px;font-size:17px}.chg b{color:var(--gold);font-size:22px}
+.lockc{border:1px solid var(--line)}
 .chip{display:inline-block;padding:3px 9px;border-radius:12px;background:var(--row);font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
 .chip.g{background:var(--gold);color:var(--navy)}
 .chip.o{border:1.5px solid var(--gold);color:var(--gold);background:none}
@@ -294,6 +297,12 @@ function awayT(m){return m.home?'O':'L';}
 function order(m){var o=[],r=m.rules;for(var s=0;s<r.sets;s++)for(var h=0;h<r.hands;h++)[homeT(m),awayT(m)].forEach(function(t){for(var k=0;k<r.per;k++)o.push({t:t,p:s*r.per+k,h:h});});return o;}
 function nextEmpty(m){var o=order(m);for(var i=0;i<o.length;i++)if(!m[o[i].t][o[i].p][o[i].h])return o[i];return null;}
 function target(m){return T.sel||nextEmpty(m);}
+function next6(t){var d=new Date(t);d.setHours(6,0,0,0);if(d.getTime()<=t)d.setDate(d.getDate()+1);return d.getTime();}
+function isLocked(m){if(!m||!allDone(m))return false;if(m.lock)return true;var b=m.unlockedAt||m.doneAt;if(!b)return true;return Date.now()>=next6(b);}
+function lockLine(m){var l=m.lock;if(l)return 'Locked by '+l.by+' · '+clock(l.at);var b=m.unlockedAt||m.doneAt;return b?'Locked automatically · '+clock(next6(b)):'Locked';}
+function clock(t){var d=new Date(t),p=function(n){return (n<10?'0':'')+n;},td=new Date();var same=d.toDateString()===td.toDateString();return (same?'':fdate(d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()))+' ')+p(d.getHours())+':'+p(d.getMinutes());}
+function logChange(m,what){if(!m.everLocked)return;m.log=(m.log||[]).concat([{at:Date.now(),by:meTag().name,what:what}]).slice(-200);}
+function handLabel(m,tg){return 'Set '+(Math.floor(tg.p/m.rules.per)+1)+' · '+slotName(m,tg.t,tg.p)+' hand '+(tg.h+1);}
 function pTot(m,t,p){return m[t][p].reduce(function(a,c){return a+val(c);},0);}
 function setTot(m,t,s){var a=0;for(var k=0;k<m.rules.per;k++)a+=pTot(m,t,s*m.rules.per+k);return a;}
 function matchTot(m,t){var a=0;for(var s=0;s<m.rules.sets;s++)a+=setTot(m,t,s);return a;}
@@ -329,11 +338,11 @@ function lsFill(m){if(!m)return;var per=m.rules.per;['L','O'].forEach(function(t
     if(ok&&best>-1)m[t][p]=m[t][best].map(function(c){return {v:c.v,sp:c.sp,vc:c.vc};});}});}
 function lsLocked(m,t,p){return isLS(m,t,p)&&Math.floor(p/m.rules.per)>0;}
 function enter(v,sp,vc){var m=curMatch();if(!m)return;var tg=target(m);if(!tg)return;
-  m.hist.push({t:tg.t,p:tg.p,h:tg.h,prev:m[tg.t][tg.p][tg.h]});if(m.hist.length>600)m.hist.shift();
-  m[tg.t][tg.p][tg.h]={v:v,sp:!!sp,vc:!!vc};T.sel=null;T.spare=false;lsFill(m);
-  if(allDone(m)){var fx=fxById(m.fid);if(fx)fx.status='played';}
+  var was=m[tg.t][tg.p][tg.h];m.hist.push({t:tg.t,p:tg.p,h:tg.h,prev:was});if(m.hist.length>600)m.hist.shift();
+  m[tg.t][tg.p][tg.h]={v:v,sp:!!sp,vc:!!vc};logChange(m,handLabel(m,tg)+': '+(was?cellText(was):'–')+' → '+cellText(m[tg.t][tg.p][tg.h]));T.sel=null;T.spare=false;lsFill(m);
+  if(allDone(m)){var fx=fxById(m.fid);if(fx)fx.status='played';if(!m.doneAt)m.doneAt=Date.now();}
   save();render();}
-function undo(){var m=curMatch();if(!m)return;var last=m.hist.pop();if(!last){toast('Nothing to undo');return;}m[last.t][last.p][last.h]=last.prev||null;lsFill(m);T.sel=null;T.spare=false;if(!allDone(m))m.done=false;save();render();}
+function undo(){var m=curMatch();if(!m)return;var last=m.hist.pop();if(!last){toast('Nothing to undo');return;}var cw=m[last.t][last.p][last.h];m[last.t][last.p][last.h]=last.prev||null;logChange(m,'Undo · '+handLabel(m,last)+': '+(cw?cellText(cw):'–')+' → '+(last.prev?cellText(last.prev):'–'));lsFill(m);T.sel=null;T.spare=false;if(!allDone(m)){m.done=false;m.doneAt=null;}save();render();}
 function chaseHint(m,tg){
   var r=m.rules,s=Math.floor(tg.p/r.per),H=homeT(m),A=awayT(m),full=r.per*r.hands;
   var nm=function(t){return t==='L'?'Lions':oppTeam(m);};
@@ -397,9 +406,9 @@ function suggest(fid){
 }
 
 /* ---------------- views ---------------- */
-var ICONS={home:'<svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',team:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.6c2.6.1 4.6 1.9 5.3 5.4"/></svg>',score:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16M15 4v16"/></svg>',results:'<svg viewBox="0 0 24 24"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 13v4M8 20h8"/></svg>',more:'<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>'};
-function renderNav(){var tabs=[['home','Home'],['team','Team'],['score','Score'],['results','Results'],['more','More']];
-  document.getElementById('nav').innerHTML=tabs.map(function(t){return '<button data-tab="'+t[0]+'" class="'+(S.ui.tab===t[0]||(t[0]==='more'&&['squad','fixtures','rules','averages','backup','settings','league','account','subs'].indexOf(S.ui.tab)>-1)?'on':'')+'">'+ICONS[t[0]]+t[1]+'</button>';}).join('');}
+var ICONS={fixtures:'<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M7.5 14h2M11 14h2M14.5 14h2M7.5 17.5h2M11 17.5h2"/></svg>',home:'<svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',team:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.6c2.6.1 4.6 1.9 5.3 5.4"/></svg>',score:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16M15 4v16"/></svg>',results:'<svg viewBox="0 0 24 24"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 13v4M8 20h8"/></svg>',more:'<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>'};
+function renderNav(){var tabs=[['home','Home'],['team','Team'],['score','Scores'],['fixtures','Fixtures'],['more','More']];
+  document.getElementById('nav').innerHTML=tabs.map(function(t){return '<button data-tab="'+t[0]+'" class="'+(S.ui.tab===t[0]||(t[0]==='more'&&['squad','rules','averages','backup','settings','league','account','subs'].indexOf(S.ui.tab)>-1)?'on':'')+'">'+ICONS[t[0]]+t[1]+'</button>';}).join('');}
 function renderTop(){
   document.getElementById('top').innerHTML='<svg viewBox="0 0 '+LOGO_W+' 1000" class="logo" role="img" aria-label="Lion’s logo"><path fill="'+GOLD+'" fill-rule="evenodd" d="'+LOGO_D+'"/></svg><div class="grow"><div class="h1">The Lions Den</div><div class="sub">'+esc(S.rules.general.home+' · '+S.rules.general.league)+'</div></div>'+(function(){var st=syncState();return '<button class="sync '+st.c+'" data-tab="account"><i></i>'+esc(st.t)+'</button>';})();}
 function fxSelect(){var f=curFx(),l=sortedFx().filter(function(x){return x.status!=='vacant'&&x.status!=='bye';});
@@ -501,25 +510,36 @@ function vScore(){var f=curFx();if(!f)return '<div class="card">Choose a fixture
       (n<12?'<div class="warn">Only '+n+' of 12 Lions slots are filled. Empty slots can be filled during the match.</div>':'')+
       '<button class="btn gold" data-act="start">Start scoring</button></div>';}
   var tg=target(m),R=result(m),h=boardHTML(m),r=m.rules;
-  if(!tg){h+='<div class="card now" style="text-align:center"><div class="h1 gold" style="font-size:20px">Match finished</div>';
-    if(R.tied&&r.tie==='captains'){h+='<div class="small muted">Pins are level. Who did the captains agree won?</div><div class="btns" style="grid-template-columns:1fr 1fr 1fr"><button class="btn '+(m.tieWinner==='L'?'gold':'ghost')+'" data-tw="L">Lions</button><button class="btn '+(m.tieWinner==='D'?'gold':'ghost')+'" data-tw="D">Draw</button><button class="btn '+(m.tieWinner==='O'?'gold':'ghost')+'" data-tw="O">'+esc(oppTeam(m))+'</button></div>';}
-    else if(R.tied&&r.tie==='extra')h+='<div class="warn">Pins are level. Game Rules say play '+r.extraHands+' extra hand(s). Record the outcome below once played.</div><div class="btns" style="grid-template-columns:1fr 1fr"><button class="btn '+(m.tieWinner==='L'?'gold':'ghost')+'" data-tw="L">Lions won</button><button class="btn '+(m.tieWinner==='O'?'gold':'ghost')+'" data-tw="O">'+esc(oppTeam(m))+' won</button></div>';
-    h+='<div class="btns"><button class="btn gold" data-tab="results">Results &amp; images</button><button class="btn ghost" data-act="undo">Undo last</button></div><div class="note">Tap any score below to correct it.</div></div>';
-    for(var s=0;s<r.sets;s++)h+=setTable(m,s);return h;}
+  if(!tg)return h+finishedHTML(f,m);
   var s0=Math.floor(tg.p/r.per),cur=m[tg.t][tg.p][tg.h],locked=tg.t==='L';
   if(!canScore(m)){h+=watchCard(m,tg,s0)+setTable(m,s0)+'<button class="btn ghost" data-act="allsets">Show all sets</button>';if(T.allsets){for(var s3=0;s3<r.sets;s3++)if(s3!==s0)h+=setTable(m,s3);}return h;}
   h+='<div class="card now"><div class="small muted">Set <b class="gold">'+(s0+1)+'</b> · Hand <b class="gold">'+(tg.h+1)+'</b> · '+(tg.t==='L'?'Lions':esc(oppTeam(m)))+' #'+(tg.p+1)+(tg.p===mP(m)-1?' · <b class="gold">Anchor</b>':'')+'</div><div class="who">'+esc(slotName(m,tg.t,tg.p,'live'))+'</div>'+
-    (T.sel?'<div class="small muted">Editing'+(cur?' (currently '+cellText(cur)+')':'')+' · <button class="gold" style="text-decoration:underline;min-height:40px" data-act="cancelsel">back to next turn</button></div>':'')+
+    (T.sel?'<div class="chg">Changing hand '+(tg.h+1)+': <b>'+(cur?esc(cellText(cur)):'–')+'</b> → ?</div><div class="small muted"><button class="gold" style="text-decoration:underline;min-height:40px" data-act="cancelsel">Cancel, back to next turn</button></div>':'')+
     '<div class="hint">'+esc(chaseHint(m,tg))+'</div>';
   if(T.spare){h+='<div class="between" style="margin-top:12px"><span class="gold" style="font-weight:600">Spare! Hand total?</span><button class="muted" style="text-decoration:underline;min-height:40px" data-act="nospare">Cancel</button></div><div class="pad">';
-    for(var i=r.spareMin;i<=r.spareMax;i++)h+='<button class="k sp" data-sp="'+i+'">'+i+'</button>';h+='</div>';}
-  else{h+='<div class="pad">';for(var j=0;j<=9;j++)h+='<button class="k" data-v="'+j+'">'+j+'</button>';
-    h+='<button class="k fn gold" data-act="spare">Spare</button><button class="k fn" data-act="vc">V/C</button><button class="k fn" data-act="other">Other</button><button class="k fn" data-act="undo">Undo</button><button class="k fn" data-act="skip">Next ›</button></div>';}
+    for(var i=r.spareMin;i<=r.spareMax;i++)h+='<button class="k sp'+(T.sel&&cur&&cur.sp&&cur.v===i?' cur':'')+'" data-sp="'+i+'">'+i+'</button>';h+='</div>';}
+  else{var cu=T.sel&&cur?cur:null,plain=cu&&!cu.sp&&!cu.vc;h+='<div class="pad">';for(var j=0;j<=9;j++)h+='<button class="k'+(plain&&cu.v===j?' cur':'')+'" data-v="'+j+'">'+j+'</button>';
+    h+='<button class="k fn gold'+(cu&&cu.sp?' cur':'')+'" data-act="spare">Spare</button><button class="k fn'+(cu&&cu.vc?' cur':'')+'" data-act="vc">V/C</button><button class="k fn'+(plain&&cu.v>9?' cur':'')+'" data-act="other">Other</button><button class="k fn" data-act="undo">Undo</button><button class="k fn" data-act="skip">Next ›</button></div>';}
   h+='</div>'+setTable(m,s0);
   h+='<button class="btn ghost" data-act="allsets">Show all sets</button>';
   if(T.allsets){for(var s2=0;s2<r.sets;s2++)if(s2!==s0)h+=setTable(m,s2);}
   return h;}
 
+function roTable(m,st){return setTable(m,st).replace(/ data-(cell|name)="[^"]*"/g,'').replace(/<div style="padding-top:10px;text-align:center"><button class="btn ghost sm" data-act="oppnames"[^>]*>[^<]*<\/button><\/div>/,'');}
+function finishedHTML(f,m){var R=result(m),r=m.rules,lk=isLocked(m),ed=canEdit()&&!lk,h='';
+  if(R.tied&&(r.tie==='captains'||r.tie==='extra')&&(ed||m.tieWinner)){h+='<div class="card now" style="text-align:center">';
+    if(r.tie==='captains')h+='<div class="small muted">Pins are level. Who did the captains agree won?</div><div class="btns" style="grid-template-columns:1fr 1fr 1fr"><button class="btn '+(m.tieWinner==='L'?'gold':'ghost')+'" data-tw="L">Lions</button><button class="btn '+(m.tieWinner==='D'?'gold':'ghost')+'" data-tw="D">Draw</button><button class="btn '+(m.tieWinner==='O'?'gold':'ghost')+'" data-tw="O">'+esc(oppTeam(m))+'</button></div>';
+    else h+='<div class="warn">Pins are level. Game Rules say play '+r.extraHands+' extra hand(s). Record the outcome once played.</div><div class="btns" style="grid-template-columns:1fr 1fr"><button class="btn '+(m.tieWinner==='L'?'gold':'ghost')+'" data-tw="L">Lions won</button><button class="btn '+(m.tieWinner==='O'?'gold':'ghost')+'" data-tw="O">'+esc(oppTeam(m))+' won</button></div>';
+    h+='</div>';}
+  if(lk)h+='<div class="card lockc"><div class="between"><div><div class="name">🔒 Match locked</div><div class="small muted">'+esc(lockLine(m))+'</div></div>'+(isAdmin()?'<button class="btn ghost sm" data-act="unlockm">Unlock</button>':'')+'</div>'+(isAdmin()?'<div class="note">Unlock to correct a score. Every change is recorded below.</div>':'')+'</div>';
+  else if(canEdit())h+='<div class="card now" style="text-align:center"><div class="h1 gold" style="font-size:20px">Match finished</div><div class="small muted">Check the scores against the board, then lock the match. Tap any score below to correct it first.</div><div class="btns"><button class="btn gold" data-act="lockm">Lock match</button><button class="btn ghost" data-act="undo">Undo last</button></div><div class="note">If nobody locks it, it locks itself at 6am tomorrow.</div></div>';
+  for(var st=0;st<r.sets;st++)h+=ed?setTable(m,st):roTable(m,st);
+  if(isAdmin())h+='<div class="card"><h2>Share</h2><button class="btn gold" data-act="resimg" style="margin-top:0">Results image</button><button class="btn ghost" data-act="report">Match report text</button><button class="btn ghost" data-act="copyres">Copy all scores as text</button></div>';
+  var sg=m.sig||{},ns=(sg.away?1:0)+(sg.home?1:0);
+  if(canEdit())h+='<div class="card"><h2>League result card</h2><div class="note" style="margin-top:0">'+(f.home?'Home match: the away captain normally sends the card in, but you can still make one.':'Away match: send the completed card to '+esc(S.rules.general.leagueEmail)+'.')+'</div>'+
+    '<button class="btn ghost" data-act="sign">'+(ns===2?'Captains signed ✓ (re-sign)':ns===1?'Captains sign (1 of 2 done)':'Captains sign')+'</button><button class="btn gold" data-act="leaguecard">Create league card</button></div>';
+  if(m.log&&m.log.length)h+='<div class="card"><h2>Changes after locking</h2><div class="list">'+m.log.slice().reverse().map(function(x){return '<div><div class="grow"><div class="small">'+esc(x.what)+'</div><div class="small muted">'+esc(x.by)+' · '+esc(clock(x.at))+'</div></div></div>';}).join('')+'</div></div>';
+  return h;}
 function vResults(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';var m=S.matches[f.id];
   if(!m)return '<div class="card">No scores recorded for this fixture yet.</div>';
   var R=result(m),h=boardHTML(m);
@@ -532,7 +552,7 @@ function vResults(){var f=curFx();if(!f)return '<div class="card">Choose a fixtu
   if(!R.done)h+='<div class="note">Match not finished yet: images and averages use the scores so far.</div>';
   return h;}
 
-function vMore(){return '<div class="card list">'+[['account',SY.session?'Signed in':'Sign in','Admins and scorers: '+(SY.session?roleLabel():'sign in to change things')]].concat(isAdmin()?[['subs','Subs','Who has paid, who owes']]:[]).concat([['league','League table','Division 2 table and cup draws from the league website'],['averages','Averages','Season averages table and image'],['fixtures','Fixtures & competitions','Add cups, fill in draws, postponements'],['squad','Squad','Add, rename or deactivate players'],['rules','Game rules','Scoring, ties, spare range, averages'],['settings','Settings','Names or nicknames on each output'],['backup','Backup & data','Save or restore everything']]).map(function(x){return '<div><button class="grow" style="text-align:left" data-tab="'+x[0]+'"><div class="name">'+x[1]+'</div><div class="small muted">'+x[2]+'</div></button><span class="muted">›</span></div>';}).join('')+'</div>';}
+function vMore(){return '<div class="card list">'+[['account',SY.session?'Signed in':'Sign in','Admins and scorers: '+(SY.session?roleLabel():'sign in to change things')]].concat(isAdmin()?[['subs','Subs','Who has paid, who owes']]:[]).concat([['league','League table','Division 2 table and cup draws from the league website'],['averages','Averages','Season averages table and image'],['squad','Squad','Add, rename or deactivate players'],['rules','Game rules','Scoring, ties, spare range, averages'],['settings','Settings','Names or nicknames on each output'],['backup','Backup & data','Save or restore everything']]).map(function(x){return '<div><button class="grow" style="text-align:left" data-tab="'+x[0]+'"><div class="name">'+x[1]+'</div><div class="small muted">'+x[2]+'</div></button><span class="muted">›</span></div>';}).join('')+'</div>';}
 
 function vAverages(){var a=averages();if(!a.length)return '<div class="card">No completed League or Cup matches yet.</div>';
   var rows=a.map(function(x,i){return '<tr><td class="n">'+(i+1)+'. '+esc(pname(x.pid))+'</td><td>'+x.games+'</td><td>'+x.pins+'</td><td class="t">'+x.avgGame.toFixed(1)+'</td><td>'+x.avgHand.toFixed(2)+'</td><td>'+x.spares+'</td><td>'+x.high+'</td></tr>';}).join('');
@@ -569,8 +589,8 @@ function vBackup(){return '<div class="card"><h2>Backup</h2><div class="small mu
   '<div class="card"><h2>Restore</h2><div class="small muted">Admins only. Loads a backup file and sends it to the shared data, replacing it for everyone.</div><label class="btn ghost imp" style="display:flex;align-items:center;justify-content:center">Choose backup file<input type="file" id="impFile" accept=".json,application/json,text/plain" style="display:none"></label><button class="btn ghost" data-act="importpaste">Paste backup text</button></div>'+
   '<div class="card"><h2>Start again</h2><div class="small muted">Clears this phone’s copy and reloads the shared data.</div><button class="btn danger" data-act="reset" style="margin-top:0">Reset to starting data</button></div>';}
 
-function render(){document.body.className='r-'+myRole();renderTop();renderNav();var v=document.getElementById('view'),t=S.ui.tab;
-  v.innerHTML=(['team','score','results'].indexOf(t)>-1?fxSelect():'')+(t==='home'?vHome():t==='team'?vTeam():t==='score'?vScore():t==='results'?vResults():t==='more'?vMore():t==='averages'?vAverages():t==='league'?vLeague():t==='fixtures'?vFixtures():t==='squad'?vSquad():t==='rules'?vRules():t==='backup'?vBackup():t==='settings'?vSettings():t==='account'?vAccount():t==='subs'?vSubs():vHome());}
+function render(){if(S.ui.tab==='results')S.ui.tab='score';document.body.className='r-'+myRole();renderTop();renderNav();var v=document.getElementById('view'),t=S.ui.tab;
+  v.innerHTML=(['team','score'].indexOf(t)>-1?fxSelect():'')+(t==='home'?vHome():t==='team'?vTeam():t==='score'?vScore():t==='results'?vResults():t==='more'?vMore():t==='averages'?vAverages():t==='league'?vLeague():t==='fixtures'?vFixtures():t==='squad'?vSquad():t==='rules'?vRules():t==='backup'?vBackup():t==='settings'?vSettings():t==='account'?vAccount():t==='subs'?vSubs():vHome());}
 
 /* ---------------- modals ---------------- */
 function chooseFxModal(){var l=sortedFx().filter(function(f){return f.status!=='vacant'&&f.status!=='bye';});var t=today(),idx=l.findIndex(function(f){return f.date>=t;});
@@ -916,6 +936,7 @@ function shortName(f){var p=String(f||'').replace(/\(.*?\)/g,'').trim().split(/\
 /* ---------------- events ---------------- */
 document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.disabled)return;var d=b.dataset,f=curFx(),m=curMatch();
   if(denied(needFor(d),m))return;
+  if(m&&isLocked(m)&&lockBlocked(d)){toast(isAdmin()?'Match locked. Tap Unlock on the Scores tab to correct it.':'Match locked. Ask an admin to unlock it.');return;}
   if(d.tab){if(d.fx)S.ui.fx=d.fx;S.ui.tab=d.tab;T.sel=null;T.spare=false;T.pick=null;closeModal();save();render();window.scrollTo(0,0);return;}
   if(d.av){var sel=selFor(f.id);sel.avail[d.id]=sel.avail[d.id]===d.av?'':d.av;if(d.av==='out'){var i=sel.lineup.indexOf(d.id);if(i>-1&&!S.matches[f.id])sel.lineup[i]=null;var ri0=sel.reserves.indexOf(d.id);if(ri0>-1)sel.reserves.splice(ri0,1);}save();render();return;}
   if(d.req!==undefined){var sl=selFor(f.id);sl.req[d.id]=+d.req;save();render();return;}
@@ -927,12 +948,14 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(d.sp!==undefined){enter(+d.sp,true,false);return;}
   if(d.cell){var a=d.cell.split(','),cm=curMatch();if(cm&&lsLocked(cm,a[0],+a[1])){toast('L/S copies the lowest score from the earlier sets');return;}T.sel={t:a[0],p:+a[1],h:+a[2]};T.spare=false;S.ui.tab='score';render();window.scrollTo(0,0);return;}
   if(d.name){var nn=d.name.split(',');if(nn[0]==='L'){var p=+nn[1];if(slotLocked(m,p)){toast((p+1)+'. '+slotName(m,'L',p)+' has thrown in this set, so the slot is locked');return;}pickPlayerModal(p,'match');}else oppNamesModal(Math.floor(+nn[1]/m.rules.per));return;}
-  if(d.tw){m.tieWinner=d.tw;save();render();return;}
+  if(d.tw){m.tieWinner=d.tw;logChange(m,'Tie result set');save();render();return;}
   if(d.nick){S.rules.general.nickOn[d.nick]=d.nv==='1';save();render();return;}
   switch(d.act){
     case 'close':closeModal();break;
     case 'signin':case 'signup':case 'signout':case 'forgot':case 'claim':case 'newpw':authAct(d.act,d);break;
     case 'acctmode':T.acct=d.m;render();break;
+    case 'lockm':m.lock={at:Date.now(),by:meTag().name};if(m.everLocked)logChange(m,'Locked again');m.unlockedAt=null;T.sel=null;save();render();toast('Match locked');break;
+    case 'unlockm':m.lock=null;m.unlockedAt=Date.now();m.everLocked=true;logChange(m,'Unlocked');T.sel=null;save();render();toast('Unlocked: changes are recorded');break;
     case 'fxf':S.ui.fxf=S.ui.fxf||{c:'all',s:'up'};S.ui.fxf[d.fk]=d.fv;localSave();render();break;
     case 'approve':case 'decline':accessAct(d.act,d.id);break;
     case 'saveaccess':case 'unlink':accessAct(d.act,d.id);break;
@@ -951,7 +974,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'tput':var s1=selFor(f.id),ts=+d.slot;if(ts>=12&&ts-12>=s1.reserves.length)s1.reserves.push(d.id);else setSlot(s1,ts,d.id);closeModal();save();render();break;
     case 'addres':var sr=selFor(f.id);pickPlayerModal(12+sr.reserves.length,'team');break;
     case 'tclear':setSlot(selFor(f.id),+d.slot,null);closeModal();save();render();break;
-    case 'mput':var sx=selFor(f.id),old=m.lineup[+d.slot],rix=sx.reserves.indexOf(d.id);m.lineup[+d.slot]=d.id;if(rix>-1){if(old)sx.reserves[rix]=old;else sx.reserves.splice(rix,1);}else if(old)sx.reserves.push(old);sx.lineup=m.lineup.slice();lsFill(m);closeModal();save();render();break;
+    case 'mput':logChange(m,'Line-up changed');var sx=selFor(f.id),old=m.lineup[+d.slot],rix=sx.reserves.indexOf(d.id);m.lineup[+d.slot]=d.id;if(rix>-1){if(old)sx.reserves[rix]=old;else sx.reserves.splice(rix,1);}else if(old)sx.reserves.push(old);sx.lineup=m.lineup.slice();lsFill(m);closeModal();save();render();break;
     case 'mclear':m.lineup[+d.slot]=null;closeModal();save();render();break;
     case 'mswap':var A=+d.a,B=+d.b;if(slotLocked(m,A)||slotLocked(m,B)){toast('That slot is locked');break;}var t2=m.lineup[A];m.lineup[A]=m.lineup[B];m.lineup[B]=t2;selFor(f.id).lineup=m.lineup.slice();closeModal();save();render();break;
     case 'teamsheet':teamSheetImg();break;
@@ -966,7 +989,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'other':modal('<h4>Other score</h4><div class="field"><label for="oVal">Hand total</label><input id="oVal" type="number" inputmode="numeric" min="0" max="'+m.rules.maxHand+'"></div><label style="display:flex;gap:10px;align-items:center;min-height:44px"><input type="checkbox" id="oSp" style="width:22px;height:22px"> Mark as spare</label><button class="btn gold" data-act="otherok">Enter</button><button class="btn ghost" data-act="close">Cancel</button>');setTimeout(function(){var i=document.getElementById('oVal');if(i)i.focus();},50);break;
     case 'otherok':var n=parseInt(document.getElementById('oVal').value,10);if(isNaN(n)||n<0||n>m.rules.maxHand){toast('Enter 0 to '+m.rules.maxHand);break;}var spc=document.getElementById('oSp').checked;closeModal();enter(n,spc,false);break;
     case 'oppnames':oppNamesModal(+d.set);break;
-    case 'saveopp':var team=oppTeam(m),known=S.oppNames[team]||(S.oppNames[team]=[]);document.querySelectorAll('[data-onp]').forEach(function(inp){var v=inp.value.trim();m.opp[+inp.dataset.onp]=v;if(v&&known.indexOf(v)<0&&!/^l\s*\/\s*s$/i.test(v))known.push(v);});lsFill(m);closeModal();save();render();break;
+    case 'saveopp':logChange(m,'Opposition names edited');var team=oppTeam(m),known=S.oppNames[team]||(S.oppNames[team]=[]);document.querySelectorAll('[data-onp]').forEach(function(inp){var v=inp.value.trim();m.opp[+inp.dataset.onp]=v;if(v&&known.indexOf(v)<0&&!/^l\s*\/\s*s$/i.test(v))known.push(v);});lsFill(m);closeModal();save();render();break;
     case 'resimg':resultsImg();break;
     case 'avgimg':avgImg();break;
     case 'shareimg':shareImg();break;
@@ -1197,8 +1220,9 @@ function subsText(){var t=subsTable(),out='Lions subs (from '+fdate(subsFrom())+
 /* who can do what: every button is checked here, and the database checks again */
 var VIEW_ACTS={close:1,choosefx:1,pickfx:1,allsets:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,fxf:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
 var SCORE_ACTS={spare:1,nospare:1,vc:1,undo:1,cancelsel:1,skip:1,other:1,otherok:1};
-var EDIT_ACTS={suggest:1,clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1,leaguecard:1,sendleague:1,copyleague:1};
+var EDIT_ACTS={suggest:1,clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,lockm:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1,leaguecard:1,sendleague:1,copyleague:1};
 var ADMIN_HIDE=['teamsheet','resimg','report','copyres','addfx','comps','bulkadd','editrule','addrule','savegeneral','importpaste','seedforce','subtick'];
+function lockBlocked(d){return !!(d.cell||d.name||d.tw||d.v!==undefined||d.sp!==undefined||['spare','nospare','vc','undo','skip','other','otherok','oppnames','saveopp','mput','mclear','mswap','takeover'].indexOf(d.act)>-1);}
 function needFor(d){if(d.tab)return 'view';if(d.v!==undefined||d.sp!==undefined||d.cell)return 'score';
   if((d.slot!==undefined&&!d.act)||d.name||d.tw)return 'edit';if(d.av||d.req!==undefined||d.nick)return 'admin';
   var a=d.act;if(!a||VIEW_ACTS[a])return 'view';if(SCORE_ACTS[a])return 'score';if(EDIT_ACTS[a])return 'edit';return 'admin';}
