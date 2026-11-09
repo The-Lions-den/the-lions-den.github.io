@@ -1,6 +1,6 @@
 -- The Lions Den v2.0: shared data setup for Supabase
 -- Paste all of this into Supabase → SQL Editor → New query, then press Run.
--- It's safe to run again: it only adds what's missing.
+-- It's safe to run again: it only adds what's missing and updates the functions. Nothing is deleted.
 
 -- 1. Squad members who can sign in, and what they can do
 create table if not exists public.people (
@@ -80,9 +80,8 @@ create policy people_admin on public.people for all
 grant select on public.docs, public.people to anon, authenticated;
 grant insert, update, delete on public.docs, public.people to authenticated;
 
--- 5. Signing up: link a new sign-in to a squad name
--- If an admin has already switched that player on as a scorer (or admin), access starts straight away;
--- otherwise they show as "Requested" for an admin to approve.
+-- 5. Signing up: link a new sign-in to a squad name.
+-- Every new sign-in waits as a request until an admin approves it (the role set beforehand is what they get).
 create or replace function public.claim_player(p_pid text, p_name text) returns text
 language plpgsql security definer set search_path = public as $$
 declare me uuid := auth.uid(); r public.people%rowtype;
@@ -95,19 +94,27 @@ begin
   if found and r.uid is not null and r.uid <> me then
     raise exception 'That player already has a sign-in. Ask an admin to unlink it.';
   end if;
+  if found and r.uid = me then   -- already linked: no change
+    return case when r.requested or r.role = 'none' then 'requested' else r.role end;
+  end if;
   if not found then
     insert into public.people (pid, role, uid, requested, name) values (p_pid, 'none', me, true, p_name);
-    return 'requested';
+  else
+    update public.people set uid = me, requested = true, name = coalesce(r.name, p_name) where pid = p_pid;
   end if;
-  update public.people
-     set uid = me,
-         requested = (r.role = 'none'),
-         name = coalesce(r.name, p_name)
-   where pid = p_pid;
-  return case when r.role = 'none' then 'requested' else r.role end;
+  return 'requested';
 end $$;
 revoke all on function public.claim_player(text, text) from public, anon;
 grant execute on function public.claim_player(text, text) to authenticated;
+
+-- Admins only: the email used for each waiting request, so they can check who it is
+create or replace function public.admin_requests() returns table(pid text, email text)
+language sql stable security definer set search_path = public, auth as $$
+  select p.pid, u.email::text from public.people p join auth.users u on u.id = p.uid
+  where p.requested and public.is_admin()
+$$;
+revoke all on function public.admin_requests() from public, anon;
+grant execute on function public.admin_requests() to authenticated;
 
 -- 6. Live updates to every phone
 do $$ begin

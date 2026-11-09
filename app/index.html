@@ -51,6 +51,7 @@ input,select,textarea{font:inherit}
 .sync{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:14px;padding:4px 10px;min-height:32px;white-space:nowrap}
 .sync i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .sync.g i{background:#3ecf6e}.sync.o i{background:var(--gold)}
+.reqs.fxf{flex-wrap:wrap;padding-top:6px}.reqs.fxf button{width:auto;padding:0 12px}
 .chip{display:inline-block;padding:3px 9px;border-radius:12px;background:var(--row);font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
 .chip.g{background:var(--gold);color:var(--navy)}
 .chip.o{border:1.5px solid var(--gold);color:var(--gold);background:none}
@@ -430,7 +431,7 @@ function vHome(){var f=nextFx(),h=feedAlerts(),rq=requestCount();if(rq)h='<div c
   h+='<div class="sec">Upcoming fixtures</div><div class="card list">'+(up.length?up.map(function(x){return fxRow(x);}).join(''):'<div class="muted">Nothing else scheduled.</div>')+'</div>';
   return h;}
 
-function vTeam(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';
+function vTeam(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';if(!canEdit())return vTeamView(f);
   var sel=selFor(f.id),am=avgMap(),R=rotationInfo(f.id),act=S.players.filter(function(p){return p.active;}).sort(firstSort);
   var counts={in:0,out:0,maybe:0};act.forEach(function(p){var a=sel.avail[p.id];if(a)counts[a]++;});
   var reqCount={};act.forEach(function(p){var r=sel.req[p.id];if(r&&sel.avail[p.id]!=='out')reqCount[r]=(reqCount[r]||0)+1;});
@@ -440,7 +441,7 @@ function vTeam(){var f=curFx();if(!f)return '<div class="card">Choose a fixture 
   h+='<div class="list" style="margin-top:6px">';
   act.forEach(function(p){var a=sel.avail[p.id]||'',r=sel.req[p.id]||0,av=am[p.id];
     var tags=(!isCupFx(f)&&R.lastRes[p.id]?' · <span class="gold">Reserve last week</span>':'')+(!isCupFx(f)&&R.returning(p.id)?' · <span class="gold">Away '+R.absent[p.id]+' wks</span>':'');
-    h+='<div style="display:block"><div class="between"><div class="grow"><div class="name">'+esc(fullName(p))+'</div><div class="small muted">'+(av?'Avg '+av.avgHand.toFixed(2)+'/hand · '+av.games+' games':'No scores yet')+tags+'</div></div><div class="seg"><button class="'+(a==='in'?'on':'')+'" data-av="in" data-id="'+p.id+'">In</button><button class="'+(a==='maybe'?'on may':'')+'" data-av="maybe" data-id="'+p.id+'">?</button><button class="'+(a==='out'?'on out':'')+'" data-av="out" data-id="'+p.id+'">Out</button></div></div>'+
+    h+='<div style="display:block"><div class="between"><div class="grow"><div class="name">'+esc(fullName(p))+'</div><div class="small muted">'+(av?'Avg '+av.avgGame.toFixed(1)+' · '+av.games+' game'+(av.games>1?'s':''):'No scores yet')+tags+'</div></div><div class="seg"><button class="'+(a==='in'?'on':'')+'" data-av="in" data-id="'+p.id+'">In</button><button class="'+(a==='maybe'?'on may':'')+'" data-av="maybe" data-id="'+p.id+'">?</button><button class="'+(a==='out'?'on out':'')+'" data-av="out" data-id="'+p.id+'">Out</button></div></div>'+
       (a&&a!=='out'?'<div class="reqs"><span class="small muted" style="align-self:center;margin-right:4px">Set</span>'+[0,1,2,3,4].map(function(s){return '<button class="'+(r===s?'on':'')+'" data-req="'+s+'" data-id="'+p.id+'">'+(s?s:'Any')+'</button>';}).join('')+'</div>':'')+'</div>';});
   h+='</div></div>';
   h+='<div class="sec">2. Team</div><div class="card">'+(started?'<div class="warn">Scoring has started. Change players on the Score tab, where locked slots are protected.</div>':'<button class="btn gold" data-act="suggest" style="margin-top:0">Suggest team</button><div class="note">'+(isCupFx(f)?'Cup match: picks the strongest available by season average.':'League: last week\u2019s reserves are picked first, players back after '+(S.rules.general.awayWeeks||3)+'+ weeks away start as reserves, then the strongest by season average.')+' Set requests are honoured; the strongest throws 12th (anchor), then 9th, 6th and 3rd. Extra available players become reserves.</div>');
@@ -458,6 +459,15 @@ function vTeam(){var f=curFx();if(!f)return '<div class="card">Choose a fixture 
   h+=subsCard(f);
   return h;}
 
+function vTeamView(f){var sel=selFor(f.id),m=S.matches[f.id],line=m?m.lineup:sel.lineup,per=3,n=line.filter(Boolean).length;
+  if(!n)return '<div class="card"><h2>Team</h2><div class="small muted">The team for this match hasn’t been picked yet.</div></div>';
+  var h='<div class="card"><h2>Team</h2>';
+  for(var s=0;s<4;s++){h+='<div class="sec" style="margin-top:'+(s?'14':'0')+'px">Set '+(s+1)+'</div><div class="list">';
+    for(var i=s*per;i<s*per+per;i++){var id=line[i];h+='<div><span class="muted" style="width:26px">'+(i+1)+'.</span><span class="grow name">'+(id?esc(outName(id,'teamsheet')):'<span class="muted">To be confirmed</span>')+'</span></div>';}
+    h+='</div>';}
+  var res=(sel.reserves||[]).filter(Boolean);
+  if(res.length)h+='<div class="sec" style="margin-top:14px">Reserves</div><div class="list">'+res.map(function(id){return '<div><span class="grow name">'+esc(outName(id,'teamsheet'))+'</span></div>';}).join('')+'</div>';
+  return h+'<button class="btn gold" data-act="teamsheet">Team sheet image</button></div>';}
 function setTable(m,s){
   var tg=target(m),H=homeT(m),A=awayT(m),r=m.rules,rows='',per=r.per,sf=r.hands>5;
   var blanks=function(){var x='';for(var h=0;h<r.hands;h++){x+='<td></td>';if(sf&&h===4)x+='<td class="sf"></td>';}return x;};
@@ -527,8 +537,17 @@ function vAverages(){var a=averages();if(!a.length)return '<div class="card">No 
   var rows=a.map(function(x,i){return '<tr><td class="n">'+(i+1)+'. '+esc(pname(x.pid))+'</td><td>'+x.games+'</td><td>'+x.pins+'</td><td class="t">'+x.avgGame.toFixed(1)+'</td><td>'+x.avgHand.toFixed(2)+'</td><td>'+x.spares+'</td><td>'+x.high+'</td></tr>';}).join('');
   return '<div class="card"><h2>Season averages</h2><table class="avg"><thead><tr><th class="n">Player</th><th>Gm</th><th>Pins</th><th>Avg</th><th>/hand</th><th>Spr</th><th>Best</th></tr></thead><tbody>'+rows+'</tbody></table><div class="note">League and Cup matches recorded in this app (Front Pin excluded). Avg = average score per match. Sorted by average score.</div><button class="btn gold" data-act="avgimg">Averages image</button></div>';}
 
-function vFixtures(){var h='<div class="card"><button class="btn gold" data-act="addfx" style="margin-top:0">Add fixture</button><button class="btn ghost" data-act="comps">Competitions</button></div>';
-  var groups={};sortedFx().forEach(function(f){var k=f.date.slice(0,7);(groups[k]=groups[k]||[]).push(f);});
+function fxPlayed(f){var m=S.matches[f.id];return f.status==='played'||!!(m&&allDone(m));}
+function fxFilter(){var q=S.ui.fxf||{c:'all',s:'up'},t=today();return sortedFx().filter(function(f){
+  if(q.c!=='all'&&f.comp!==q.c)return false;var pl=fxPlayed(f);
+  if(q.s==='up')return !pl&&f.date>=t;if(q.s==='played')return pl;return true;});}
+function vFixtures(){var q=S.ui.fxf||{c:'all',s:'up'},used={};S.fixtures.forEach(function(f){used[f.comp]=1;});
+  var chip=function(k,v,l){return '<button class="'+(q[k]===v?'on':'')+'" data-act="fxf" data-fk="'+k+'" data-fv="'+esc(v)+'">'+esc(l)+'</button>';};
+  var h='<div class="card"><div class="small muted">Competition</div><div class="reqs fxf">'+chip('c','all','All')+S.comps.filter(function(c){return !c.archived&&used[c.id];}).map(function(c){return chip('c',c.id,c.name);}).join('')+'</div>'+
+    '<div class="small muted" style="margin-top:8px">Show</div><div class="reqs fxf">'+chip('s','up','Upcoming')+chip('s','played','Played')+chip('s','all','All')+'</div></div>';
+  h+='<div class="card"><button class="btn gold" data-act="addfx" style="margin-top:0">Add fixture</button><button class="btn ghost" data-act="comps">Competition setup</button></div>';
+  var groups={},list=fxFilter();if(!list.length)h+='<div class="card muted">No fixtures match.</div>';
+  list.forEach(function(f){var k=f.date.slice(0,7);(groups[k]=groups[k]||[]).push(f);});
   Object.keys(groups).forEach(function(k){var d=new Date(k+'-15T12:00:00');h+='<div class="sec">'+MON[d.getMonth()]+' '+d.getFullYear()+'</div><div class="card list">'+groups[k].map(function(f){return fxRow(f,'editfx');}).join('')+'</div>';});
   return h;}
 function vSquad(){var act=S.players.slice().sort(function(a,b){return (b.active-a.active)||firstSort(a,b);});
@@ -913,6 +932,8 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'close':closeModal();break;
     case 'signin':case 'signup':case 'signout':case 'forgot':case 'claim':case 'newpw':authAct(d.act,d);break;
     case 'acctmode':T.acct=d.m;render();break;
+    case 'fxf':S.ui.fxf=S.ui.fxf||{c:'all',s:'up'};S.ui.fxf[d.fk]=d.fv;localSave();render();break;
+    case 'approve':case 'decline':accessAct(d.act,d.id);break;
     case 'saveaccess':case 'unlink':accessAct(d.act,d.id);break;
     case 'takeover':m.scorer=meTag();T.sel=null;T.spare=false;save();render();toast('You’re scoring now');break;
     case 'pullall':SY.ready=false;SY.pulled='';SY.at={};T.seedAsked=false;toast('Reloading…');pull(true);break;
@@ -1114,23 +1135,28 @@ function authAct(a,d){if(!SB){toast('Sharing isn’t available');return;}
     SB.auth.resetPasswordForEmail(em3,{redirectTo:location.origin+location.pathname}).then(function(r){if(r.error)throw r.error;modal('<h4>Check your email</h4><div class="small muted">A reset link has been sent to '+esc(em3)+'. Open it on this phone. If nothing arrives, ask an admin to reset your password.</div><button class="btn gold" data-act="close">OK</button>');}).catch(fail);}
   else if(a==='newpw'){var np=fval('npPw');if(np.length<6){toast('6 or more characters');return;}SB.auth.updateUser({password:np}).then(function(r){if(r.error)throw r.error;closeModal();toast('Password changed');}).catch(fail);}}
 function claim(pid){var p=player(pid);return SB.rpc('claim_player',{p_pid:pid,p_name:p?p.name:pid}).then(function(r){if(r.error)throw r.error;
-  toast(r.data==='requested'?'Request sent. An admin needs to approve you.':'Signed in as '+(r.data==='admin'?'an admin':'a scorer'));return loadPeople();}).then(function(){pull(!SY.ready);render();});}
+  toast(r.data==='requested'?'Request sent. An admin will approve you.':'Signed in as '+(r.data==='admin'?'an admin':'a scorer'));return loadPeople();}).then(function(){pull(!SY.ready);render();});}
 function personOf(pid){return PEOPLE.filter(function(x){return x.pid===pid;})[0]||null;}
 function accessBadge(pid){var x=personOf(pid);if(!x)return '';
   if(x.requested&&x.uid)return isAdmin()?' <span class="chip o">Requested</span>':'';
   return x.role==='admin'?' <span class="chip g">Admin</span>':x.role==='scorer'?' <span class="chip g">Scorer</span>':'';}
 function accessInject(pid){var x=personOf(pid)||{role:'none'},pl=player(pid),box=document.getElementById('mbox');if(!box||!pl)return;
-  var st=x.uid?(x.requested?'Has asked for scorer access.':'Has a sign-in linked.'):'No sign-in yet. If you switch them on, they get access as soon as they set up a sign-in in the app.';
+  if(x.uid&&x.requested){var role=x.role==='none'?'scorer':x.role;
+    box.insertAdjacentHTML('beforeend','<div class="card" style="margin-top:14px;background:var(--row)"><h2>Sign-in request</h2><div class="small muted">Someone has set up a sign-in as this player using:</div><div class="name" id="rqEmail" style="margin:6px 0">Checking…</div><div class="field"><label>Give them</label><select id="acRole"><option value="scorer"'+(role==='scorer'?' selected':'')+'>Scorer</option><option value="admin"'+(role==='admin'?' selected':'')+'>Admin</option></select></div><button class="btn gold" data-act="approve" data-id="'+pid+'">Approve</button><button class="btn danger" data-act="decline" data-id="'+pid+'">Decline</button><div class="note">Only approve if you recognise the email. Declining frees the name for the right person.</div></div>');
+    if(SB)SB.rpc('admin_requests').then(function(r){var e=document.getElementById('rqEmail');if(!e)return;var row=(r.data||[]).filter(function(y){return y.pid===pid;})[0];e.textContent=row?row.email:(r.error?'Couldn’t load the email: '+errMsg(r.error):'(not found)');});
+    return;}
+  var st=x.uid?(x.requested?'Has asked for scorer access.':'Has a sign-in linked.'):'No sign-in yet. When they set one up, you’ll be asked to approve it.';
   box.insertAdjacentHTML('beforeend','<div class="card" style="margin-top:14px;background:var(--row)"><h2>App access</h2><div class="small muted">'+esc(st)+'</div><div class="field"><label>Can this player change things?</label><select id="acRole"><option value="none"'+(x.role==='none'?' selected':'')+'>No (viewer)</option><option value="scorer"'+(x.role==='scorer'?' selected':'')+'>Scorer</option><option value="admin"'+(x.role==='admin'?' selected':'')+'>Admin</option></select></div><button class="btn gold" data-act="saveaccess" data-id="'+pid+'">Save access</button>'+(x.uid?'<button class="btn ghost" data-act="unlink" data-id="'+pid+'">Unlink their sign-in</button>':'')+'<div class="note">Scorers can change the line-up, add a player, enter scores and opposition names, and sign the league card. Admins can change everything.</div></div>');}
 function accessAct(a,pid){if(!SB||navigator.onLine===false){toast('Needs signal');return;}var pl=player(pid);
   if(a==='saveaccess'){var role=fval('acRole');if(SY.me&&pid===SY.me.pid&&role!=='admin'){toast('You can’t remove your own admin access');return;}
     SB.from('people').upsert({pid:pid,role:role,requested:false,name:pl?pl.name:pid}).then(function(r){if(r.error)throw r.error;closeModal();toast('Access saved');return loadPeople();}).catch(function(e){toast(errMsg(e));});}
-  else if(a==='unlink'){SB.from('people').update({uid:null,requested:false}).eq('pid',pid).then(function(r){if(r.error)throw r.error;closeModal();toast('Sign-in unlinked');return loadPeople();}).catch(function(e){toast(errMsg(e));});}}
+  else if(a==='approve'){var rl=fval('acRole')||'scorer';SB.from('people').update({role:rl,requested:false}).eq('pid',pid).then(function(r){if(r.error)throw r.error;closeModal();toast('Approved');return loadPeople();}).catch(function(e){toast(errMsg(e));});}
+  else if(a==='decline'||a==='unlink'){SB.from('people').update({uid:null,requested:false}).eq('pid',pid).then(function(r){if(r.error)throw r.error;closeModal();toast('Sign-in unlinked');return loadPeople();}).catch(function(e){toast(errMsg(e));});}}
 function requestCount(){return isAdmin()?PEOPLE.filter(function(x){return x.requested&&x.uid;}).length:0;}
 function playerOptions(){return S.players.filter(function(p){return p.active;}).sort(firstSort).map(function(p){return '<option value="'+p.id+'">'+esc(fullName(p))+'</option>';}).join('');}
 function vAccount(){var st=syncState(),h='';
   if(!SY.session){h+='<div class="card"><h2>'+(T.acct==='new'?'Set up a sign-in':'Sign in')+'</h2><div class="small muted">Only admins and scorers sign in. Everyone else can see everything without signing in.</div>';
-    if(T.acct==='new')h+='<div class="field"><label>Your name</label><select id="suPid"><option value="">Choose…</option>'+playerOptions()+'</select></div><div class="field"><label>Email</label><input id="suEmail" type="email" autocomplete="email" autocapitalize="off"></div><div class="field"><label>Choose a password (6 or more characters)</label><input id="suPw" type="password" autocomplete="new-password"></div><button class="btn gold" data-act="signup">Create sign-in</button><button class="btn ghost" data-act="acctmode" data-m="">I already have one</button><div class="note">If an admin has switched you on as a scorer, you can score straight away. Otherwise an admin approves you.</div>';
+    if(T.acct==='new')h+='<div class="field"><label>Your name</label><select id="suPid"><option value="">Choose…</option>'+playerOptions()+'</select></div><div class="field"><label>Email</label><input id="suEmail" type="email" autocomplete="email" autocapitalize="off"></div><div class="field"><label>Choose a password (6 or more characters)</label><input id="suPw" type="password" autocomplete="new-password"></div><button class="btn gold" data-act="signup">Create sign-in</button><button class="btn ghost" data-act="acctmode" data-m="">I already have one</button><div class="note">An admin will approve your sign-in before you can change anything.</div>';
     else h+='<div class="field"><label>Email</label><input id="siEmail" type="email" autocomplete="email" autocapitalize="off"></div><div class="field"><label>Password</label><input id="siPw" type="password" autocomplete="current-password"></div><button class="btn gold" data-act="signin">Sign in</button><button class="btn ghost" data-act="acctmode" data-m="new">New admin/scorer? Set up a sign-in</button><button class="btn ghost" data-act="forgot">Forgot password</button>';
     h+='</div>';}
   else{var me=SY.me,p=me&&player(me.pid);
@@ -1168,7 +1194,7 @@ function subsText(){var t=subsTable(),out='Lions subs (from '+fdate(subsFrom())+
   t.forEach(function(r){out+='\n'+fullName(player(r.pid))+': '+(r.owe?'owes £'+r.owe:'paid up')+' ('+r.paid+' of '+r.n+' nights paid)';});return out;}
 
 /* who can do what: every button is checked here, and the database checks again */
-var VIEW_ACTS={close:1,choosefx:1,pickfx:1,teamsheet:1,allsets:1,resimg:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,leaguecard:1,sendleague:1,copyleague:1,report:1,copyres:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
+var VIEW_ACTS={close:1,choosefx:1,pickfx:1,teamsheet:1,allsets:1,resimg:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,leaguecard:1,sendleague:1,copyleague:1,report:1,copyres:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,fxf:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
 var SCORE_ACTS={spare:1,nospare:1,vc:1,undo:1,cancelsel:1,skip:1,other:1,otherok:1};
 var EDIT_ACTS={suggest:1,clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1};
 var ADMIN_HIDE=['addfx','comps','bulkadd','editrule','addrule','savegeneral','importpaste','seedforce','subtick'];
