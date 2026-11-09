@@ -1,0 +1,38 @@
+# Nightly backup of the shared team data, encrypted, saved in backups/
+# Needs two repository secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_SECRET_KEY  - the Supabase secret key (sb_secret_…)
+#   BACKUP_PASSPHRASE    - a long passphrase of your choice; keep it in your password manager
+# Until both are set, this job just skips.
+name: Nightly backup
+
+on:
+  schedule:
+    - cron: '23 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Back up the shared data
+        env:
+          KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$KEY" ] || [ -z "$PASS" ]; then echo "Backup secrets not set yet: skipping"; exit 0; fi
+          U=https://hjwpwiiebbnjykkywckx.supabase.co/rest/v1
+          curl -fsS "$U/docs?select=*" -H "apikey: $KEY" -o docs.json
+          curl -fsS "$U/people?select=*" -H "apikey: $KEY" -o people.json
+          python3 -c "import json;print(json.dumps({'docs':json.load(open('docs.json')),'people':json.load(open('people.json'))}))" | gzip > backup.json.gz
+          mkdir -p backups
+          f=backups/lions-den-$(date -u +%Y-%m-%d).json.gz.enc
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass env:PASS -in backup.json.gz -out "$f"
+          rm -f docs.json people.json backup.json.gz
+          ls -1t backups/*.enc | tail -n +91 | xargs -r git rm -q   # keep the latest 90 nights
+          git config user.name "Lions Den bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backups && git commit -m "Nightly backup $(date -u +%Y-%m-%d)" && git push || echo "Nothing new"

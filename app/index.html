@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lions Den">
+<meta name="theme-color" content="#0B1A38">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>The Lions Den</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@500;700&display=swap">
+<style>
+:root{--navy:#0B1A38;--panel:#12264D;--row:#152C57;--line:#22396A;--gold:#F6B630;--muted:#A9B8D6;--white:#fff;--red:#FF8A80;--green:#7BD88F}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--navy);color:var(--white);font-family:Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
+input,select,textarea{font:inherit}
+.wrap{max-width:600px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))}
+.top{display:flex;align-items:center;gap:12px;padding:4px 2px 12px}
+.logo{width:40px;height:52px;flex:none}
+.h1{font-family:Oswald,sans-serif;font-size:22px;font-weight:700;text-transform:uppercase;line-height:1.1}
+.sub{font-size:13px;color:var(--muted)}
+.nav{position:fixed;left:0;right:0;bottom:0;background:#08142C;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:5}
+.nav button{min-height:48px;border-radius:10px;font-size:12px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+.nav button.on{color:var(--gold)}
+.card{background:var(--panel);border-radius:16px;padding:14px;margin-bottom:12px}
+.card h2,.sec{margin:0 0 10px;font-family:Oswald,sans-serif;font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.sec{margin:18px 2px 8px;color:var(--gold);font-size:16px}
+.row{display:flex;align-items:center;gap:10px}
+.between{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.gold{color:var(--gold)}
+.red{color:var(--red)}
+.big{font-family:Oswald,sans-serif;font-size:44px;font-weight:700;line-height:1.05}
+.btn{display:block;width:100%;min-height:50px;border-radius:12px;font-weight:700;font-size:16px;margin-top:10px;padding:0 14px}
+.btn.gold{background:var(--gold);color:var(--navy)}
+.btn.ghost{border:2px solid var(--line);color:var(--white)}
+.btn.danger{border:2px solid var(--red);color:var(--red)}
+.btn.sm{min-height:44px;font-size:15px;margin-top:0;width:auto;display:inline-flex;align-items:center}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.btns .btn{margin-top:0}
+.list>div,.li{display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid var(--line);min-height:52px}
+.list>div:first-child{border-top:0}
+.li .grow,.grow{flex:1;min-width:0}
+.name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sync{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:14px;padding:4px 10px;min-height:32px;white-space:nowrap}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.sync.g i{background:#3ecf6e}.sync.o i{background:var(--gold)}
+.chip{display:inline-block;padding:3px 9px;border-radius:12px;background:var(--row);font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+.chip.g{background:var(--gold);color:var(--navy)}
+.chip.o{border:1.5px solid var(--gold);color:var(--gold);background:none}
+.seg{display:inline-grid;grid-auto-flow:column;gap:4px;background:var(--row);border-radius:10px;padding:3px}
+.seg button{min-width:40px;min-height:40px;border-radius:8px;font-weight:700;font-size:14px;color:var(--muted);padding:0 8px}
+.seg button.on{background:var(--gold);color:var(--navy)}
+.seg button.on.out{background:#3B5385;color:var(--white)}
+.seg button.on.may{background:#8A6F2A;color:var(--white)}
+.reqs{display:flex;gap:4px;margin-top:6px}
+.reqs button{min-width:40px;min-height:36px;border-radius:8px;background:var(--row);font-size:13px;font-weight:700;color:var(--muted)}
+.reqs button.on{background:none;border:2px solid var(--gold);color:var(--gold)}
+.slots{display:grid;gap:10px}
+.set{background:var(--row);border-radius:12px;padding:8px}
+.set .lbl{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);font-weight:700;margin:2px 4px 6px}
+.slot{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;border-radius:10px;padding:0 10px;text-align:left;background:var(--panel);margin-top:4px}
+.slot .n{width:26px;color:var(--muted);font-size:13px;font-weight:700}
+.slot.sel{outline:2px solid var(--gold)}
+.slot.empty .name{color:var(--muted);font-weight:400;font-style:italic}
+.board .teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;text-align:center}
+.tname{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.tname.l{color:var(--gold);font-weight:700}
+.pts{display:flex;justify-content:space-between;margin:10px -14px -14px;padding:9px 16px;background:var(--gold);color:var(--navy);font-weight:700;font-size:15px;border-radius:0 0 16px 16px}
+.now{border:2px solid var(--gold)}
+.now .who{font-family:Oswald,sans-serif;font-size:28px;font-weight:700;line-height:1.1}
+.hint{margin-top:8px;font-size:15px;font-weight:600;color:var(--gold)}
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+.k{background:var(--row);border-radius:12px;min-height:54px;font-size:22px;font-weight:700}
+.k:active{background:var(--line)}
+.k.fn{font-size:14px}
+.k.sp{border:2px solid var(--gold);color:var(--gold);background:none}
+.k.gold{background:var(--gold);color:var(--navy)}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;padding:2px 0 6px}
+th.n{text-align:left;padding-left:4px;width:29%}
+th.sh{width:36px}
+th.tt{width:31px}
+th.x{width:30px}
+td.setc{background:var(--gold);color:var(--navy);font-family:Oswald,sans-serif;font-weight:700;font-size:15px;line-height:1.1;border-top:2px solid var(--panel)}
+td.setc small{display:block;font-family:Inter,sans-serif;font-size:10px;font-weight:700}
+td.setc.out{background:var(--panel);color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
+.bpts{font-size:15px;font-weight:700;color:var(--muted);margin-top:2px}
+.bpts.gold{color:var(--gold)}
+th.x{font-size:9.5px;letter-spacing:0;line-height:1.1}
+tr.dn td,tr.up td{height:28px;font-size:13px;border-top:1px dashed var(--line)}
+td.lbl{font-size:11.5px;color:var(--muted);font-weight:600;font-style:italic;text-align:left;padding-left:4px}
+td.sf{font-size:13px;color:var(--muted);background:rgba(255,255,255,.03)}
+td.bym{color:var(--gold);font-weight:700}
+td.upv{color:var(--gold);font-weight:700}
+td.sl{color:#5C74A6}
+td{padding:0;height:40px;text-align:center;border-top:1px solid var(--line);font-size:15px}
+td.n{text-align:left;padding-left:4px;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td.n.l{color:var(--gold)}
+td.t{font-weight:700;color:var(--gold)}
+.c{width:100%;height:38px;font-size:16px;border-radius:8px;padding:0;text-align:center}
+.c.sel{outline:2px solid var(--gold);outline-offset:-2px;background:rgba(246,182,48,.12)}
+.ring{display:inline-block;min-width:24px;padding:3px 3px;line-height:1.2;color:var(--gold);font-weight:700;font-size:13px;background:linear-gradient(135deg,var(--gold) 3px,transparent 3px) top left/51% 51% no-repeat,linear-gradient(225deg,var(--gold) 3px,transparent 3px) top right/51% 51% no-repeat,linear-gradient(45deg,var(--gold) 3px,transparent 3px) bottom left/51% 51% no-repeat,linear-gradient(315deg,var(--gold) 3px,transparent 3px) bottom right/51% 51% no-repeat}
+.vc{display:inline-block;width:100%;text-align:center;font-size:11px;font-style:italic;letter-spacing:-.3px;color:var(--muted)}
+.e{color:#3B5385}
+tr.sep td{border-top:2px solid var(--gold)}
+.nm{width:100%;text-align:left;font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:38px;padding-left:4px}
+.nm.l{color:var(--gold)}
+.lock{font-size:10px;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;font-size:13px;color:var(--muted);align-items:center}
+.chips .chip.up{color:var(--gold)}
+.chips .chip.dn{color:var(--red)}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font-size:13px;color:var(--muted);font-weight:600}
+.field input,.field select,.field textarea{background:var(--row);border:1px solid var(--line);color:var(--white);border-radius:10px;padding:11px 12px;min-height:46px;font-size:16px;width:100%}
+.field textarea{min-height:120px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.modal .box{background:var(--panel);border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:600px;max-height:88vh;overflow:auto}
+.modal h4{margin:0 0 10px;font-family:Oswald,sans-serif;font-size:21px;text-transform:uppercase}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--gold);color:var(--navy);padding:10px 16px;border-radius:20px;font-weight:700;display:none;z-index:30;max-width:90%;text-align:center}
+.warn{background:rgba(255,138,128,.12);border:1px solid var(--red);color:var(--white);border-radius:10px;padding:8px 10px;font-size:13px;margin-top:8px}
+.note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
+.sigpad{display:block;width:100%;height:140px;background:#fff;border-radius:10px;touch-action:none;margin-top:6px}
+.feedalert{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:10px 12px;border:1px solid var(--gold);border-radius:12px}
+.feedalert .btn.sm{width:auto;min-height:38px;margin:0;padding:0 16px}
+.ltwrap{overflow-x:auto;margin:0 -4px}
+table.lt.full{font-size:13.5px}table.lt tr.grp th{color:var(--gold);font-size:11px;border-bottom:1px solid var(--line)}table.lt td.x{color:var(--muted);font-weight:400}table.lt tr.us td.x{color:var(--navy)}
+.lres{padding:8px 0;border-bottom:1px solid var(--line)}.lres:last-child{border-bottom:0}.lt2{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}.lt2 .sc{font-weight:800;color:var(--gold);text-align:center}
+table.lt{width:100%;border-collapse:separate;border-spacing:0 3px;font-size:13.5px}
+table.lt th{font-size:10.5px;color:var(--muted);font-weight:600;text-align:center;padding:2px 2px;white-space:nowrap}
+table.lt td{text-align:center;padding:8px 2px;background:#152C57;white-space:nowrap}
+table.lt td:first-child{border-radius:8px 0 0 8px}table.lt td:last-child{border-radius:0 8px 8px 0}
+table.lt .n{text-align:left;padding-left:6px}table.lt{table-layout:fixed}table.lt th.n{width:auto}table.lt .n{overflow:hidden;text-overflow:ellipsis}table.lt td.n{font-weight:700}
+table.lt td.t{color:var(--gold);font-weight:800}table.lt td.up{color:var(--green);font-weight:700}table.lt td.dn{color:var(--red);font-weight:700}table.lt tr.us td.up,table.lt tr.us td.dn{color:var(--navy)}table.lt.compact td{padding:6px 2px}
+.fxsel select{display:block;width:100%;margin-top:4px;min-height:46px;border-radius:10px;border:1px solid var(--line);background:var(--row);color:var(--white);font:600 16px Inter,system-ui,sans-serif;padding:0 10px;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--gold) 50%),linear-gradient(135deg,var(--gold) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px;background-repeat:no-repeat}
+table.lt tr.us td{background:var(--gold);color:var(--navy)}table.lt tr.us td.t{color:var(--navy)}
+a.btn.lnk{display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--white)}a.btn.gold.lnk{color:var(--navy)}
+.top5{display:block;width:100%;text-align:left;color:inherit;font:inherit;border:0;cursor:pointer}.t5r{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}.t5r:last-of-type{border-bottom:0}.t5n{width:20px;color:var(--muted);font-weight:700}.t5a{min-width:52px;text-align:right;font:700 22px Oswald,sans-serif;color:var(--gold)}
+.imgout{width:100%;border-radius:10px;display:block;margin-top:8px}
+.avg td{height:42px;font-size:14px}
+.avg td.n{font-size:14px}
+textarea.out{width:100%;min-height:200px;background:var(--row);color:var(--white);border:1px solid var(--line);border-radius:10px;padding:10px;font:14px/1.45 Inter,sans-serif}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top" id="top"></div>
+  <div id="view"></div>
+</div>
+<nav class="nav" id="nav"></nav>
+<div class="modal" id="modal"><div class="box" id="mbox"></div></div>
+<div class="toast" id="toast"></div>
+<script src="supabase.js"></script>
+<script>
+(function(){
+'use strict';
+var LOGO_W=766, LOGO_D='M635.0 999.4C633.1 999.2 628.7 998.7 625.3 998.4L619.0 997.8 L618.0 994.0C617.4 991.8 617.1 983.3 617.2 974.8L617.5 959.5 L621.5 958.8C623.7 958.4 643.3 958.3 665.1 958.7C709.6 959.4 705.4 960.2 706.6 951.2L707.2 946.3 L702.9 945.6C700.5 945.3 685.4 944.6 669.3 944.0C641.2 943.1 640.0 943.0 635.3 940.6C629.1 937.5 625.7 933.8 622.6 927.0C620.4 922.2 620.0 919.3 619.2 904.0C618.6 893.6 618.6 883.9 619.1 880.1C620.7 868.6 625.4 861.1 633.5 856.7C637.4 854.5 638.4 854.5 688.7 854.2C737.5 853.9 740.0 854.0 741.8 855.8C743.9 857.9 744.5 863.1 744.5 881.5L744.5 893.5 L733.5 894.1C727.5 894.5 709.6 894.8 693.8 894.9C661.8 895.0 664.8 894.2 663.5 902.6L662.9 906.7 L669.1 907.4C672.5 907.7 682.2 908.0 690.7 908.0C714.1 908.0 729.4 909.6 735.8 912.7C742.4 915.8 747.2 922.0 750.1 931.1C751.9 937.1 752.1 939.8 751.8 959.8L751.5 981.8 L748.5 986.1C744.8 991.3 738.3 996.5 733.2 998.1C730.5 999.0 716.7 999.4 684.0 999.6C659.0 999.7 636.9 999.6 635.0 999.4ZM492.1 995.2C490.5 993.7 485.4 986.4 480.8 979.0C458.8 943.8 441.7 916.1 440.6 913.5C438.8 909.5 438.0 920.3 437.4 957.7L436.7 994.9 L432.6 995.6C426.8 996.7 396.8 996.1 395.4 994.9C392.3 992.4 392.1 985.3 393.0 920.5C393.5 884.7 394.2 854.7 394.5 853.8C395.3 851.8 404.7 851.0 427.5 851.0C442.5 851.0 445.0 851.2 446.8 852.8C448.7 854.4 458.9 869.4 469.6 886.3C472.3 890.6 476.0 896.4 477.9 899.3C479.8 902.2 483.0 907.6 485.1 911.4L488.8 918.3 L489.5 914.9C489.8 913.0 490.4 898.8 490.8 883.3C491.3 862.4 491.9 854.7 492.8 853.8C493.7 852.9 499.4 852.4 513.5 852.2L532.8 851.8 L534.2 854.2C535.2 856.1 535.4 869.3 535.2 924.0C535.0 961.1 534.7 992.7 534.4 994.1C533.7 997.6 531.6 998.0 511.4 998.0L495.0 998.0 L492.1 995.2ZM154.6 995.5C153.8 994.6 152.8 992.4 152.5 990.6C151.8 987.0 153.6 880.4 154.6 862.9L155.2 852.2 L159.8 851.6C166.7 850.7 193.6 850.9 196.3 851.9C198.5 852.8 198.7 853.6 199.4 861.7C200.3 873.9 198.1 989.8 196.8 993.2C196.3 994.6 194.9 996.1 193.7 996.4C192.5 996.7 183.5 997.0 173.8 997.0C159.3 997.0 155.9 996.7 154.6 995.5ZM22.0 995.0C11.3 994.7 2.4 994.3 2.4 994.2C0.5 991.6 0.4 968.1 2.1 919.0C2.6 902.8 3.2 886.1 3.5 882.0C4.7 863.6 5.2 857.4 5.6 855.8C6.2 853.7 14.0 850.1 19.5 849.4C21.7 849.1 28.7 849.3 35.0 849.9C49.7 851.3 50.0 851.6 50.0 864.4C50.0 869.4 49.5 891.4 48.8 913.2C48.2 935.1 48.0 953.3 48.4 953.7C48.8 954.1 63.8 954.7 81.6 955.0C107.5 955.4 114.3 955.8 114.9 956.9C116.2 958.9 117.3 982.0 116.5 988.8L115.8 994.7 L104.7 995.3C92.1 996.1 51.5 995.9 22.0 995.0ZM271.5 994.4C251.0 990.2 245.3 986.7 239.4 975.1C237.1 970.5 236.6 967.6 235.8 957.1C234.6 940.4 235.8 888.5 237.5 879.9C240.1 866.9 245.8 859.3 256.5 854.3L262.5 851.5 L306.0 851.5L349.5 851.5 L354.6 854.2C362.6 858.4 369.6 866.7 372.1 875.2C374.2 882.2 374.3 883.3 373.7 927.4L373.1 972.4 L369.8 979.0C367.3 983.9 365.3 986.3 361.6 988.7C352.7 994.8 350.5 995.0 310.1 994.9C290.0 994.8 272.6 994.6 271.5 994.4ZM328.0 953.2C328.3 952.8 328.4 938.9 328.2 922.2L327.9 892.0 L304.7 892.2L281.5 892.5 L281.0 920.0C280.5 945.5 280.6 947.8 282.3 951.4L284.2 955.3 L305.8 954.6C317.7 954.3 327.7 953.6 328.0 953.2ZM558.3 915.0C556.1 914.1 556.0 913.7 554.4 903.3C553.7 898.8 555.8 898.0 567.9 898.0C576.8 898.0 578.0 897.8 579.0 896.1C580.5 893.2 579.0 892.7 568.0 892.1L558.5 891.5 L558.0 874.4C557.7 865.0 557.6 856.6 557.8 855.7C558.2 853.7 563.0 853.1 580.8 852.8C593.7 852.5 595.3 852.7 596.5 854.3C598.3 856.8 599.4 874.9 598.6 889.5C597.6 908.3 594.1 913.4 581.4 915.0C572.7 916.2 561.2 916.1 558.3 915.0ZM294.9 806.1C274.1 800.1 267.1 797.4 252.6 790.2C233.1 780.6 213.6 766.3 203.9 754.7C188.6 736.3 181.2 721.0 176.9 698.8C174.1 684.2 174.5 659.7 177.8 645.5C183.5 621.1 195.4 593.7 210.4 571.1C221.1 554.9 234.6 540.0 238.7 540.0C240.8 540.0 240.3 551.7 237.5 569.7C234.0 592.1 233.5 599.4 233.5 626.5C233.5 654.0 234.1 661.8 237.6 678.1C242.1 699.6 250.3 720.6 262.1 740.8C274.5 762.1 286.1 776.2 307.2 795.5C313.6 801.4 319.1 806.9 319.5 807.8C320.2 809.6 318.3 812.0 316.1 811.9C315.2 811.8 305.7 809.2 294.9 806.1ZM332.4 797.1C327.3 793.4 306.2 771.6 298.4 762.0C282.7 742.6 266.8 716.2 259.5 697.1C253.6 682.0 249.1 662.3 247.9 647.6C244.7 606.2 252.6 540.5 265.5 501.5C272.7 479.7 284.7 452.9 294.7 436.5C301.1 425.9 325.0 393.1 348.0 363.5C378.5 324.2 376.3 327.3 375.6 323.6C374.3 316.8 353.0 288.7 341.1 278.1C336.4 274.0 332.5 271.1 332.3 271.7C331.6 273.8 335.9 283.0 346.2 301.1C359.9 325.3 360.7 327.8 357.4 334.2C355.6 337.6 346.1 350.0 334.1 364.5C330.0 369.4 319.4 383.2 310.5 395.0C279.5 436.4 264.7 463.0 260.1 485.2C259.4 488.4 258.5 491.2 258.0 491.5C253.3 494.4 241.6 478.1 235.4 460.0L233.2 453.5 L232.0 459.4C230.3 467.7 231.1 480.2 233.9 487.2C235.1 490.4 238.2 495.7 240.8 499.1C250.5 511.7 250.2 511.1 248.7 513.4C246.0 517.5 242.2 518.5 230.0 518.4C220.6 518.3 216.9 517.8 209.6 515.6C192.1 510.3 178.6 503.4 169.7 495.1C163.5 489.3 161.7 485.8 161.9 479.8C162.0 475.5 161.4 474.1 156.2 466.7C147.7 454.7 146.4 452.3 143.6 443.6C141.5 437.4 141.2 435.5 142.2 434.8C144.9 433.2 149.1 434.1 156.4 438.1C168.6 444.7 180.6 446.8 186.9 443.6C194.1 439.8 207.6 420.0 220.1 394.7C229.3 376.0 232.5 367.7 233.9 359.1C236.3 343.6 226.9 326.8 211.7 319.6C201.9 315.0 195.6 314.0 176.2 314.0C162.3 314.0 158.0 313.7 157.1 312.6C156.3 311.6 156.5 307.9 158.1 297.9C160.6 281.8 160.2 273.9 156.5 266.3C153.2 259.6 145.5 252.7 138.2 249.9C131.7 247.5 121.0 247.0 114.4 248.8C110.2 250.0 97.4 257.7 98.2 258.6C98.5 258.8 100.8 258.2 103.3 257.1C110.1 254.2 119.0 252.8 123.9 253.9C128.2 254.8 133.0 257.5 133.0 258.8C133.0 259.2 129.5 262.4 125.1 265.8C120.8 269.2 116.6 272.7 115.9 273.7C114.6 275.2 114.7 275.2 117.5 273.8C119.2 272.9 123.8 271.2 127.8 270.0C139.2 266.5 143.5 268.2 146.0 277.1C147.5 282.3 145.5 284.2 134.6 288.1C125.7 291.2 119.9 294.3 121.0 295.3C121.3 295.6 126.0 294.9 131.5 293.9L141.5 291.9 L143.2 294.1C146.9 298.6 144.0 306.9 136.2 314.2C132.5 317.7 128.7 319.7 119.2 323.5C111.9 326.3 106.3 329.1 105.5 330.4C103.5 333.2 103.6 337.4 106.2 347.5C107.4 352.2 108.0 356.3 107.7 356.7C107.3 357.1 103.6 356.8 99.4 356.2C89.1 354.6 81.9 350.6 72.9 341.4C68.8 337.2 63.8 333.0 61.7 331.9C56.3 329.1 50.2 323.3 47.7 318.6C45.9 315.2 45.5 312.8 45.5 305.0C45.5 293.4 46.4 291.7 59.0 278.5C63.8 273.6 68.4 268.1 69.3 266.4C71.4 262.3 72.4 256.0 71.6 251.6C70.2 244.3 62.1 239.4 55.5 242.0L52.5 243.2 L55.9 244.4C61.9 246.5 66.4 256.2 64.1 262.0C63.4 263.9 47.6 283.6 43.0 288.4C41.5 289.9 31.9 283.7 26.4 277.6C19.4 269.9 17.0 264.8 17.0 257.9C17.0 249.9 20.7 243.4 32.0 231.9C46.8 216.8 60.3 209.2 84.2 202.6C91.0 200.7 97.8 198.9 99.3 198.5C102.6 197.8 104.3 194.3 105.5 186.5C106.4 180.0 107.8 177.5 113.6 171.7C122.1 163.3 156.4 141.7 168.8 137.0C171.4 136.0 176.0 134.9 179.0 134.6C205.7 131.5 211.1 130.4 232.0 124.4C240.5 122.0 251.0 119.6 255.4 119.0C263.3 118.0 273.1 118.5 276.2 120.1C278.8 121.5 280.0 127.6 279.3 135.2C278.7 141.7 279.7 145.0 282.1 145.0C283.8 145.0 288.1 137.2 292.6 126.0C299.2 109.5 302.6 103.3 308.1 97.4C315.2 89.9 320.9 87.7 334.1 87.2C346.6 86.7 354.1 88.1 358.8 91.7C364.8 96.2 370.6 105.3 374.2 115.7C377.4 125.2 377.5 126.0 377.4 140.5C377.4 154.2 377.1 156.1 374.7 163.0C373.2 167.1 372.2 171.5 372.5 172.6C373.3 175.9 381.0 180.3 401.1 188.9C453.4 211.3 479.6 225.8 502.7 245.1C531.6 269.4 551.4 304.7 555.2 339.0C557.3 358.2 554.2 378.6 545.2 403.5C537.8 424.1 532.4 435.2 505.7 484.4C494.4 505.5 489.1 520.2 484.4 544.0C481.3 560.1 480.0 570.5 477.0 604.8C476.5 611.6 475.3 618.7 474.5 620.6C472.6 625.2 463.1 635.0 449.5 646.5C436.5 657.5 409.4 685.0 399.6 697.0C395.8 701.7 392.2 705.8 391.5 706.2C388.5 708.0 383.9 704.8 379.1 697.6C369.6 683.5 362.5 667.0 357.1 646.4C352.5 628.6 351.0 616.1 351.0 594.7C351.0 570.4 353.3 554.9 360.2 532.5C362.3 525.7 378.1 493.6 383.6 484.9C385.1 482.5 390.1 474.1 394.6 466.3C399.2 458.5 404.5 449.5 406.6 446.3C423.0 420.7 455.4 356.6 457.9 344.8C459.5 337.6 459.1 325.2 456.9 315.0C451.0 286.8 435.8 260.4 413.1 238.8C403.7 229.8 384.7 216.4 373.1 210.6C352.1 200.0 313.1 187.2 292.5 184.0C288.6 183.5 284.5 182.8 283.2 182.5C279.5 181.6 280.7 183.4 285.3 185.4C287.6 186.4 297.7 190.5 307.8 194.6C350.1 211.6 386.4 233.0 403.1 250.6C414.6 262.8 426.6 281.1 434.0 297.6C440.4 312.3 441.5 317.4 441.5 334.5C441.5 348.1 441.2 350.3 438.6 358.5C435.8 367.5 430.4 379.1 422.5 393.0C408.2 418.4 403.3 426.7 391.5 446.5C353.9 509.3 345.5 526.2 340.0 549.5C335.5 568.7 334.7 575.3 334.7 596.0C334.7 612.1 335.1 618.4 337.2 632.0C340.7 654.4 349.3 678.3 362.9 703.6C370.1 717.1 372.1 722.8 371.2 727.7C370.9 729.2 365.7 742.6 359.5 757.5C353.3 772.4 346.8 788.0 345.0 792.2C342.1 799.3 341.6 800.0 339.1 800.0C337.5 800.0 334.5 798.7 332.4 797.1ZM494.8 604.2C494.2 585.3 497.7 549.0 502.0 529.5C504.2 519.3 507.8 511.3 532.6 461.8C559.6 407.7 561.9 402.9 565.0 391.1C570.2 371.6 571.8 360.9 571.8 346.0C571.7 320.1 569.0 308.7 557.4 286.0C545.7 263.2 530.9 246.0 509.3 230.4C486.3 213.7 475.9 208.2 428.9 188.0C390.9 171.6 392.4 172.4 390.9 168.8C389.6 165.6 389.4 155.6 390.5 149.0C391.0 145.9 391.8 145.0 395.0 143.5C398.3 142.0 401.2 141.8 417.7 142.3C440.3 142.9 462.1 145.8 493.0 152.1C508.2 155.2 543.3 168.1 562.1 177.5C596.6 194.8 631.0 224.0 652.2 254.0C665.7 273.1 678.9 305.7 684.4 333.6C688.6 355.2 689.3 364.1 688.7 390.3C688.2 412.7 688.0 415.5 685.1 428.5C680.4 449.4 677.9 458.0 662.3 506.5C656.7 523.9 652.8 527.7 631.5 537.0C626.0 539.4 617.9 543.0 613.5 545.0C556.9 571.5 543.3 579.0 506.7 604.6C496.4 611.8 495.1 611.7 494.8 604.2ZM676.0 511.5C676.0 508.6 679.6 494.3 685.6 473.7C699.2 426.8 698.9 427.9 701.1 415.1C704.4 395.9 705.4 369.5 703.8 348.0C702.5 332.3 697.3 310.9 690.0 291.4C684.9 277.8 668.3 246.4 661.5 237.4C645.9 217.0 621.0 195.0 597.0 180.4C571.0 164.6 538.8 150.9 510.0 143.1C486.0 136.7 441.3 130.7 415.8 130.6C395.5 130.5 395.1 130.3 390.9 120.7C386.0 109.2 384.8 100.4 387.8 97.7C390.9 94.8 400.7 91.1 412.7 88.1C433.7 82.9 437.3 82.5 460.5 82.5C497.6 82.5 519.1 85.7 562.5 97.7C578.4 102.1 586.0 105.0 611.5 116.2C643.1 130.2 641.8 129.5 659.0 140.7C714.8 177.2 739.0 205.3 753.9 250.7C762.3 276.1 765.5 298.4 765.5 330.5C765.5 350.5 765.0 357.4 762.5 375.5C761.3 384.1 756.6 402.0 752.6 413.7C748.1 426.5 737.5 448.0 730.9 457.7C715.6 480.1 690.2 508.3 680.2 513.8L676.0 516.1 L676.0 511.5ZM205.4 392.2C204.5 390.2 202.9 384.2 201.8 379.0C198.4 362.9 200.8 344.7 207.1 337.9C210.7 334.1 213.2 334.3 218.0 338.6C222.5 342.7 225.0 349.3 225.0 357.0C225.0 370.6 213.8 396.0 207.9 396.0C207.4 396.0 206.3 394.3 205.4 392.2ZM292.9 308.9C293.1 297.0 288.5 287.4 280.7 283.3C279.0 282.5 269.3 279.6 259.1 276.9C208.9 263.8 199.0 260.2 192.9 253.3C187.6 247.2 189.1 242.5 200.3 231.2C207.7 223.7 208.2 223.0 205.8 223.0C202.0 223.0 189.6 231.6 181.8 239.7C175.4 246.4 173.4 249.9 174.2 253.5C174.6 255.5 186.9 260.9 225.0 276.1C256.3 288.5 265.2 293.3 273.2 301.9C280.0 309.1 283.3 316.0 286.0 327.7C287.1 332.5 288.3 337.6 288.7 339.0C289.5 342.1 292.8 318.5 292.9 308.9ZM151.0 200.8C157.3 192.1 168.8 178.4 172.5 175.4C177.8 171.1 188.1 166.3 194.9 165.0C197.9 164.5 207.1 164.0 215.4 163.9L230.5 163.8 L224.5 161.8C202.8 154.6 196.0 153.0 190.9 154.0C180.7 156.0 174.7 160.3 160.3 176.2C150.5 186.9 146.0 191.2 143.5 192.0C137.8 193.9 136.7 192.3 137.2 182.3C137.3 177.7 137.4 174.0 137.2 174.0C136.3 174.0 130.7 187.6 130.3 190.8C129.9 193.8 130.4 195.1 132.7 197.8C135.6 201.2 141.5 203.9 146.1 204.0C147.8 204.0 149.3 203.0 151.0 200.8ZM183.5 200.0C193.0 198.5 208.0 195.0 208.0 194.2C208.0 193.6 193.4 188.4 186.2 186.4C181.9 185.3 177.0 187.0 172.4 191.2C170.0 193.4 168.0 195.7 168.0 196.2C168.0 198.3 172.5 201.9 174.5 201.5C175.6 201.2 179.7 200.5 183.5 200.0ZM345.3 157.6C347.1 156.9 350.3 154.4 352.5 152.1L356.4 148.0 L349.7 148.0C343.1 148.0 343.0 148.0 343.0 145.2C343.0 143.7 344.2 140.5 345.5 138.1C346.9 135.7 347.8 133.5 347.5 133.2C347.3 132.9 343.8 134.1 339.8 135.7C335.8 137.4 331.0 139.1 329.1 139.5L325.7 140.2 L326.3 134.9C326.8 131.2 328.3 127.2 331.5 121.7C334.1 117.4 336.0 113.6 335.7 113.4C334.9 112.5 323.5 119.5 319.9 123.1C314.6 128.4 313.3 133.2 314.7 142.6C315.3 146.9 316.5 150.9 317.5 152.0C318.9 153.6 326.8 156.5 334.5 158.3C338.4 159.2 342.1 159.0 345.3 157.6ZM179.7 121.0C175.3 117.1 172.5 110.7 170.6 99.5C167.8 83.5 169.2 69.4 174.5 60.5C177.3 55.8 184.8 48.3 194.5 40.6C201.8 34.8 203.9 34.0 206.0 36.4C206.9 37.6 206.0 40.6 201.7 51.7C193.3 72.8 192.7 75.4 192.1 99.7C191.5 119.4 191.4 121.0 189.5 122.4C186.4 124.7 183.4 124.3 179.7 121.0ZM207.7 116.2C205.7 111.8 205.5 110.0 205.5 91.0C205.6 68.9 206.4 63.3 211.4 52.7C217.0 41.0 230.8 27.6 245.0 20.1C257.0 13.8 278.2 7.3 294.5 4.9C319.2 1.3 330.5 0.1 331.4 1.0C333.9 3.5 328.2 7.3 309.5 16.0C279.4 29.9 273.9 33.3 261.1 45.5C244.8 61.1 235.5 77.4 229.1 101.9C227.5 107.8 225.7 113.7 225.1 114.9C223.3 118.2 218.0 121.0 213.7 121.0C210.1 121.0 209.7 120.7 207.7 116.2ZM632.0 110.0C625.7 107.9 618.2 105.2 615.5 104.0C600.3 97.3 568.9 87.9 543.5 82.4C504.1 73.8 497.1 73.0 464.4 73.0C440.3 73.0 437.1 73.2 425.3 75.5C409.7 78.7 402.6 80.4 393.6 83.6C384.4 86.8 381.7 86.6 372.7 82.5C350.2 72.1 322.0 74.2 306.2 87.5C304.6 88.9 300.5 94.0 297.1 99.0L290.9 108.0 L282.7 108.1C274.8 108.1 260.0 109.2 249.3 110.6C244.3 111.2 244.1 111.2 242.5 108.0C241.2 105.5 241.0 103.3 241.4 98.2C243.5 75.7 255.9 55.9 277.0 41.4C310.5 18.4 356.6 4.1 397.5 4.0C433.7 4.0 468.9 10.6 513.0 25.8C532.5 32.5 543.0 36.9 558.6 44.9C582.7 57.4 599.1 69.2 628.7 95.7C642.3 107.9 646.1 112.2 644.2 113.4C643.8 113.6 638.3 112.1 632.0 110.0Z';
+var KEY='lions-hub-v1';
+var NAVY='#0B1A38',PANEL='#12264D',ROW='#152C57',LINE='#22396A',GOLD='#F6B630',MUTED='#A9B8D6',WHITE='#FFFFFF';
+
+/* ---------------- seed data ---------------- */
+function uid(p){return (p||'x')+Math.random().toString(36).slice(2,9);}
+var SQUAD={v:1,players:[
+ ['p1','Chris Parrett'],['p2','Alec Hughes'],['p3','Martin Watt'],['p4','Leon White'],['p5','Craig Portchmouth'],['p6','Jay Harvey'],['p7','Dave Buck'],['p8','Pete Robertson'],['p9','Dave Dibble','Treasurer'],['p10','Andy Nancollis','Captain'],['p11','Andy Evans'],['p12','Chris Cooke'],
+ ['p13','Adam Watt','Vice Captain'],['p14','Andy Johnson'],['p15','Dan Batch'],['p16','Greg Vafiadis'],['p17','Ian Power'],['p18','James Hinder'],['p19','Jody Welch'],['p20','Kane Sloan'],['p21','Mark Gingell'],['p22','Mike Baddock'],['p23','Nick Collyer'],['p24','Nick White'],['p25','Owen Sibthorpe']]};
+function syncSquad(D){if((D.squadV||0)>=SQUAD.v)return;var used={};
+  SQUAD.players.forEach(function(r){var id=r[0],full=r[1],role=r[2]||'',nick=r[3]||'',sn=shortName(full).toLowerCase(),p=null,i;
+    for(i=0;i<D.players.length;i++){var q=D.players[i];if(q.id===id||q.mid===id){p=q;break;}}
+    if(!p)for(i=0;i<D.players.length;i++){var q2=D.players[i];if(used[q2.id])continue;if((q2.full&&q2.full.toLowerCase()===full.toLowerCase())||q2.name.toLowerCase()===sn){p=q2;if(q2.id!==id)q2.mid=id;break;}}
+    if(!p){p={id:id,active:true};D.players.push(p);}
+    used[p.id]=1;p.full=full;p.name=shortName(full);p.role=role;if(nick)p.nick=nick;p.active=true;});
+  D.squadV=SQUAD.v;}
+function defaultRules(){return {
+  types:{
+    league:{label:'League',result:'sets',setWin:2,setTie:1,matchWin:6,matchTie:3,tie:'share',extraHands:1,spareMin:9,spareMax:27,maxHand:27,averages:true,sets:4,per:3,hands:6,notes:'2 points per set won, 6 for most pins overall.'},
+    cup:{label:'Cup',result:'pins',setWin:0,setTie:0,matchWin:0,matchTie:0,tie:'captains',extraHands:1,spareMin:9,spareMax:27,maxHand:27,averages:true,sets:4,per:3,hands:6,notes:'Decided on total pins only. Tie rule to confirm with the league.'},
+    frontpin:{label:'Front Pin',result:'pins',setWin:0,setTie:0,matchWin:0,matchTie:0,tie:'captains',extraHands:1,spareMin:1,spareMax:27,maxHand:27,averages:false,sets:4,per:3,hands:6,notes:'Pins only count once the front pin is hit. A spare = all remaining pins down; only those are reset, so a spare can be under 9.'}
+  },
+  general:{leagueEmail:'john.bastincsl@outlook.com',sendWhen:'away',home:'Golden Lion',league:'Central Skittle League',season:'2026-27',teamName:'THE LIONS',awayWeeks:3}
+};}
+var COMPS=[['league','League Div 2','league'],['fp','Front Pin Cup','frontpin'],['ko','Knock Out Cup','cup'],['gd','George Davis Cup','cup'],['gdt','GD Tournament','cup']];
+var LEAGUE=[[1,'2026-09-04','Renegades',0,'Workingmens'],[2,'2026-09-11','Box Tops',1],[3,'2026-09-18','Reptiles',0,'49 Club Upstairs'],[4,'2026-10-02',null],[5,'2026-10-09','Double Six',1],[6,'2026-10-16','Wookurs',0,'Conservative Club'],[7,'2026-10-30',null],[8,'2026-11-06','Steamers',0,'White Hart'],[9,'2026-11-20','Gatecrashers',1],[10,'2026-12-04','Persuaders',0,'Boro Club'],[11,'2026-12-18','Belvedere',1],[12,'2027-01-29','Renegades',1],[13,'2027-02-05','Box Tops',0,'White Hart'],[14,'2027-02-12','Reptiles',1],[15,'2027-02-19',null],[16,'2027-03-05','Double Six',0,'Regency'],[17,'2027-03-12','Wookurs',1],[18,'2027-03-19',null],[19,'2027-04-02','Steamers',1],[20,'2027-04-09','Gatecrashers',0,'Social Club'],[21,'2027-04-16','Persuaders',1],[22,'2027-04-23','Belvedere',0,'Coach House']];
+var CUPS=[['2026-09-25','fp','Round 1'],['2026-10-23','fp','Round 2'],['2026-11-27','ko','Round 1'],['2026-12-11','ko','Round 2'],['2027-01-08','gdt','Tournament 1'],['2027-01-15','gdt','Tournament 2'],['2027-01-22','gdt','Tournament 3'],['2027-01-27','fp','Semi Finals'],['2027-02-10','ko','Semi Finals'],['2027-02-26','gd','R1 & Chairman’s Shield R1'],['2027-03-06','fp','Finals'],['2027-03-13','ko','Finals'],['2027-03-17','gd','R2 & Chairman’s Shield R2'],['2027-04-07','gd','Semi Finals (incl. Chairman’s Shield)'],['2027-04-24','gd','Finals (incl. Chairman’s Shield)']];
+var NOV6={L:[[6,4,9,5,6,6],[7,6,7,9,8,7],[9,3,8,7,8,6],[7,3,7,'b16',5,8],[7,8,7,8,7,8],[9,9,8,8,9,8],[6,3,9,6,8,5],[5,3,6,7,8,6],[6,5,5,6,6,7],[6,5,9,4,9,7],[7,9,'b14',9,'b12','b16'],[7,9,'b16',6,8,8]],
+ O:[[3,3,7,5,3,7],[6,7,'b9',4,8,9],[8,8,5,6,6,8],[5,6,'VC',7,5,5],[9,6,6,6,5,6],[6,6,7,5,8,8],[9,8,7,5,7,8],[7,6,2,5,6,6],[8,7,9,7,8,6],[8,6,5,6,9,5],[7,6,5,7,'b14','b12'],[6,8,7,9,7,4]],
+ opp:['D. Longdon','M. Dewey','R. Hill','M. Bowden','P. Critchley','D. Heathcock','P. Grafton','S. Hall','R. White','P. Flint','P. Read','C. Murray']};
+function cellFrom(x){if(x==='VC')return {v:0,sp:false,vc:true};if(String(x).charAt(0)==='b')return {v:+String(x).slice(1),sp:true,vc:false};return {v:+x,sp:false,vc:false};}
+/* Past 2026/27 results, transcribed from Andy's photos (claude/past-scores-2026-27.md). Bump PAST.v to push changes to every phone. */
+function PR(t){return t.split('|').map(function(r){return r.trim().split(/\s+/).map(function(x){return x==='V'?'VC':x.charAt(0)==='('?'b'+x.slice(1,-1):x;});});}
+var PAST={v:1,byes:['C1','C3'],matches:[
+ {fid:'L1',opp:['J Pocock','S John','J Hawkins','J Stadden','C Lewis','W Raines','C Hawkins','M Hawkins','G Raines','D Fry','S Hawkins','C Loud'],
+  lineup:['p22','p4','p3','p7','p5','p1','p19','p8','p10','p11','p13','p17'],
+  L:'3 6 2 7 2 8|5 6 7 6 5 9|7 2 4 6 5 6|4 1 7 7 4 6|4 2 6 4 6 5|6 6 7 7 6 5|4 8 6 9 8 8|7 7 7 5 7 6|7 6 6 5 7 7|8 9 9 6 6 8|(15) 8 6 5 6 5|7 5 9 7 5 6',
+  O:'9 4 3 1 6 5|4 5 (16) 6 4 (13)|4 9 4 7 7 3|7 6 V 6 4 7|8 8 8 8 9 (14)|4 6 9 7 7 5|7 7 7 5 3 4|8 (15) 7 2 4 (16)|6 7 4 8 5 5|7 9 9 5 8 7|8 (9) 7 8 4 7|6 (9) 7 9 7 7'},
+ {fid:'L2',opp:['B Taylor','K Crisp','J Giddings','A Knight','G Eldridge','A Bridgman','R Wild','A Ballard','G Teague','S Lawrence','S Farrow','M Bewley'],
+  lineup:['p10','p4','p7','p9','p19','p1','p8','p12','p11','p13','p17','p24'],
+  L:'6 3 7 6 9 6|5 8 7 4 4 5|8 6 5 8 8 8|5 6 7 4 9 4|4 6 7 7 7 7|6 8 8 1 8 7|9 7 6 6 7 6|6 6 8 (13) 7 9|9 8 9 9 9 7|5 3 7 5 8 7|6 6 7 7 (15) 6|7 9 4 6 5 7',
+  O:'7 7 7 8 7 6|6 5 7 9 9 6|4 8 2 5 3 9|5 4 6 7 4 7|8 4 8 8 8 5|7 7 7 6 7 7|6 8 5 7 5 6|8 7 7 4 (17) 8|9 7 8 (15) 8 9|8 6 7 8 7 9|7 (11) 5 4 8 7|7 (15) (14) 6 8 5'},
+ {fid:'L3',opp:['P Baines','O Bullock','K Merrifield','A Milsom','P Stacey','D Roper','C Bowden','R Blackborow','R Millett','D Stacey','D Bowden','R Jones'],
+  lineup:['p23','p4','p1','p9','p7','p19','p8','p10','p17','p13','p12','p11'],
+  L:'5 6 6 5 5 6|3 7 6 7 9 6|6 6 7 5 9 7|7 6 7 7 8 5|7 4 6 8 6 7|4 7 7 5 4 6|5 8 7 8 6 8|8 8 7 8 (14) 8|(14) 6 8 7 7 6|5 8 4 7 6 (16)|6 7 (12) 4 (14) 7|7 7 7 7 7 6',
+  O:'8 8 8 9 4 9|8 7 8 9 9 9|8 9 7 (14) 7 9|7 6 9 8 8 7|6 5 7 8 7 8|9 4 8 7 7 8|8 6 6 6 7 5|(17) 8 9 9 9 5|9 9 8 8 (9) 7|3 8 7 7 6 (17)|7 9 5 8 9 9|8 5 7 4 9 8'},
+ {fid:'L5',opp:['M Holland','S Fear','D Phillips','S Matthews','A Wookey','M Keyse','A Matthews','K Flook','P Wilbraham','L/S','K Mulraney','D Ridge'],
+  lineup:['p1','p3','p11','p4','p5','p9','p10','p19','p8','p13','p12','p17'],
+  L:'6 7 8 8 7 7|8 8 4 7 (15) 8|4 6 4 8 7 8|6 8 6 7 7 6|7 7 7 7 8 (12)|6 5 4 9 9 (11)|8 8 7 9 5 7|6 6 8 4 (14) 7|7 5 7 7 7 8|8 8 8 8 7 9|(18) (11) 7 7 (15) 8|6 7 4 6 8 6',
+  O:'4 6 7 7 3 6|6 4 8 6 4 7|8 5 7 (12) 7 5|9 6 3 6 7 8|7 8 3 8 3 7|4 7 8 8 7 8|7 8 8 4 3 7|8 5 V 6 7 9|4 7 (11) 8 6 7|4 6 7 7 3 6|6 4 6 7 8 8|3 8 8 5 5 9'},
+ {fid:'L6',opp:['N Langson','L Bastin','D Pople','L Botterill','A Joy','L Buttery','R Hawkins','D Hawkins','P Gadsden','H Gadsden','K Belcher','S Hodgkins'],
+  lineup:['p1','p4','p17','p3','p7','p19','p9','p8','p18','p24','p11','p12'],
+  L:'2 6 (13) 6 (10) 8|7 5 7 6 6 8|7 6 6 7 8 5|8 7 8 9 8 8|8 8 7 3 4 7|7 6 6 4 7 7|7 5 8 4 8 4|9 7 4 7 4 7|5 6 6 6 7 5|7 3 6 5 3 4|8 (9) 6 7 7 6|7 8 8 8 7 5',
+  O:'5 6 7 6 9 4|7 5 6 5 5 5|7 5 9 7 6 6|1 3 8 7 6 4|7 7 6 6 8 1|7 9 7 6 8 8|6 4 6 3 (12) 3|5 4 8 8 8 6|7 6 8 6 7 8|6 4 5 (13) 5 7|(15) 5 8 7 7 (12)|4 6 6 (13) 6 6'},
+ {fid:'C2',fx:{opp:'Double Six',home:false,venue:'Regency'},opp:['A Matthews','A Wookey','D Conner','J Matthews','S Matthews','D Phillips','R Appleyard','M Keyse','M Hansford','L/S','P Wilbraham','K Flook'],
+  lineup:['p1','p5','p23','p4','p9','p10','p3','p8','p17','p11','p13','p12'],
+  L:'4 6 V 5 4 1|V V V 8 3 2|V 4 V 5 (4) 4|V V 8 8 7 V|V 3 4 V 1 V|7 7 5 V V V|V 4 4 V 5 V|1 7 4 3 7 5|(12) 4 6 V 5 9|8 5 V 8 5 3|7 5 V 5 1 3|V 8 V V 7 5',
+  O:'6 8 9 3 V 3|V 8 7 V 6 4|V V V 3 V V|6 1 V 4 V V|1 V 6 V 7 1|V 9 2 (11) 2 V|5 5 8 5 9 3|V V 6 5 3 3|2 V 6 5 7 4|V V V 3 V V|4 3 6 6 5 V|V (9) 6 (9) V 2'}
+]};
+function syncPast(D){if((D.pastV||0)>=PAST.v)return;
+  PAST.byes.forEach(function(id){var f=fxById(id,D);if(f&&f.status==='scheduled'&&!D.matches[id])f.status='bye';});
+  PAST.matches.forEach(function(x){var f=fxById(x.fid,D);if(!f)return;var ex=D.matches[x.fid];if(ex&&(ex.L.some(function(r){return r.some(function(c){return !!c;});})))return;
+    if(x.fx){if(!f.opp)f.opp=x.fx.opp;f.home=x.fx.home;if(!f.venue||f.venue===D.rules.general.home)f.venue=x.fx.venue;}
+    var m=newMatch(D,x.fid);m.lineup=x.lineup.slice();m.opp=x.opp.slice();m.L=PR(x.L).map(function(r){return r.map(cellFrom);});m.O=PR(x.O).map(function(r){return r.map(cellFrom);});m.done=true;
+    D.matches[x.fid]=m;f.status='played';var tm=f.opp;var kn=D.oppNames[tm]||(D.oppNames[tm]=[]);x.opp.forEach(function(n){if(n!=='L/S'&&kn.indexOf(n)<0)kn.push(n);});
+    D.sel[x.fid]=D.sel[x.fid]||{avail:{},req:{},lineup:m.lineup.slice(),reserves:[]};});
+  var l8=fxById('L8',D);if(l8&&l8.status==='scheduled'&&D.matches.L8&&D.matches.L8.done)l8.status='played';
+  D.pastV=PAST.v;}
+function seed(){
+  var D={v:1,players:[],comps:[],rules:defaultRules(),fixtures:[],sel:{},matches:{},oppNames:{},ui:{tab:'home',fx:null}};
+  syncSquad(D);
+  COMPS.forEach(function(c){D.comps.push({id:c[0],name:c[1],type:c[2],archived:false});});
+  LEAGUE.forEach(function(f){D.fixtures.push(f[2]?{id:'L'+f[0],date:f[1],comp:'league',round:'Week '+f[0],opp:f[2],home:!!f[3],venue:f[3]?'Golden Lion':f[4],status:'scheduled'}:{id:'L'+f[0],date:f[1],comp:'league',round:'Week '+f[0],opp:'',home:true,venue:'',status:'vacant'});});
+  CUPS.forEach(function(c,i){D.fixtures.push({id:'C'+(i+1),date:c[0],comp:c[1],round:c[2],opp:'',home:true,venue:'',status:'scheduled'});});
+  // 6 Nov result, already played
+  var m=newMatch(D,'L8');m.lineup=['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10','p11','p12'];m.opp=NOV6.opp.slice();
+  m.L=NOV6.L.map(function(r){return r.map(cellFrom);});m.O=NOV6.O.map(function(r){return r.map(cellFrom);});m.done=true;
+  D.matches.L8=m;D.oppNames.Steamers=NOV6.opp.slice();
+  D.sel.L8={avail:{},req:{},lineup:m.lineup.slice()};
+  syncPast(D);
+  return D;
+}
+function newMatch(D,fid){
+  var f=fxById(fid,D),r=JSON.parse(JSON.stringify(D.rules.types[compType(f,D)]||D.rules.types.league));var P=r.sets*r.per;
+  function blank(){var a=[];for(var i=0;i<P;i++){var h=[];for(var j=0;j<r.hands;j++)h.push(null);a.push(h);}return a;}
+  return {fid:fid,type:compType(f,D),rules:r,home:f.home,lineup:Array(P).fill(null),opp:Array(P).fill(''),L:blank(),O:blank(),hist:[],done:false,tieWinner:null};
+}
+
+/* ---------------- state ---------------- */
+var S;try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){S=null;}
+if(!S||!S.players)S=seed();
+S.players.forEach(function(p){delete p.phone;});delete S.regTemplate;syncSquad(S);syncPast(S);
+if(!S.rules.general.nickOn)S.rules.general.nickOn={teamsheet:false,live:false,results:false,report:false,averages:false};
+var T={sel:null,spare:false,pick:null,repos:null};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast('Could not save on this phone');}if(typeof syncKick==='function')syncKick();}
+
+/* ---------------- helpers ---------------- */
+function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fxById(id,D){D=D||S;for(var i=0;i<D.fixtures.length;i++)if(D.fixtures[i].id===id)return D.fixtures[i];return null;}
+function compById(id,D){D=D||S;for(var i=0;i<D.comps.length;i++)if(D.comps[i].id===id)return D.comps[i];return null;}
+function compType(f,D){var c=compById(f.comp,D);return c?c.type:'league';}
+function rulesFor(f){return S.rules.types[compType(f)]||S.rules.types.league;}
+function player(id){for(var i=0;i<S.players.length;i++)if(S.players[i].id===id)return S.players[i];return null;}
+function pname(id){if(id==='LS')return 'L/S';var p=player(id);return p?p.name:'—';}
+function fullName(p){return p.full||p.name;}
+function firstSort(a,b){return fullName(a).localeCompare(fullName(b));}
+function outName(id,out){if(id==='LS')return 'L/S';var p=player(id);if(!p)return '—';var on=S.rules.general.nickOn||{};return out&&on[out]&&p.nick?p.nick:p.name;}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],DAY=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function fdate(s,long){if(!s)return '';var d=new Date(s+'T12:00:00');var t=DAY[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()];return long?t+' '+d.getFullYear():t;}
+function fxTitle(f){var o=f.opp||'TBC';return f.home?'Lions v '+o:o+' v Lions';}
+function fxComp(f){var c=compById(f.comp);return (c?c.name:'')+(f.round?' · '+f.round:'');}
+function sortedFx(){return S.fixtures.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
+function playable(f){return f.status==='scheduled'||f.status==='played';}
+function nextFx(){var t=today(),l=sortedFx();for(var i=0;i<l.length;i++){var f=l[i];if(f.date>=t&&f.status==='scheduled'&&!(S.matches[f.id]&&S.matches[f.id].done))return f;}return null;}
+function curFx(){var f=S.ui.fx&&fxById(S.ui.fx);if(!f){f=nextFx();if(f)S.ui.fx=f.id;}return f;}
+function selFor(fid){if(!S.sel[fid])S.sel[fid]={avail:{},req:{},lineup:Array(12).fill(null),reserves:[]};if(!S.sel[fid].reserves)S.sel[fid].reserves=[];return S.sel[fid];}
+function getSlot(sel,i){return i<12?sel.lineup[i]:sel.reserves[i-12];}
+function setSlot(sel,i,v){if(i<12)sel.lineup[i]=v;else{if(v)sel.reserves[i-12]=v;else sel.reserves.splice(i-12,1);}}
+function toast(t){var e=document.getElementById('toast');e.textContent=t;e.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(function(){e.style.display='none';},2000);}
+function modal(h){document.getElementById('mbox').innerHTML=h;document.getElementById('modal').style.display='flex';}
+function closeModal(){document.getElementById('modal').style.display='none';T.subsP=null;if(T.pend){T.pend=false;render();}}
+function oppTeam(m){var f=fxById(m.fid);return (f&&f.opp)||'Opponents';}
+
+/* ---------------- match logic ---------------- */
+function mP(m){return m.rules.sets*m.rules.per;}
+function val(c){return c?c.v:0;}
+function homeT(m){return m.home?'L':'O';}
+function awayT(m){return m.home?'O':'L';}
+function order(m){var o=[],r=m.rules;for(var s=0;s<r.sets;s++)for(var h=0;h<r.hands;h++)[homeT(m),awayT(m)].forEach(function(t){for(var k=0;k<r.per;k++)o.push({t:t,p:s*r.per+k,h:h});});return o;}
+function nextEmpty(m){var o=order(m);for(var i=0;i<o.length;i++)if(!m[o[i].t][o[i].p][o[i].h])return o[i];return null;}
+function target(m){return T.sel||nextEmpty(m);}
+function pTot(m,t,p){return m[t][p].reduce(function(a,c){return a+val(c);},0);}
+function setTot(m,t,s){var a=0;for(var k=0;k<m.rules.per;k++)a+=pTot(m,t,s*m.rules.per+k);return a;}
+function matchTot(m,t){var a=0;for(var s=0;s<m.rules.sets;s++)a+=setTot(m,t,s);return a;}
+function setFilled(m,t,s){var n=0;for(var k=0;k<m.rules.per;k++)for(var h=0;h<m.rules.hands;h++)if(m[t][s*m.rules.per+k][h])n++;return n;}
+function setDone(m,s){var full=m.rules.per*m.rules.hands;return setFilled(m,'L',s)===full&&setFilled(m,'O',s)===full;}
+function allDone(m){for(var s=0;s<m.rules.sets;s++)if(!setDone(m,s))return false;return true;}
+function slotLocked(m,p){return m.L[p].some(function(c){return !!c;});}
+function downVal(m,t,s,h){var a=0;for(var k=0;k<m.rules.per;k++){var c=m[t][s*m.rules.per+k][h];if(!c)return null;a+=c.v;}return a;}
+function upVal(m,t,s,h){if(!handDone(m,s,h))return null;var d=0;for(var x=0;x<=h;x++)d+=handLead(m,s,x);var mine=t==='L'?d:-d;return mine>0?String(mine):'/';}
+function soFar(m,t,p){var a=0;for(var h=0;h<5;h++){var c=m[t][p][h];if(!c)return null;a+=c.v;}return a;}
+function setPts(m,t,s){if(m.rules.result!=='sets'||!setDone(m,s))return null;var a=setTot(m,'L',s),b=setTot(m,'O',s),mine=t==='L'?a:b,th=t==='L'?b:a;return mine>th?m.rules.setWin:mine===th?m.rules.setTie:0;}
+function setWonOrTied(m,t,s){if(!setDone(m,s))return false;var a=setTot(m,'L',s),b=setTot(m,'O',s),mine=t==='L'?a:b,th=t==='L'?b:a;return mine>=th;}
+function bym(m,p){var full=function(r){return r.every(function(c){return !!c;});};if(!full(m.L[p])||!full(m.O[p]))return false;return pTot(m,'L',p)>pTot(m,'O',p);}
+function handLead(m,s,h){var a=0,b=0;for(var k=0;k<m.rules.per;k++){a+=val(m.L[s*m.rules.per+k][h]);b+=val(m.O[s*m.rules.per+k][h]);}return a-b;}
+function handDone(m,s,h){for(var k=0;k<m.rules.per;k++){if(!m.L[s*m.rules.per+k][h]||!m.O[s*m.rules.per+k][h])return false;}return true;}
+function spares(m,t){var n=0;m[t].forEach(function(r){r.forEach(function(c){if(c&&c.sp)n++;});});return n;}
+function result(m){ // {l,o, winner:'L'|'O'|'D'|null, tied}
+  var r=m.rules,A=matchTot(m,'L'),B=matchTot(m,'O'),done=allDone(m),l=0,o=0,tied=done&&A===B,w=null;
+  if(r.result==='sets'){
+    for(var s=0;s<r.sets;s++){if(!setDone(m,s))continue;var a=setTot(m,'L',s),b=setTot(m,'O',s);if(a>b)l+=r.setWin;else if(b>a)o+=r.setWin;else{l+=r.setTie;o+=r.setTie;}}
+    if(done){if(A>B)l+=r.matchWin;else if(B>A)o+=r.matchWin;else if(r.tie==='captains'&&m.tieWinner&&m.tieWinner!=='D'){if(m.tieWinner==='L')l+=r.matchWin;else o+=r.matchWin;}else{l+=r.matchTie;o+=r.matchTie;}}
+  }
+  if(done){if(A>B)w='L';else if(B>A)w='O';else w=m.tieWinner||(r.tie==='share'?'D':null);}
+  return {l:l,o:o,winner:w,tied:tied,A:A,B:B,done:done};
+}
+function cellHTML(c){if(!c)return '<span class="e">·</span>';if(c.vc)return '<span class="vc">V/C</span>';if(c.sp)return '<span class="ring">'+c.v+'</span>';return String(c.v);}
+function cellText(c){if(!c)return '-';if(c.vc)return 'V/C';if(c.sp)return '['+c.v+']';return String(c.v);}
+function slotName(m,t,p,out){if(t==='L')return m.lineup[p]?outName(m.lineup[p],out):'Lions '+(p+1);return (m.opp[p]&&m.opp[p].trim())||'Opp '+(p+1);}
+
+function isLS(m,t,p){return t==='L'?m.lineup[p]==='LS':/^l\s*\/\s*s$/i.test(String(m.opp[p]||'').trim());}
+function lsFill(m){if(!m)return;var per=m.rules.per;['L','O'].forEach(function(t){for(var p=0;p<m[t].length;p++){if(!isLS(m,t,p))continue;var s=Math.floor(p/per);if(s===0)continue;
+    var best=-1,bt=1e9,ok=true;for(var q=0;q<s*per;q++){if(!m[t][q].every(function(c){return !!c;})){ok=false;break;}if(isLS(m,t,q))continue;var v=pTot(m,t,q);if(v<bt){bt=v;best=q;}}
+    if(ok&&best>-1)m[t][p]=m[t][best].map(function(c){return {v:c.v,sp:c.sp,vc:c.vc};});}});}
+function lsLocked(m,t,p){return isLS(m,t,p)&&Math.floor(p/m.rules.per)>0;}
+function enter(v,sp,vc){var m=curMatch();if(!m)return;var tg=target(m);if(!tg)return;
+  m.hist.push({t:tg.t,p:tg.p,h:tg.h,prev:m[tg.t][tg.p][tg.h]});if(m.hist.length>600)m.hist.shift();
+  m[tg.t][tg.p][tg.h]={v:v,sp:!!sp,vc:!!vc};T.sel=null;T.spare=false;lsFill(m);
+  if(allDone(m)){var fx=fxById(m.fid);if(fx)fx.status='played';}
+  save();render();}
+function undo(){var m=curMatch();if(!m)return;var last=m.hist.pop();if(!last){toast('Nothing to undo');return;}m[last.t][last.p][last.h]=last.prev||null;lsFill(m);T.sel=null;T.spare=false;if(!allDone(m))m.done=false;save();render();}
+function chaseHint(m,tg){
+  var r=m.rules,s=Math.floor(tg.p/r.per),H=homeT(m),A=awayT(m),full=r.per*r.hands;
+  var nm=function(t){return t==='L'?'Lions':oppTeam(m);};
+  if(r.result==='pins'){
+    var hl=0,al=0;for(var i=0;i<r.sets;i++){hl+=full-setFilled(m,H,i);al+=full-setFilled(m,A,i);}
+    var d=matchTot(m,A)-matchTot(m,H);
+    if(hl===0&&al>0){var need=-d+1;return need<=0?nm(A)+' have won on pins.':nm(A)+' need '+need+' from the last '+al+' throw'+(al>1?'s':'')+' to win'+(need-1>0?' ('+(need-1)+' to tie)':'')+'.';}
+    var lead=matchTot(m,'L')-matchTot(m,'O');return lead===0?'Level on pins.':(lead>0?'Lions lead by '+lead+' pins overall.':'Lions trail by '+(-lead)+' pins overall.');
+  }
+  var homeLeft=full-setFilled(m,H,s),awayLeft=full-setFilled(m,A,s),diff=setTot(m,A,s)-setTot(m,H,s);
+  if(homeLeft===0&&awayLeft>0){var nd=-diff+1;if(nd<=0)return nm(A)+' have won set '+(s+1)+'.';return nm(A)+' need '+nd+' from the last '+awayLeft+' throw'+(awayLeft>1?'s':'')+' to win set '+(s+1)+(nd-1>0?' ('+(nd-1)+' to tie)':'')+'.';}
+  var ld=setTot(m,'L',s)-setTot(m,'O',s);if(ld===0)return 'Set '+(s+1)+' level.';
+  return (ld>0?'Lions lead set '+(s+1)+' by '+ld:'Lions trail set '+(s+1)+' by '+(-ld))+'.';
+}
+function curMatch(){var f=curFx();return f?S.matches[f.id]||null:null;}
+
+/* ---------------- averages ---------------- */
+function averages(){
+  var st={};
+  Object.keys(S.matches).forEach(function(fid){var m=S.matches[fid];if(!m.rules.averages)return;if(!allDone(m))return;
+    m.lineup.forEach(function(pid,p){if(!pid||pid==='LS')return;var a=st[pid]||(st[pid]={pid:pid,games:0,pins:0,hands:0,spares:0,high:0,vc:0});
+      var tot=pTot(m,'L',p);a.games++;a.pins+=tot;a.hands+=m.L[p].filter(function(c){return !!c;}).length;a.high=Math.max(a.high,tot);
+      m.L[p].forEach(function(c){if(c&&c.sp)a.spares++;if(c&&c.vc)a.vc++;});});});
+  return Object.keys(st).map(function(k){var a=st[k];a.avgHand=a.hands?a.pins/a.hands:0;a.avgGame=a.games?a.pins/a.games:0;return a;}).sort(function(x,y){return (y.avgGame-x.avgGame)||(y.avgHand-x.avgHand);});
+}
+function avgMap(){var o={};averages().forEach(function(a){o[a.pid]=a;});return o;}
+
+/* ---------------- suggest ---------------- */
+function rotationInfo(fid){
+  var f=fxById(fid),prev=sortedFx().filter(function(x){return x.date<f.date&&x.id!==fid&&S.sel[x.id]&&((S.matches[x.id]&&S.matches[x.id].lineup.some(Boolean))||(S.sel[x.id].lineup||[]).some(Boolean));}).reverse();
+  var lastRes={},absent={},thr=S.rules.general.awayWeeks||3;
+  if(prev[0])(S.sel[prev[0].id].reserves||[]).forEach(function(p){lastRes[p]=1;});
+  S.players.forEach(function(p){var n=0;for(var i=0;i<prev.length;i++){var sl=S.sel[prev[i].id],ln=S.matches[prev[i].id]?S.matches[prev[i].id].lineup:sl.lineup;if(ln.indexOf(p.id)>-1||(sl.reserves||[]).indexOf(p.id)>-1)break;n++;}absent[p.id]=n;});
+  return {lastRes:lastRes,absent:absent,thr:thr,returning:function(id){return prev.length>=thr&&absent[id]>=thr;}};
+}
+function isCupFx(f){return rulesFor(f).result==='pins';}
+function suggest(fid){
+  var f=fxById(fid),sel=selFor(fid),am=avgMap(),act=S.players.filter(function(p){return p.active;}),cup=isCupFx(f),R=rotationInfo(fid),warn=[];
+  var score=function(p){return am[p.id]?am[p.id].avgHand:0;};
+  var tier=function(p){if(cup)return 1;if(R.lastRes[p.id])return 0;if(R.returning(p.id))return 2;return 1;};
+  var rank=function(a,b){return (tier(a)-tier(b))||(score(b)-score(a));};
+  var pool=act.filter(function(p){return sel.avail[p.id]==='in';}).sort(rank);
+  var maybes=act.filter(function(p){return sel.avail[p.id]==='maybe';}).sort(rank);
+  var chosen=pool.slice(0,12),reserves=pool.slice(12);
+  if(chosen.length<12){var fill=maybes.slice(0,12-chosen.length);chosen=chosen.concat(fill);reserves=reserves.concat(maybes.slice(fill.length));}else reserves=reserves.concat(maybes);
+  var line=Array(12).fill(null),used={};
+  [1,2,3,4].forEach(function(s){var req=chosen.filter(function(p){return sel.req[p.id]===s;}).sort(function(a,b){return score(b)-score(a);});
+    if(req.length>3)warn.push(req.length+' picked players asked for set '+s+'; only 3 fit.');
+    req.slice(0,3).forEach(function(p,i){line[(s-1)*3+i]=p.id;used[p.id]=1;});});
+  var orderSlots=[11,8,5,2,10,7,4,1,9,6,3,0],rest=chosen.filter(function(p){return !used[p.id];}).sort(function(a,b){return score(b)-score(a);});
+  orderSlots.forEach(function(si){if(line[si])return;var p=rest.shift();if(p){line[si]=p.id;used[p.id]=1;}});
+  rest.forEach(function(p){reserves.unshift(p);});
+  for(var s=0;s<4;s++){var ids=line.slice(s*3,s*3+3).filter(Boolean);ids.sort(function(a,b){return score(player(a))-score(player(b));});var pad=3-ids.length;for(var k=0;k<3;k++)line[s*3+k]=k<pad?null:ids[k-pad];}
+  if(cup)warn.push('Cup match: strongest available players picked.');
+  else{var rot=chosen.filter(function(p){return R.lastRes[p.id];});if(rot.length)warn.push('Reserve last week, so picked this week: '+rot.map(function(p){return p.name;}).join(', ')+'.');
+    var back=reserves.filter(function(p){return R.returning(p.id)&&sel.avail[p.id]==='in';});if(back.length)warn.push('Back after '+R.thr+'+ weeks away, so reserve this week: '+back.map(function(p){return p.name;}).join(', ')+'.');}
+  reserves.filter(function(p){return sel.req[p.id];}).forEach(function(p){warn.push(p.name+' asked for set '+sel.req[p.id]+' but is a reserve this week.');});
+  if(pool.length<12)warn.push(pool.length+' players marked In'+(maybes.length?'; Maybe players used to fill':'')+'.');
+  if(chosen.length<12)warn.push((12-chosen.length)+' slot'+(12-chosen.length>1?'s':'')+' still empty.');
+  sel.lineup=line;sel.reserves=reserves.map(function(p){return p.id;});return warn;
+}
+
+/* ---------------- views ---------------- */
+var ICONS={home:'<svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',team:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.6c2.6.1 4.6 1.9 5.3 5.4"/></svg>',score:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16M15 4v16"/></svg>',results:'<svg viewBox="0 0 24 24"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 13v4M8 20h8"/></svg>',more:'<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>'};
+function renderNav(){var tabs=[['home','Home'],['team','Team'],['score','Score'],['results','Results'],['more','More']];
+  document.getElementById('nav').innerHTML=tabs.map(function(t){return '<button data-tab="'+t[0]+'" class="'+(S.ui.tab===t[0]||(t[0]==='more'&&['squad','fixtures','rules','averages','backup','settings','league','account','subs'].indexOf(S.ui.tab)>-1)?'on':'')+'">'+ICONS[t[0]]+t[1]+'</button>';}).join('');}
+function renderTop(){
+  document.getElementById('top').innerHTML='<svg viewBox="0 0 '+LOGO_W+' 1000" class="logo" role="img" aria-label="Lion’s logo"><path fill="'+GOLD+'" fill-rule="evenodd" d="'+LOGO_D+'"/></svg><div class="grow"><div class="h1">The Lions Den</div><div class="sub">'+esc(S.rules.general.home+' · '+S.rules.general.league)+'</div></div>'+(function(){var st=syncState();return '<button class="sync '+st.c+'" data-tab="account"><i></i>'+esc(st.t)+'</button>';})();}
+function fxSelect(){var f=curFx(),l=sortedFx().filter(function(x){return x.status!=='vacant'&&x.status!=='bye';});
+  return '<div class="card fxsel"><label for="fxSel" class="small muted">Fixture</label><select id="fxSel">'+(f?'':'<option value="">Choose a fixture</option>')+l.map(function(x){var m=S.matches[x.id],dn=m&&allDone(m);return '<option value="'+x.id+'"'+(f&&f.id===x.id?' selected':'')+'>'+esc(fdate(x.date)+' · '+fxTitle(x)+(dn?' ✓':x.status!=='scheduled'?' ('+x.status+')':''))+'</option>';}).join('')+'</select>'+
+    (f?'<div class="small muted" style="margin-top:6px">'+esc(fxComp(f)+' · '+(f.home?'Home':'Away')+(f.venue?' · '+f.venue:''))+'</div>':'')+'</div>';}
+function fxRow(f,act){var m=S.matches[f.id],r=m&&allDone(m)?result(m):null,tag='',draw=f.status==='scheduled'&&!f.opp&&compType(f)!=='league'&&!m&&f.date>=today();
+  if(f.status==='vacant')tag='<span class="chip">Vacant</span>';else if(f.status==='cancelled')tag='<span class="chip">Cancelled</span>';else if(f.status==='knockedout')tag='<span class="chip">Out</span>';else if(f.status==='bye')tag='<span class="chip">Bye</span>';
+  else if(r)tag='<span class="chip '+(r.winner==='L'?'g':'')+'">'+(r.winner==='L'?'Won':r.winner==='O'?'Lost':r.winner==='D'?'Drawn':'Tied')+' '+(f.home?r.A+'–'+r.B:r.B+'–'+r.A)+'</span>';
+  else if(m)tag='<span class="chip o">In play</span>';
+  if(draw)tag='<span class="chip o">Draw needed</span>';
+  return '<div class="li"><button class="grow" style="text-align:left" data-act="'+(act||'pickfx')+'" data-id="'+f.id+'"><div class="name">'+(f.status==='vacant'?'Vacant date':esc(fxTitle(f)))+'</div><div class="small muted">'+esc(fdate(f.date)+' · '+fxComp(f)+(f.venue?' · '+f.venue:''))+'</div></button>'+tag+'</div>';}
+
+var TOP_MIN=3;
+function vHome(){var f=nextFx(),h=feedAlerts(),rq=requestCount();if(rq)h='<div class="feedalert"><div><b>'+rq+' scorer request'+(rq>1?'s':'')+'</b><div class="small">Approve or decline in Squad</div></div><button class="btn gold sm" data-tab="squad">View</button></div>'+h;
+  h+='<div class="sec">Next match</div>';
+  if(f){var m=S.matches[f.id],sel=selFor(f.id),ins=Object.keys(sel.avail).filter(function(k){return sel.avail[k]==='in';}).length,picked=sel.lineup.filter(Boolean).length;
+    h+='<div class="card now"><div class="small muted">'+esc(fxComp(f))+'</div><div class="who">'+esc(fxTitle(f))+'</div><div class="small muted">'+esc(fdate(f.date,true)+' · '+(f.home?'Home, Lions throw first':'Away, Lions chase')+(f.venue?' · '+f.venue:''))+'</div>'+
+      '<div class="chips"><span class="chip">'+ins+' available</span><span class="chip">'+picked+'/12 picked</span>'+(m?'<span class="chip o">Scoring started</span>':'')+'</div>'+
+      '<div class="btns"><button class="btn ghost" data-tab="team" data-fx="'+f.id+'">Availability &amp; team</button><button class="btn gold" data-tab="score" data-fx="'+f.id+'">Score</button></div>'+
+      '<button class="btn ghost" data-act="editfx" data-id="'+f.id+'">Edit fixture</button></div>';}
+  else h+='<div class="card muted">No more fixtures scheduled.</div>';
+  var top=averages().filter(function(x){return x.games>=TOP_MIN;}).slice(0,5);
+  h+='<div class="sec">Top 5 averages</div><button class="card top5" data-tab="averages">'+(top.length?top.map(function(x,i){return '<div class="t5r"><span class="t5n">'+(i+1)+'</span><span class="grow name">'+esc(outName(x.pid,'averages'))+'</span><span class="small muted">'+x.games+' matches</span><span class="t5a">'+x.avgGame.toFixed(1)+'</span></div>';}).join(''):'<div class="small muted">No one has played '+TOP_MIN+' matches yet.</div>')+
+    '<div class="small muted" style="margin-top:8px">Average score per match · min '+TOP_MIN+' matches · tap for the full table</div></button>';
+  var t=leagueTbl();h+='<div class="sec">League table</div>';
+  if(t){var lp=lionsPos();h+='<div class="card">'+(lp?'<div class="small muted" style="margin-bottom:4px">Lions '+ordN(lp.pos)+' of '+lp.of+(t.asOf?' · as of '+esc(sheetDate(t.asOf)):'')+'</div>':'')+ltHTML(t,true)+'<button class="btn ghost" data-tab="league" style="min-height:42px">Full table, results &amp; draws</button></div>';}
+  else h+='<div class="card"><div class="small muted">The league table appears here once the app has been online on your hosting.</div><button class="btn ghost" data-tab="league" style="min-height:42px">League page</button></div>';
+  var up=sortedFx().filter(function(x){return x.date>=today()&&x.status==='scheduled'&&(!f||x.id!==f.id);}).slice(0,5);
+  h+='<div class="sec">Upcoming fixtures</div><div class="card list">'+(up.length?up.map(function(x){return fxRow(x);}).join(''):'<div class="muted">Nothing else scheduled.</div>')+'</div>';
+  return h;}
+
+function vTeam(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';
+  var sel=selFor(f.id),am=avgMap(),R=rotationInfo(f.id),act=S.players.filter(function(p){return p.active;}).sort(firstSort);
+  var counts={in:0,out:0,maybe:0};act.forEach(function(p){var a=sel.avail[p.id];if(a)counts[a]++;});
+  var reqCount={};act.forEach(function(p){var r=sel.req[p.id];if(r&&sel.avail[p.id]!=='out')reqCount[r]=(reqCount[r]||0)+1;});
+  var m=S.matches[f.id],started=!!m;
+  var h='<div class="sec">1. Availability</div><div class="card"><div class="chips" style="padding-top:0"><span class="chip g">'+counts.in+' in</span><span class="chip">'+counts.maybe+' maybe</span><span class="chip">'+counts.out+' out</span><span class="chip">'+(act.length-counts.in-counts.out-counts.maybe)+' no reply</span></div>';
+  Object.keys(reqCount).forEach(function(s){if(reqCount[s]>3)h+='<div class="warn">'+reqCount[s]+' players have asked for set '+s+'. A set only has 3 places.</div>';});
+  h+='<div class="list" style="margin-top:6px">';
+  act.forEach(function(p){var a=sel.avail[p.id]||'',r=sel.req[p.id]||0,av=am[p.id];
+    var tags=(!isCupFx(f)&&R.lastRes[p.id]?' · <span class="gold">Reserve last week</span>':'')+(!isCupFx(f)&&R.returning(p.id)?' · <span class="gold">Away '+R.absent[p.id]+' wks</span>':'');
+    h+='<div style="display:block"><div class="between"><div class="grow"><div class="name">'+esc(fullName(p))+'</div><div class="small muted">'+(av?'Avg '+av.avgHand.toFixed(2)+'/hand · '+av.games+' games':'No scores yet')+tags+'</div></div><div class="seg"><button class="'+(a==='in'?'on':'')+'" data-av="in" data-id="'+p.id+'">In</button><button class="'+(a==='maybe'?'on may':'')+'" data-av="maybe" data-id="'+p.id+'">?</button><button class="'+(a==='out'?'on out':'')+'" data-av="out" data-id="'+p.id+'">Out</button></div></div>'+
+      (a&&a!=='out'?'<div class="reqs"><span class="small muted" style="align-self:center;margin-right:4px">Set</span>'+[0,1,2,3,4].map(function(s){return '<button class="'+(r===s?'on':'')+'" data-req="'+s+'" data-id="'+p.id+'">'+(s?s:'Any')+'</button>';}).join('')+'</div>':'')+'</div>';});
+  h+='</div></div>';
+  h+='<div class="sec">2. Team</div><div class="card">'+(started?'<div class="warn">Scoring has started. Change players on the Score tab, where locked slots are protected.</div>':'<button class="btn gold" data-act="suggest" style="margin-top:0">Suggest team</button><div class="note">'+(isCupFx(f)?'Cup match: picks the strongest available by season average.':'League: last week\u2019s reserves are picked first, players back after '+(S.rules.general.awayWeeks||3)+'+ weeks away start as reserves, then the strongest by season average.')+' Set requests are honoured; the strongest throws 12th (anchor), then 9th, 6th and 3rd. Extra available players become reserves.</div>');
+  h+='<div class="slots" style="margin-top:10px">';
+  for(var s=0;s<4;s++){h+='<div class="set"><div class="lbl">Set '+(s+1)+(s===3?' · anchor set':'')+'</div>';
+    for(var k=0;k<3;k++){var i=s*3+k,pid=sel.lineup[i],rq=pid&&sel.req[pid];
+      h+='<button class="slot'+(pid?'':' empty')+(T.pick===i?' sel':'')+'" data-slot="'+i+'"'+(started?' disabled':'')+'><span class="n">'+(i+1)+'</span><span class="grow name">'+(pid?esc(pname(pid)):'Tap to pick')+'</span>'+(rq?'<span class="chip o">Set '+rq+' req</span>':'')+(i===11?'<span class="chip g">Anchor</span>':'')+'</button>';}
+    h+='</div>';}
+  h+='<div class="set"><div class="lbl">Reserves</div>';
+  sel.reserves.forEach(function(pid,i){var ix=12+i,rq=sel.req[pid];h+='<button class="slot'+(T.pick===ix?' sel':'')+'" data-slot="'+ix+'"><span class="n">R'+(i+1)+'</span><span class="grow name">'+esc(pname(pid))+'</span>'+(sel.avail[pid]==='maybe'?'<span class="chip">Maybe</span>':'')+(rq?'<span class="chip o">Set '+rq+' req</span>':'')+'</button>';});
+  h+='<button class="slot empty" data-act="addres"><span class="n">+</span><span class="grow name">Add reserve</span></button></div>';
+  h+='</div>'+(T.pick!=null?'<div class="note gold">Tap another slot or reserve to swap, or tap the same one again to change or remove.</div>':'');
+  var dupe=sel.lineup.filter(Boolean);
+  h+='<div class="btns"><button class="btn ghost" data-act="clearteam"'+(started?' disabled':'')+'>Clear team</button><button class="btn gold" data-act="teamsheet"'+(dupe.length?'':' disabled')+'>Team sheet image</button></div></div>';
+  h+=subsCard(f);
+  return h;}
+
+function setTable(m,s){
+  var tg=target(m),H=homeT(m),A=awayT(m),r=m.rules,rows='',per=r.per,sf=r.hands>5;
+  var blanks=function(){var x='';for(var h=0;h<r.hands;h++){x+='<td></td>';if(sf&&h===4)x+='<td class="sf"></td>';}return x;};
+  [H,A].forEach(function(t,ti){
+    for(var k=0;k<per;k++){var p=s*per+k,lk=t==='L'&&slotLocked(m,p);
+      rows+='<tr'+(ti===1&&k===0?' class="sep"':'')+'><td class="n"><button class="nm'+(t==='L'?' l':'')+'" data-name="'+t+','+p+'">'+esc(slotName(m,t,p,'live'))+'</button></td>';
+      for(var h=0;h<r.hands;h++){var isSel=tg&&tg.t===t&&tg.p===p&&tg.h===h;rows+='<td><button class="c'+(isSel?' sel':'')+'" data-cell="'+t+','+p+','+h+'" aria-label="'+esc(slotName(m,t,p))+' hand '+(h+1)+'">'+cellHTML(m[t][p][h])+'</button></td>';
+        if(sf&&h===4){var so=soFar(m,t,p);rows+='<td class="sf">'+(so==null?'':so)+'</td>';}}
+      rows+='<td class="t">'+pTot(m,t,p)+'</td>'+(k===0?'<td class="setc'+(setWonOrTied(m,t,s)?'':' out')+'" rowspan="'+(per+2)+'">'+setTot(m,t,s)+(setPts(m,t,s)?'<small>+'+setPts(m,t,s)+' pts</small>':'')+'</td>':'')+'</tr>';}
+    var dr='<tr class="dn"><td class="lbl">Down total</td>',ur='<tr class="up"><td class="lbl">Lead</td>';
+    for(var h2=0;h2<r.hands;h2++){var dv=downVal(m,t,s,h2),uv=upVal(m,t,s,h2);dr+='<td>'+(dv==null?'':dv)+'</td>';ur+='<td class="'+(uv&&uv!=='/'?'upv':'sl')+'">'+(uv==null?'':uv)+'</td>';
+      if(sf&&h2===4){dr+='<td class="sf"></td>';ur+='<td class="sf"></td>';}}
+    rows+=dr+'<td></td></tr>'+ur+'<td></td></tr>';});
+  var a=setTot(m,'L',s),b=setTot(m,'O',s),st=setDone(m,s)?(a>b?'Lions win':b>a?esc(oppTeam(m))+' win':'Tied'):'In play';
+  var hd='';for(var hh=1;hh<=r.hands;hh++){hd+='<th>'+hh+'</th>';if(sf&&hh===5)hd+='<th class="x">So<br>far</th>';}
+  return '<div class="card"><div class="between" style="margin-bottom:8px"><h2 style="margin:0">Set '+(s+1)+(s===r.sets-1?' · Anchor':'')+'</h2><span class="small muted">'+st+'</span></div><table><thead><tr><th class="n">'+esc(H==='L'?'Lions':oppTeam(m))+' first</th>'+hd+'<th class="tt">Tot</th><th class="sh">Set</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+   '<div style="padding-top:10px;text-align:center"><button class="btn ghost sm" data-act="oppnames" data-set="'+s+'">Edit opp names</button></div></div>';
+}
+function boardHTML(m){var R=result(m),pins=m.rules.result==='pins';
+  var side=function(t){var isL=t==='L',tot=isL?R.A:R.B,pts=isL?R.l:R.o;return '<div><div class="tname'+(isL?' l':'')+'">'+(isL?'Lions':esc(oppTeam(m)))+'</div><div class="big">'+tot+'</div>'+(pins?'':'<div class="bpts'+(isL?' gold':'')+'">'+pts+' pt'+(pts===1?'':'s')+'</div>')+'</div>';};
+  var on=esc(oppTeam(m)),d=Math.abs(R.A-R.B),pl=' pin'+(d===1?'':'s'),bar;
+  if(R.done)bar=R.A===R.B?'Level on pins':(R.A>R.B?'Lions':on)+' win by '+d+pl;
+  else bar=R.A===R.B?'Level':(R.A>R.B?'Lions':on)+' lead by '+d+pl;
+  return '<div class="card board"><div class="teams">'+side(homeT(m))+'<div class="muted small" style="padding:0 8px">v</div>'+side(awayT(m))+'</div><div class="pts" style="justify-content:center;font-family:Oswald,sans-serif;font-size:27px;font-weight:700;padding:10px 12px;text-align:center">'+
+   bar+'</div></div>';}
+function vScore(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';
+  var m=S.matches[f.id];
+  if(!m&&!canEdit())return '<div class="card"><h2>Not started yet</h2><div class="small muted">The scores appear here live, hand by hand, once the scorer starts.</div></div>';
+  if(!m){var sel=selFor(f.id),n=sel.lineup.filter(Boolean).length,r=rulesFor(f);
+    return '<div class="card"><h2>Ready to score?</h2><div class="small muted">'+esc(fxComp(f))+' · '+esc(r.label)+' rules: '+(r.result==='sets'?r.setWin+' per set, '+r.matchWin+' for the match':'total pins decide')+'. Spare keypad '+r.spareMin+'–'+r.spareMax+'.</div>'+
+      (n<12?'<div class="warn">Only '+n+' of 12 Lions slots are filled. Empty slots can be filled during the match.</div>':'')+
+      '<button class="btn gold" data-act="start">Start scoring</button></div>';}
+  var tg=target(m),R=result(m),h=boardHTML(m),r=m.rules;
+  if(!tg){h+='<div class="card now" style="text-align:center"><div class="h1 gold" style="font-size:20px">Match finished</div>';
+    if(R.tied&&r.tie==='captains'){h+='<div class="small muted">Pins are level. Who did the captains agree won?</div><div class="btns" style="grid-template-columns:1fr 1fr 1fr"><button class="btn '+(m.tieWinner==='L'?'gold':'ghost')+'" data-tw="L">Lions</button><button class="btn '+(m.tieWinner==='D'?'gold':'ghost')+'" data-tw="D">Draw</button><button class="btn '+(m.tieWinner==='O'?'gold':'ghost')+'" data-tw="O">'+esc(oppTeam(m))+'</button></div>';}
+    else if(R.tied&&r.tie==='extra')h+='<div class="warn">Pins are level. Game Rules say play '+r.extraHands+' extra hand(s). Record the outcome below once played.</div><div class="btns" style="grid-template-columns:1fr 1fr"><button class="btn '+(m.tieWinner==='L'?'gold':'ghost')+'" data-tw="L">Lions won</button><button class="btn '+(m.tieWinner==='O'?'gold':'ghost')+'" data-tw="O">'+esc(oppTeam(m))+' won</button></div>';
+    h+='<div class="btns"><button class="btn gold" data-tab="results">Results &amp; images</button><button class="btn ghost" data-act="undo">Undo last</button></div><div class="note">Tap any score below to correct it.</div></div>';
+    for(var s=0;s<r.sets;s++)h+=setTable(m,s);return h;}
+  var s0=Math.floor(tg.p/r.per),cur=m[tg.t][tg.p][tg.h],locked=tg.t==='L';
+  if(!canScore(m)){h+=watchCard(m,tg,s0)+setTable(m,s0)+'<button class="btn ghost" data-act="allsets">Show all sets</button>';if(T.allsets){for(var s3=0;s3<r.sets;s3++)if(s3!==s0)h+=setTable(m,s3);}return h;}
+  h+='<div class="card now"><div class="small muted">Set <b class="gold">'+(s0+1)+'</b> · Hand <b class="gold">'+(tg.h+1)+'</b> · '+(tg.t==='L'?'Lions':esc(oppTeam(m)))+' #'+(tg.p+1)+(tg.p===mP(m)-1?' · <b class="gold">Anchor</b>':'')+'</div><div class="who">'+esc(slotName(m,tg.t,tg.p,'live'))+'</div>'+
+    (T.sel?'<div class="small muted">Editing'+(cur?' (currently '+cellText(cur)+')':'')+' · <button class="gold" style="text-decoration:underline;min-height:40px" data-act="cancelsel">back to next turn</button></div>':'')+
+    '<div class="hint">'+esc(chaseHint(m,tg))+'</div>';
+  if(T.spare){h+='<div class="between" style="margin-top:12px"><span class="gold" style="font-weight:600">Spare! Hand total?</span><button class="muted" style="text-decoration:underline;min-height:40px" data-act="nospare">Cancel</button></div><div class="pad">';
+    for(var i=r.spareMin;i<=r.spareMax;i++)h+='<button class="k sp" data-sp="'+i+'">'+i+'</button>';h+='</div>';}
+  else{h+='<div class="pad">';for(var j=0;j<=9;j++)h+='<button class="k" data-v="'+j+'">'+j+'</button>';
+    h+='<button class="k fn gold" data-act="spare">Spare</button><button class="k fn" data-act="vc">V/C</button><button class="k fn" data-act="other">Other</button><button class="k fn" data-act="undo">Undo</button><button class="k fn" data-act="skip">Next ›</button></div>';}
+  h+='</div>'+setTable(m,s0);
+  h+='<button class="btn ghost" data-act="allsets">Show all sets</button>';
+  if(T.allsets){for(var s2=0;s2<r.sets;s2++)if(s2!==s0)h+=setTable(m,s2);}
+  return h;}
+
+function vResults(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';var m=S.matches[f.id];
+  if(!m)return '<div class="card">No scores recorded for this fixture yet.</div>';
+  var R=result(m),h=boardHTML(m);
+  h+='<div class="card"><h2>Share</h2><button class="btn gold" data-act="resimg" style="margin-top:0">Results image</button><button class="btn ghost" data-act="report">Match report text</button><button class="btn ghost" data-act="copyres">Copy all scores as text</button>'+
+    '</div>';
+  var sg=m.sig||{},ns=(sg.away?1:0)+(sg.home?1:0);
+  h+='<div class="card"><h2>League result card</h2><div class="note" style="margin-top:0">'+(f.home?'Home match: the away captain normally sends the card in, but you can still make one.':'Away match: send the completed card to '+esc(S.rules.general.leagueEmail)+'.')+'</div>'+
+    '<button class="btn ghost" data-act="sign">'+(ns===2?'Captains signed ✓ (re-sign)':ns===1?'Captains sign (1 of 2 done)':'Captains sign')+'</button><button class="btn gold" data-act="leaguecard">Create league card</button></div>';
+  if(!R.done)h+='<div class="note">Match not finished yet: images and averages use the scores so far.</div>';
+  return h;}
+
+function vMore(){return '<div class="card list">'+[['account',SY.session?'Signed in':'Sign in','Admins and scorers: '+(SY.session?roleLabel():'sign in to change things')]].concat(isAdmin()?[['subs','Subs','Who has paid, who owes']]:[]).concat([['league','League table','Division 2 table and cup draws from the league website'],['averages','Averages','Season averages table and image'],['fixtures','Fixtures & competitions','Add cups, fill in draws, postponements'],['squad','Squad','Add, rename or deactivate players'],['rules','Game rules','Scoring, ties, spare range, averages'],['settings','Settings','Names or nicknames on each output'],['backup','Backup & data','Save or restore everything']]).map(function(x){return '<div><button class="grow" style="text-align:left" data-tab="'+x[0]+'"><div class="name">'+x[1]+'</div><div class="small muted">'+x[2]+'</div></button><span class="muted">›</span></div>';}).join('')+'</div>';}
+
+function vAverages(){var a=averages();if(!a.length)return '<div class="card">No completed League or Cup matches yet.</div>';
+  var rows=a.map(function(x,i){return '<tr><td class="n">'+(i+1)+'. '+esc(pname(x.pid))+'</td><td>'+x.games+'</td><td>'+x.pins+'</td><td class="t">'+x.avgGame.toFixed(1)+'</td><td>'+x.avgHand.toFixed(2)+'</td><td>'+x.spares+'</td><td>'+x.high+'</td></tr>';}).join('');
+  return '<div class="card"><h2>Season averages</h2><table class="avg"><thead><tr><th class="n">Player</th><th>Gm</th><th>Pins</th><th>Avg</th><th>/hand</th><th>Spr</th><th>Best</th></tr></thead><tbody>'+rows+'</tbody></table><div class="note">League and Cup matches recorded in this app (Front Pin excluded). Avg = average score per match. Sorted by average score.</div><button class="btn gold" data-act="avgimg">Averages image</button></div>';}
+
+function vFixtures(){var h='<div class="card"><button class="btn gold" data-act="addfx" style="margin-top:0">Add fixture</button><button class="btn ghost" data-act="comps">Competitions</button></div>';
+  var groups={};sortedFx().forEach(function(f){var k=f.date.slice(0,7);(groups[k]=groups[k]||[]).push(f);});
+  Object.keys(groups).forEach(function(k){var d=new Date(k+'-15T12:00:00');h+='<div class="sec">'+MON[d.getMonth()]+' '+d.getFullYear()+'</div><div class="card list">'+groups[k].map(function(f){return fxRow(f,'editfx');}).join('')+'</div>';});
+  return h;}
+function vSquad(){var act=S.players.slice().sort(function(a,b){return (b.active-a.active)||firstSort(a,b);});
+  var n=S.players.filter(function(p){return p.active;}).length;
+  return '<div class="card"><div class="small muted" style="margin-bottom:8px">'+n+' active players. The registered squad is built into the app and updates with each new version.</div><div class="btns" style="margin-top:0"><button class="btn gold" data-act="addplayer">Add player</button><button class="btn ghost" data-act="bulkadd">Paste a list</button></div></div><div class="card list">'+
+   act.map(function(p){return '<div><button class="grow" style="text-align:left" data-act="editplayer" data-id="'+p.id+'"><div class="name">'+esc(fullName(p))+(p.role?' <span class="chip o">'+esc(p.role)+'</span>':'')+accessBadge(p.id)+'</div><div class="small muted">'+esc(p.name)+(p.nick?' · “'+esc(p.nick)+'”':'')+(p.active?'':' · Inactive')+'</div></button><span class="muted">›</span></div>';}).join('')+'</div>';}
+function vSettings(){var on=S.rules.general.nickOn,rows=[['teamsheet','Team sheet image'],['live','Live scoring screen'],['results','Results image (end-of-match scorecard)'],['report','Match report text'],['averages','Averages image']];
+  return '<div class="card"><h2>Names on outputs</h2><div class="small muted">Choose proper names (e.g. C. Cooke) or nicknames for each output. Players without a nickname always show their proper name. Team picking and anything for the league always use proper names.</div><div class="list" style="margin-top:8px">'+
+   rows.map(function(r){return '<div><div class="grow name" style="white-space:normal">'+r[1]+'</div><div class="seg"><button class="'+(on[r[0]]?'':'on')+'" data-nick="'+r[0]+'" data-nv="0">Proper</button><button class="'+(on[r[0]]?'on':'')+'" data-nick="'+r[0]+'" data-nv="1">Nickname</button></div></div>';}).join('')+'</div></div>';}
+function vRules(){var h='';
+  Object.keys(S.rules.types).forEach(function(k){var r=S.rules.types[k];
+    h+='<div class="card"><div class="between"><h2 style="margin:0">'+esc(r.label)+'</h2><button class="btn ghost sm" data-act="editrule" data-id="'+k+'">Edit</button></div><div class="small muted" style="margin-top:6px;line-height:1.5">'+
+     (r.result==='sets'?r.setWin+' pts per set won ('+r.setTie+' each if tied) + '+r.matchWin+' for most pins ('+r.matchTie+' each if tied)':'Result on total pins only')+'<br>Tied on pins: '+({share:'share the points',captains:'captains decide',extra:'play '+r.extraHands+' extra hand(s)',notes:'see notes'}[r.tie])+'<br>Spare keypad '+r.spareMin+'–'+r.spareMax+' · Averages: '+(r.averages?'yes':'no')+'<br>'+r.sets*r.per+' players, '+r.sets+' sets of '+r.per+', '+r.hands+' hands'+(r.notes?'<br><i>'+esc(r.notes)+'</i>':'')+'</div></div>';});
+  var g=S.rules.general;
+  h+='<div class="card"><button class="btn ghost" data-act="addrule" style="margin-top:0">Add a new match type</button></div><div class="card"><h2>General</h2><div class="field"><label>League results email</label><input id="gEmail" value="'+esc(g.leagueEmail)+'"></div><div class="field"><label>Send results when Lions are</label><select id="gWhen"><option value="away"'+(g.sendWhen==='away'?' selected':'')+'>Away</option><option value="home"'+(g.sendWhen==='home'?' selected':'')+'>Home</option><option value="both"'+(g.sendWhen==='both'?' selected':'')+'>Home and away</option></select></div><div class="field"><label>Home venue</label><input id="gHome" value="'+esc(g.home)+'"></div><div class="field"><label>Weeks away before a returning player starts as a reserve (league)</label><input id="gAway" type="number" inputmode="numeric" value="'+(g.awayWeeks||3)+'"></div><button class="btn gold" data-act="savegeneral">Save</button><div class="note">A finished match keeps the rules it was played under, so editing a rule won’t change past results.</div></div>';
+  return h;}
+function vBackup(){return '<div class="card"><h2>Backup</h2><div class="small muted">The team data is shared online, and every phone keeps its own copy. A backup file is a spare copy for safekeeping.</div><button class="btn gold" data-act="export">Save backup file</button><button class="btn ghost" data-act="exportcopy">Copy backup as text</button></div>'+
+  '<div class="card"><h2>Restore</h2><div class="small muted">Admins only. Loads a backup file and sends it to the shared data, replacing it for everyone.</div><label class="btn ghost imp" style="display:flex;align-items:center;justify-content:center">Choose backup file<input type="file" id="impFile" accept=".json,application/json,text/plain" style="display:none"></label><button class="btn ghost" data-act="importpaste">Paste backup text</button></div>'+
+  '<div class="card"><h2>Start again</h2><div class="small muted">Clears this phone’s copy and reloads the shared data.</div><button class="btn danger" data-act="reset" style="margin-top:0">Reset to starting data</button></div>';}
+
+function render(){document.body.className='r-'+myRole();renderTop();renderNav();var v=document.getElementById('view'),t=S.ui.tab;
+  v.innerHTML=(['team','score','results'].indexOf(t)>-1?fxSelect():'')+(t==='home'?vHome():t==='team'?vTeam():t==='score'?vScore():t==='results'?vResults():t==='more'?vMore():t==='averages'?vAverages():t==='league'?vLeague():t==='fixtures'?vFixtures():t==='squad'?vSquad():t==='rules'?vRules():t==='backup'?vBackup():t==='settings'?vSettings():t==='account'?vAccount():t==='subs'?vSubs():vHome());}
+
+/* ---------------- modals ---------------- */
+function chooseFxModal(){var l=sortedFx().filter(function(f){return f.status!=='vacant'&&f.status!=='bye';});var t=today(),idx=l.findIndex(function(f){return f.date>=t;});
+  modal('<h4>Choose fixture</h4><div class="list">'+l.map(function(f){return fxRow(f);}).join('')+'</div><button class="btn ghost" data-act="close">Close</button>');
+  setTimeout(function(){var b=document.querySelectorAll('#mbox [data-act="pickfx"]')[Math.max(0,idx-1)];if(b)b.scrollIntoView({block:'start'});},30);}
+function pickPlayerModal(slot,mode){ // mode 'team' (selection) or 'match'
+  var f=curFx(),sel=selFor(f.id),m=S.matches[f.id],line=mode==='match'?m.lineup:sel.lineup,cur=mode==='match'?line[slot]:getSlot(sel,slot);
+  var act=S.players.filter(function(p){return p.active&&line.indexOf(p.id)<0&&(mode==='match'||sel.reserves.indexOf(p.id)<0);});
+  var rank={in:0,maybe:1,'':2,out:3},ri=function(id){var i=sel.reserves.indexOf(id);return i<0?99:i;};act.sort(function(a,b){return (ri(a.id)-ri(b.id))||(rank[sel.avail[a.id]||'']-rank[sel.avail[b.id]||''])||firstSort(a,b);});
+  var h='<h4>'+(slot>=12?'Reserve '+(slot-11):'Slot '+(slot+1))+(cur?': '+esc(pname(cur)):'')+'</h4>';
+  if(mode==='match'&&cur==='LS'){h+='';}
+  if(mode==='match'){var others=[];for(var i=0;i<line.length;i++)if(i!==slot&&!slotLocked(m,i))others.push(i);
+    if(others.length&&cur)h+='<div class="sec" style="margin-top:0">Swap with</div><div class="list">'+others.map(function(i){return '<div><button class="grow" style="text-align:left" data-act="mswap" data-a="'+slot+'" data-b="'+i+'"><div class="name">'+(i+1)+'. '+esc(line[i]?pname(line[i]):'(empty)')+'</div><div class="small muted">Set '+(Math.floor(i/3)+1)+'</div></button></div>';}).join('')+'</div>';}
+  if(slot<12&&cur!=='LS')h+='<div class="sec" style="margin-top:0">Short of players?</div><div class="list"><div><button class="grow" style="text-align:left" data-act="'+(mode==='match'?'mput':'tput')+'" data-slot="'+slot+'" data-id="LS"><div class="name">L/S (lowest score)</div><div class="small muted">Copies our lowest player total from the earlier sets</div></button></div></div>';
+  h+='<div class="sec">Bring in</div><div class="list">'+act.map(function(p){var a=sel.avail[p.id];return '<div><button class="grow" style="text-align:left" data-act="'+(mode==='match'?'mput':'tput')+'" data-slot="'+slot+'" data-id="'+p.id+'"><div class="name">'+esc(fullName(p))+'</div><div class="small muted">'+(sel.reserves.indexOf(p.id)>-1?'<span class="gold">Reserve '+(sel.reserves.indexOf(p.id)+1)+'</span> · ':'')+(a==='in'?'Available':a==='maybe'?'Maybe':a==='out'?'Out':'No reply')+(sel.req[p.id]?' · asked for set '+sel.req[p.id]:'')+'</div></button></div>';}).join('')+'</div>';
+  if(cur)h+='<button class="btn danger" data-act="'+(mode==='match'?'mclear':'tclear')+'" data-slot="'+slot+'">'+(slot>=12&&mode!=='match'?'Remove from reserves':'Leave slot empty')+'</button>';
+  h+='<button class="btn ghost" data-act="close">Cancel</button>';modal(h);}
+function oppNamesModal(s){var m=curMatch(),per=m.rules.per,team=oppTeam(m),known=(S.oppNames[team]||[]);
+  var h='<h4>'+esc(team)+' · set '+(s+1)+'</h4><datalist id="oppKnown">'+known.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>';
+  for(var k=0;k<per;k++){var p=s*per+k;h+='<div class="field"><label for="on'+k+'">Player '+(p+1)+'</label><input id="on'+k+'" data-onp="'+p+'" list="oppKnown" autocomplete="off" autocapitalize="words" enterkeyhint="'+(k<per-1?'next':'done')+'" value="'+esc(m.opp[p]||'')+'" placeholder="Type a name"></div>';}
+  h+='<div class="note">Opposition a player short? Type L/S as the name. That slot then copies their lowest total from the earlier sets.</div><button class="btn gold" data-act="saveopp" data-set="'+s+'">Save names</button><button class="btn ghost" data-act="close">Cancel</button>';modal(h);
+  setTimeout(function(){var i=document.getElementById('on0');if(i)i.focus();},60);}
+function fxModal(id){var f=id?fxById(id):{id:'',date:today(),comp:S.comps[0].id,round:'',opp:'',home:true,venue:S.rules.general.home,status:'scheduled'};
+  var teams={};S.fixtures.forEach(function(x){if(x.opp)teams[x.opp]=1;});var venues={};S.fixtures.forEach(function(x){if(x.venue)venues[x.venue]=1;});
+  var hasScores=!!S.matches[f.id];
+  modal('<h4>'+(id?'Edit fixture':'Add fixture')+'</h4><datalist id="dlTeams">'+Object.keys(teams).sort().map(function(t){return '<option value="'+esc(t)+'">';}).join('')+'</datalist><datalist id="dlVen">'+Object.keys(venues).sort().map(function(t){return '<option value="'+esc(t)+'">';}).join('')+'</datalist>'+
+   '<div class="grid2"><div class="field"><label>Date</label><input type="date" id="fDate" value="'+esc(f.date)+'"></div><div class="field"><label>Competition</label><select id="fComp">'+S.comps.filter(function(c){return !c.archived||c.id===f.comp;}).map(function(c){return '<option value="'+c.id+'"'+(c.id===f.comp?' selected':'')+'>'+esc(c.name)+'</option>';}).join('')+'</select></div></div>'+
+   '<div class="field"><label>Round / week</label><input id="fRound" value="'+esc(f.round)+'" placeholder="e.g. Round 1"></div><div class="field"><label>Opponent</label><input id="fOpp" list="dlTeams" value="'+esc(f.opp)+'" placeholder="Leave blank if not drawn yet"></div>'+
+   '<div class="field"><label>Lions are</label><select id="fHome"><option value="1"'+(f.home?' selected':'')+'>Home (throw first)</option><option value="0"'+(!f.home?' selected':'')+'>Away (chase)</option></select></div><div class="field"><label>Venue</label><input id="fVen" list="dlVen" value="'+esc(f.venue)+'"></div>'+
+   '<div class="field"><label>Status</label><select id="fStat">'+[['scheduled','Scheduled'],['played','Played'],['vacant','Vacant date'],['cancelled','Cancelled / postponed'],['knockedout','Knocked out (cup)'],['bye','Bye']].map(function(s){return '<option value="'+s[0]+'"'+(f.status===s[0]?' selected':'')+'>'+s[1]+'</option>';}).join('')+'</select></div>'+
+   '<button class="btn gold" data-act="savefx" data-id="'+esc(f.id)+'">Save</button>'+(id?(hasScores?'<div class="note">This fixture has scores, so it can be cancelled but not deleted.</div>':'<button class="btn danger" data-act="delfx" data-id="'+f.id+'">Delete fixture</button>'):'')+'<button class="btn ghost" data-act="close">Cancel</button>');
+  setTimeout(function(){var h=document.getElementById('fHome'),v=document.getElementById('fVen');if(h)h.onchange=function(){if(h.value==='1')v.value=S.rules.general.home;else if(v.value===S.rules.general.home)v.value='';};},30);}
+function compsModal(){modal('<h4>Competitions</h4><div class="list">'+S.comps.map(function(c){return '<div><div class="grow"><input data-cname="'+c.id+'" value="'+esc(c.name)+'" style="width:100%;background:var(--row);border:1px solid var(--line);color:#fff;border-radius:8px;padding:9px;font-size:16px"><div class="small muted" style="margin-top:4px"><select data-ctype="'+c.id+'" style="background:var(--row);color:#fff;border:1px solid var(--line);border-radius:8px;padding:6px;font-size:15px">'+Object.keys(S.rules.types).map(function(k){return '<option value="'+k+'"'+(c.type===k?' selected':'')+'>'+esc(S.rules.types[k].label)+' rules</option>';}).join('')+'</select> <label style="margin-left:8px"><input type="checkbox" data-carch="'+c.id+'"'+(c.archived?' checked':'')+'> Archived</label></div></div></div>';}).join('')+'</div>'+
+  '<div class="sec">New competition</div><div class="field"><input id="ncName" placeholder="e.g. New Year Cup"></div><div class="field"><select id="ncType">'+Object.keys(S.rules.types).map(function(k){return '<option value="'+k+'">'+esc(S.rules.types[k].label)+' rules</option>';}).join('')+'</select></div>'+
+  '<button class="btn gold" data-act="savecomps">Save</button><button class="btn ghost" data-act="close">Cancel</button>');}
+function ruleModal(k){var isNew=!k,r=isNew?JSON.parse(JSON.stringify(S.rules.types.cup)):S.rules.types[k];if(isNew)r.label='';
+  function num(id,label,v){return '<div class="field"><label>'+label+'</label><input type="number" inputmode="numeric" id="'+id+'" value="'+v+'"></div>';}
+  modal('<h4>'+(isNew?'New match type':esc(r.label)+' rules')+'</h4><div class="field"><label>Name</label><input id="rLabel" value="'+esc(r.label)+'"></div>'+
+   '<div class="field"><label>Result decided by</label><select id="rRes"><option value="sets"'+(r.result==='sets'?' selected':'')+'>Set points + match bonus</option><option value="pins"'+(r.result==='pins'?' selected':'')+'>Total pins only</option></select></div>'+
+   '<div class="grid2">'+num('rSetWin','Points: set won',r.setWin)+num('rSetTie','Points: set tied (each)',r.setTie)+num('rMatchWin','Points: most pins',r.matchWin)+num('rMatchTie','Points: pins tied (each)',r.matchTie)+'</div>'+
+   '<div class="field"><label>When total pins are tied</label><select id="rTie">'+[['share','Share the points'],['captains','Captains decide (app asks who won)'],['extra','Play extra hand(s)'],['notes','See notes']].map(function(o){return '<option value="'+o[0]+'"'+(r.tie===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></div>'+
+   '<div class="grid2">'+num('rExtra','Extra hands on a tie',r.extraHands)+num('rMax','Max hand score',r.maxHand)+num('rSpMin','Spare keypad from',r.spareMin)+num('rSpMax','Spare keypad to',r.spareMax)+num('rSets','Sets',r.sets)+num('rPer','Players per set',r.per)+num('rHands','Hands per set',r.hands)+'</div>'+
+   '<label style="display:flex;gap:10px;align-items:center;min-height:44px"><input type="checkbox" id="rAvg" style="width:22px;height:22px"'+(r.averages?' checked':'')+'> Counts towards averages</label>'+
+   '<div class="field"><label>Notes</label><textarea id="rNotes">'+esc(r.notes||'')+'</textarea></div>'+
+   '<button class="btn gold" data-act="saverule" data-id="'+(k||'')+'">Save</button><button class="btn ghost" data-act="close">Cancel</button>');}
+
+/* ---------------- images ---------------- */
+var logoPath=null;function getLogo(){if(!logoPath&&window.Path2D)logoPath=new Path2D(LOGO_D);return logoPath;}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function font(ctx,w,s,fam){ctx.font=w+' '+s+'px '+(fam==='o'?'Oswald, Impact, sans-serif':'Inter, Helvetica, Arial, sans-serif');}
+function txt(ctx,t,x,y,o){o=o||{};font(ctx,o.w||'400',o.s||22,o.f);ctx.fillStyle=o.c||WHITE;ctx.textAlign=o.a||'left';ctx.textBaseline='alphabetic';
+  if(o.max){var tt=String(t);while(ctx.measureText(tt).width>o.max&&tt.length>1)tt=tt.slice(0,-2)+'…';t=tt;}ctx.fillText(t,x,y);}
+function drawLogo(ctx,x,y,h){var p=getLogo();if(!p)return;ctx.save();ctx.translate(x,y);var k=h/1000;ctx.scale(k,k);ctx.fillStyle=GOLD;ctx.fill(p,'evenodd');ctx.restore();}
+function canvasFor(h){var c=document.createElement('canvas');c.width=1080;c.height=h;var ctx=c.getContext('2d');ctx.fillStyle=NAVY;ctx.fillRect(0,0,1080,h);return {c:c,ctx:ctx};}
+function header(ctx,title,line1,line2){drawLogo(ctx,48,48,140);var tx=48+LOGO_W*0.14+32;txt(ctx,line1,tx,84,{s:20,w:'700',c:GOLD,max:1080-tx-48});txt(ctx,title.toUpperCase(),tx,146,{s:54,w:'700',f:'o',max:1080-tx-48});txt(ctx,line2,tx,184,{s:22,c:MUTED,max:1080-tx-48});return 228;}
+function fontsReady(){try{return Promise.all([document.fonts.load('700 40px Oswald'),document.fonts.load('400 20px Inter'),document.fonts.load('700 20px Inter')]).catch(function(){});}catch(e){return Promise.resolve();}}
+function showImage(c,fname,caption){
+  var url=c.toDataURL('image/png');
+  modal('<h4>'+esc(caption)+'</h4><img class="imgout" src="'+url+'" alt="'+esc(caption)+'"><button class="btn gold" data-act="shareimg">Share / save image</button><div class="note">If sharing isn’t offered, press and hold the image and choose Save to Photos, then post it from WhatsApp.</div><button class="btn ghost" data-act="close">Close</button>');
+  T.img={c:c,fname:fname};}
+function shareImg(){var I=T.img;if(!I)return;I.c.toBlob(function(b){try{var file=new File([b],I.fname,{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file]}).catch(function(){});}else toast('Press and hold the image to save it');}catch(e){toast('Press and hold the image to save it');}},'image/png');}
+
+/* ---------------- league result card (layout template: edit LEAGUE_CARD when the league changes its form) ---------------- */
+var LEAGUE_CARD={v:'2026-27',title:'CENTRAL SKITTLE LEAGUE',name:'Central Skittle League',team:'Lions',ink:'#1B2A6B',
+  labels:{div:'DIVISION/CUP',date:'DATE OF MATCH',home:'HOME TEAM',away:'AWAY TEAM',name:'NAME',score:'SCORE',setTot:'SET TOTAL',total:'TOTAL',points:'POINTS',
+    spares:'HAVE ALL AWAY SPARES BEEN ENTERED',hiScorer:'Highest Scorer',hiScore:'Highest Score',sig:'Captain’s Signature',sigAway:'(AWAY TEAM)',sigHome:'(HOME TEAM)',
+    email:'Please email a copy of the completed scorecard to '}};
+function ordDate(s){if(!s)return '';var d=new Date(s+'T12:00:00'),n=d.getDate(),x=(n%100>10&&n%100<14)?'th':({1:'st',2:'nd',3:'rd'}[n%10]||'th');return n+x+' '+MON[d.getMonth()]+' '+d.getFullYear();}
+function lcDiv(f){var c=compById(f.comp),n=c?c.name:'';if(c&&c.type==='league')return n.replace(/^league\s+/i,'');return n+(f.round?' – '+f.round:'');}
+function lcCell(c){if(!c)return '';if(c.vc)return 'V/C';if(c.sp)return '('+c.v+')';return String(c.v);}
+function lcT(ctx,t,x,y,o){o=o||{};ctx.font=(o.w||'400')+' '+(o.s||26)+'px Inter, Helvetica, Arial, sans-serif';ctx.fillStyle=o.c||'#000';ctx.textAlign=o.a||'left';ctx.textBaseline='middle';
+  t=String(t==null?'':t);if(o.max)while(ctx.measureText(t).width>o.max&&t.length>1)t=t.slice(0,-2)+'…';ctx.fillText(t,x,y);}
+function lcHigh(m,t){var best=-1,who=[];for(var p=0;p<mP(m);p++){if(isLS(m,t,p))continue;var v=pTot(m,t,p);if(v>best){best=v;who=[p];}else if(v===best)who.push(p);}
+  return {names:who.map(function(p){return slotName(m,t,p);}).join(' / '),score:best>0?best:''};}
+function loadImg(u){return new Promise(function(res){if(!u)return res(null);var i=new Image();i.onload=function(){res(i);};i.onerror=function(){res(null);};i.src=u;});}
+function leagueCardCanvas(m,f,sigs){var L=LEAGUE_CARD,lb=L.labels,INK=L.ink,r=m.rules,per=r.per,R=result(m),W=2000,H=1600;
+  var c=document.createElement('canvas');c.width=W;c.height=H;var ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.strokeStyle='#000';ctx.lineCap='butt';
+  var box=function(x,y,w,h,lw){ctx.lineWidth=lw||2;ctx.strokeRect(x,y,w,h);},line=function(x1,y1,x2,y2,lw){ctx.lineWidth=lw||2;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();};
+  var dots=function(x1,x2,y){ctx.save();ctx.setLineDash&&ctx.setLineDash([3,7]);line(x1,y,x2,y,2);ctx.restore();};
+  lcT(ctx,L.title,W/2,90,{s:60,w:'800',a:'center'});
+  var hT=homeT(m),aT=awayT(m),team=function(t){return t==='L'?L.team:oppTeam(m);};
+  var hdr=function(lab,val,x,y,lw,bw){lcT(ctx,lab,x,y+32,{s:28,w:'700'});box(x+lw,y,bw,64,3);lcT(ctx,val,x+lw+18,y+32,{s:32,w:'700',c:INK,max:bw-36});};
+  hdr(lb.div,lcDiv(f),60,150,250,630);hdr(lb.date,ordDate(f.date),1040,150,280,620);
+  hdr(lb.home,team(hT),60,240,250,630);hdr(lb.away,team(aT),1040,240,280,620);
+  var TY=350,HH=64,RH=50,cw={n:270,h:70,s:105,t:105},TW=cw.n+cw.h*6+cw.s+cw.t;
+  var table=function(t,x){var y=TY;ctx.fillStyle='#000';box(x,y,TW,HH+RH*12,4);line(x,y+HH,x+TW,y+HH,4);
+    lcT(ctx,lb.name,x+cw.n/2,y+HH/2,{s:26,w:'800',a:'center'});
+    var xs=[x+cw.n];for(var h=1;h<=6;h++)xs.push(x+cw.n+cw.h*h);xs.push(x+cw.n+cw.h*6+cw.s);
+    xs.forEach(function(xx,i){line(xx,y,xx,y+HH+RH*12,i===0||i>=6?3:2);});
+    lcT(ctx,lb.score,x+cw.n+cw.h*6+cw.s/2,y+HH/2,{s:22,w:'800',a:'center'});
+    lcT(ctx,lb.setTot.split(' ')[0],x+TW-cw.t/2,y+HH/2-13,{s:20,w:'800',a:'center'});lcT(ctx,lb.setTot.split(' ').slice(1).join(' '),x+TW-cw.t/2,y+HH/2+13,{s:20,w:'800',a:'center'});
+    for(var p=0;p<12;p++){var ry=y+HH+RH*p,cy=ry+RH/2;if(p)line(x,ry,x+TW,ry,p%per===0?5:1.5);
+      if(p>=mP(m))continue;
+      lcT(ctx,slotName(m,t,p),x+12,cy,{s:26,w:'600',c:INK,max:cw.n-20});
+      var any=false;for(var h2=0;h2<r.hands&&h2<6;h2++){var cc=m[t][p][h2];if(cc)any=true;lcT(ctx,lcCell(cc),x+cw.n+cw.h*h2+cw.h/2,cy,{s:cc&&cc.vc?20:26,w:'600',c:INK,a:'center'});}
+      if(any)lcT(ctx,pTot(m,t,p),x+cw.n+cw.h*6+cw.s/2,cy,{s:28,w:'700',c:INK,a:'center'});
+      if(p%per===per-1){var s=Math.floor(p/per);if(setFilled(m,t,s))lcT(ctx,setTot(m,t,s),x+TW-cw.t/2,cy,{s:30,w:'800',c:INK,a:'center'});}}
+    var by=TY+HH+RH*12+16,bx=x+TW-cw.t;
+    lcT(ctx,lb.total,bx-16,by+32,{s:26,w:'800',a:'right'});box(bx,by,cw.t,64,3);lcT(ctx,matchTot(m,t)||'',bx+cw.t/2,by+32,{s:32,w:'800',c:INK,a:'center'});
+    lcT(ctx,lb.points,bx-16,by+112,{s:26,w:'800',a:'right'});box(bx,by+80,cw.t,64,3);
+    if(r.result==='sets')lcT(ctx,t==='L'?R.l:R.o,bx+cw.t/2,by+112,{s:32,w:'800',c:INK,a:'center'});
+    var hi=lcHigh(m,t),hy=by+200;
+    lcT(ctx,lb.hiScorer,x,hy,{s:28,w:'700'});dots(x+230,x+TW,hy+18);lcT(ctx,hi.names,x+246,hy,{s:30,w:'700',c:INK,max:TW-260});
+    lcT(ctx,lb.hiScore,x,hy+70,{s:28,w:'700'});dots(x+230,x+TW,hy+88);lcT(ctx,hi.score,x+246,hy+70,{s:30,w:'700',c:INK});
+    return hy+70;};
+  var endY=table(hT,60);table(aT,1040);
+  lcT(ctx,lb.spares,1360,TY+HH+RH*12+16+72,{s:24,w:'800',a:'center'});
+  var sy=endY+150;
+  var sig=function(x,lab,img){lcT(ctx,lb.sig,x,sy,{s:28,w:'700'});dots(x+290,x+760,sy+18);lcT(ctx,lab,x+770,sy,{s:22,w:'700'});
+    if(img){var bw=460,bh=110,k=Math.min(bw/img.width,bh/img.height),w=img.width*k,h=img.height*k;ctx.drawImage(img,x+300,sy+14-h,w,h);}};
+  sig(60,lb.sigAway,sigs&&sigs.away);sig(1040,lb.sigHome,sigs&&sigs.home);
+  lcT(ctx,lb.email+S.rules.general.leagueEmail,W/2,H-60,{s:28,w:'700',a:'center'});
+  return c;}
+function leagueCard(){var f=curFx(),m=S.matches[f.id];if(!m)return;var sg=m.sig||{};
+  Promise.all([fontsReady(),loadImg(sg.away),loadImg(sg.home)]).then(function(a){var c=leagueCardCanvas(m,f,{away:a[1],home:a[2]});
+    var fname='CSL-'+f.date+'-'+(f.home?'Lions-v-'+oppTeam(m):oppTeam(m)+'-v-Lions').replace(/[^A-Za-z0-9-]+/g,'-')+'.png',url=c.toDataURL('image/png');
+    modal('<h4>League result card</h4><img class="imgout" src="'+url+'" alt="League result card" style="background:#fff">'+
+      (!m.sig||!m.sig.away||!m.sig.home?'<div class="note">Not signed by both captains yet.</div>':'')+
+      '<button class="btn gold" data-act="sendleague">Send to league</button><button class="btn ghost" data-act="copyleague">Copy league email address</button>'+
+      '<div class="note">Send to league copies '+esc(S.rules.general.leagueEmail)+' and opens the share sheet. Choose Mail, then paste the address into To. If sharing isn’t offered, press and hold the image to save it, then attach it to an email.</div><button class="btn ghost" data-act="close">Close</button>');
+    T.img={c:c,fname:fname};T.lfile=null;c.toBlob(function(b){try{T.lfile=new File([b],fname,{type:'image/png'});}catch(e){}},'image/png');});}
+function leagueMailText(){var f=curFx(),m=S.matches[f.id],R=result(m),hT=homeT(m),nm=function(t){return t==='L'?LEAGUE_CARD.team:oppTeam(m);};
+  var aT=awayT(m),pts=m.rules.result==='sets'?' ('+(hT==='L'?R.l:R.o)+' – '+(aT==='L'?R.l:R.o)+' pts)':'';
+  return LEAGUE_CARD.name+' result, '+lcDiv(f)+', '+ordDate(f.date)+': '+nm(hT)+' '+matchTot(m,hT)+' v '+matchTot(m,aT)+' '+nm(aT)+pts+'. Completed scorecard attached.';}
+function sendLeague(){var e=S.rules.general.leagueEmail;try{navigator.clipboard&&navigator.clipboard.writeText(e).catch(function(){});}catch(x){}
+  var go=function(file){try{if(file&&navigator.canShare&&navigator.canShare({files:[file]})){toast('Address copied: paste it into To');navigator.share({files:[file],title:'League result',text:leagueMailText()}).catch(function(){});}else toast('Press and hold the image to save it');}catch(x){toast('Press and hold the image to save it');}};
+  if(T.lfile)go(T.lfile);else T.img.c.toBlob(function(b){try{go(new File([b],T.img.fname,{type:'image/png'}));}catch(x){go(null);}},'image/png');}
+function sigModal(){var m=curMatch();if(!m)return;var f=curFx(),aw=f.home?oppTeam(m):LEAGUE_CARD.team,hm=f.home?LEAGUE_CARD.team:oppTeam(m);
+  var pad=function(k,who){return '<div class="field"><label>'+esc(LEAGUE_CARD.labels.sig)+' – '+esc(who)+' captain '+(k==='away'?'(away team)':'(home team)')+'</label><canvas class="sigpad" data-sig="'+k+'"></canvas><button class="btn ghost" data-act="sigclear" data-k="'+k+'" style="min-height:38px">Clear</button></div>';};
+  modal('<h4>Captains sign the card</h4><div class="note" style="margin-top:0">Each captain signs with a finger. The signatures go on the league card.</div>'+pad('away',aw)+pad('home',hm)+'<button class="btn gold" data-act="sigsave">Save signatures</button><button class="btn ghost" data-act="close">Cancel</button>');
+  T.sig={};document.querySelectorAll('canvas.sigpad').forEach(function(cv){var k=cv.dataset.sig,dpr=window.devicePixelRatio||1,w=cv.clientWidth||320,h=cv.clientHeight||140;cv.width=w*dpr;cv.height=h*dpr;
+    var ctx=cv.getContext('2d');ctx.scale(dpr,dpr);ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=LEAGUE_CARD.ink;
+    var st={draw:false,inked:false};T.sig[k]={cv:cv,st:st};
+    if(m.sig&&m.sig[k]){loadImg(m.sig[k]).then(function(i){if(i){ctx.drawImage(i,0,0,w,h);st.inked=true;st.old=true;}});}
+    var pos=function(e){var b=cv.getBoundingClientRect();return [e.clientX-b.left,e.clientY-b.top];};
+    cv.addEventListener('pointerdown',function(e){e.preventDefault();try{cv.setPointerCapture(e.pointerId);}catch(x){}st.draw=true;st.changed=true;var q=pos(e);ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(q[0]+0.1,q[1]+0.1);ctx.stroke();st.inked=true;});
+    cv.addEventListener('pointermove',function(e){if(!st.draw)return;e.preventDefault();var q=pos(e);ctx.lineTo(q[0],q[1]);ctx.stroke();});
+    var up=function(){st.draw=false;};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);});}
+function sigTrim(cv){var w=cv.width,h=cv.height,ctx=cv.getContext('2d'),d;try{d=ctx.getImageData(0,0,w,h).data;}catch(e){return cv.toDataURL('image/png');}
+  var x0=w,y0=h,x1=-1,y1=-1;for(var y=0;y<h;y++)for(var x=0;x<w;x++)if(d[(y*w+x)*4+3]>20){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
+  if(x1<0)return null;var pd=6;x0=Math.max(0,x0-pd);y0=Math.max(0,y0-pd);x1=Math.min(w-1,x1+pd);y1=Math.min(h-1,y1+pd);
+  var o=document.createElement('canvas'),sc=Math.min(1,600/(x1-x0+1));o.width=Math.round((x1-x0+1)*sc);o.height=Math.round((y1-y0+1)*sc);o.getContext('2d').drawImage(cv,x0,y0,x1-x0+1,y1-y0+1,0,0,o.width,o.height);return o.toDataURL('image/png');}
+
+/* ---------------- league website feed (lions-feed.php on the team's hosting) ---------------- */
+var FEED_URL='feed.json',FEED_EVERY=60*60*1000;
+function feedLions(t){return /lion/i.test(String(t||''));}
+function parseTable(rows){if(!rows||!rows.length)return null;var low=function(c){return String(c==null?'':c).trim().toLowerCase();};
+  var hi=-1,tc=-1,pos=-1;
+  for(var i=0;i<rows.length&&hi<0;i++){var r0=rows[i]||[],pi=-1,ti=-1;r0.forEach(function(c,ix){var l=low(c);if(pi<0&&/^(pos|position|no\.?|#)$/.test(l))pi=ix;if(ti<0&&/^(name|team|team name|club)$/.test(l))ti=ix;});if(ti>=0&&(pi>=0||r0.filter(function(c){return low(c)!=='';}).length>=4)){hi=i;tc=ti;pos=pi;}}
+  if(hi<0)return null;
+  var head=rows[hi],grp=rows[hi-1]||[],lab=[],seen={},cols=[],extra=[];
+  head.forEach(function(h,ix){var l=String(h||'').trim();if(!l){lab[ix]='';return;}var k=l.toLowerCase();
+    if(seen[k]&&ix!==tc){var g='';for(var q=ix;q>=0;q--){if(String(grp[q]||'').trim()){g=String(grp[q]).trim();break;}}lab[ix]=(g?g.charAt(0).toUpperCase()+' ':'')+l;extra.push(ix);}else{lab[ix]=l;seen[k]=1;}});
+  var find=function(re){for(var q=0;q<head.length;q++)if(extra.indexOf(q)<0&&re.test(low(head[q])))return q;return -1;};
+  var pts=find(/^(pts|points|total points)$/),chg=find(/^(chg|change|ded|deducted|adj)$/);
+  head.forEach(function(h,ix){if(lab[ix]&&extra.indexOf(ix)<0&&ix!==chg)cols.push(ix);});
+  var title='',asOf='';for(var k2=0;k2<=hi;k2++){(rows[k2]||[]).forEach(function(c,ix){var t=String(c||'').trim();if(/^as of /i.test(t))asOf=t.replace(/^as of /i,'');});}
+  for(var g2=0;g2<grp.length&&g2<=tc;g2++)if(String(grp[g2]||'').trim()){title=String(grp[g2]).trim();break;}
+  var body=[];for(var r=hi+1;r<rows.length;r++){var row=rows[r]||[],nm=String(row[tc]||'').trim();if(!nm){if(body.length)break;continue;}if(/vacant/i.test(nm))continue;body.push(row);}
+  var blocks={};rows.forEach(function(row,ri){(row||[]).forEach(function(c){var m=/^(results|fixtures) for (.+)$/i.exec(String(c||'').trim());if(!m)return;var kind=m[1].toLowerCase();if(blocks[kind])return;
+    var hr=rows[ri+1]||[],hix=-1,aix=-1;hr.forEach(function(x,ix){var l=low(x);if(l==='home team'&&hix<0)hix=ix;if(l==='away team'&&aix<0)aix=ix;});if(hix<0||aix<0)return;
+    var after=function(from,to,name){for(var q=from+1;q<(to<0?hr.length:to);q++)if(low(hr[q])===name)return q;return -1;};
+    var H={pts:after(hix,aix,'points'),pins:after(hix,aix,'team'),name:after(hix,aix,'name'),score:after(hix,aix,'score')},A={pts:after(aix,-1,'points'),pins:after(aix,-1,'team'),name:after(aix,-1,'name'),score:after(aix,-1,'score')};
+    var g=function(rw,q){return q>=0?String(rw[q]||'').trim():'';},list=[];
+    for(var q=ri+2;q<rows.length;q++){var rw=rows[q]||[],h=g(rw,hix),a=g(rw,aix);if(!h&&!a)break;if(/vacant/i.test(h)||/vacant/i.test(a))continue;
+      list.push({h:h,a:a,hp:g(rw,H.pts),ap:g(rw,A.pts),hpins:g(rw,H.pins),apins:g(rw,A.pins),hn:g(rw,H.name),an:g(rw,A.name),hs:g(rw,H.score),as:g(rw,A.score)});}
+    blocks[kind]={date:m[2].trim(),rows:list};});});
+  return {title:title,asOf:asOf,head:lab,cols:cols,extra:extra,tc:tc,pos:pos,pts:pts,chg:chg,body:body,results:blocks.results||null,fixtures:blocks.fixtures||null};}
+function chgNum(t,r){if(t.chg<0)return 0;var n=parseInt(String(r[t.chg]||'').replace('−','-').replace('+',''),10);return isNaN(n)?0:n;}
+function chgTxt(n){return n>0?'+'+n:n<0?'−'+(-n):'';}
+function ltHTML(t,compact){var cols=compact?[t.pos,t.tc,find1(t,/^p$/),t.pts].filter(function(c){return c>=0;}):t.cols.slice();if(t.chg>=0)cols.push(t.chg);
+  var w=function(c){return c===t.tc?'':c===t.pos?30:c===t.pts?46:c===t.chg?36:27;};
+  return '<div class="ltwrap"><table class="lt'+(compact?' compact':'')+'"><colgroup>'+cols.map(function(c){return '<col'+(w(c)?' style="width:'+w(c)+'px"':'')+'>';}).join('')+'</colgroup><thead><tr>'+cols.map(function(c){return '<th'+(c===t.tc?' class="n"':'')+'>'+(c===t.chg?'+/−':esc(t.head[c]))+'</th>';}).join('')+'</tr></thead><tbody>'+
+    t.body.map(function(r){return '<tr'+(feedLions(r[t.tc])?' class="us"':'')+'>'+cols.map(function(c){if(c===t.chg){var n=chgNum(t,r);return '<td class="'+(n>0?'up':n<0?'dn':'')+'">'+chgTxt(n)+'</td>';}return '<td'+(c===t.tc?' class="n"':c===t.pts?' class="t"':'')+'>'+esc(r[c]||'')+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></div>';}
+function find1(t,re){for(var q=0;q<t.cols.length;q++)if(re.test(String(t.head[t.cols[q]]).trim().toLowerCase()))return t.cols[q];return -1;}
+function sheetDate(t){var m=/(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(t||'');if(!m)return t||'';var iso=m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);return fdate(iso,true);}
+function ptsOut(t,r){var v=t.pts>=0?String(r[t.pts]||''):'';return v;}
+function leagueTbl(){var F=S.feed;return F&&F.table?parseTable(F.table.rows):null;}
+function ordN(n){n=+n;var x=(n%100>10&&n%100<14)?'th':({1:'st',2:'nd',3:'rd'}[n%10]||'th');return n+x;}
+function lionsPos(){var t=leagueTbl();if(!t)return null;for(var i=0;i<t.body.length;i++)if(feedLions(t.body[i][t.tc])){var r=t.body[i];return {pos:t.pos>=0&&/^\d+$/.test(r[t.pos])?+r[t.pos]:i+1,pts:t.pts>=0?r[t.pts]:null,of:t.body.length};}return null;}
+function feedNews(){var F=S.feed,seen=S.feedSeen||{draws:{}},n={draws:[],fix:false};if(!F)return n;
+  (F.cups||[]).forEach(function(c){var nw=(c.images||[]).filter(function(im){return !seen.draws[im.file];});if(nw.length)n.draws.push(c);});
+  if(F.fixtures&&seen.pdf&&F.fixtures.hash!==seen.pdf)n.fix=true;return n;}
+function feedAgo(iso){if(!iso)return '';var d=new Date(iso),m=Math.round((Date.now()-d)/60000);if(m<2)return 'just now';if(m<60)return m+' min ago';if(m<36*60)return Math.round(m/60)+' h ago';return fdate(d.toISOString().slice(0,10),true);}
+function feedFetch(force){var now=Date.now();if(!force&&T.feedTry&&now-T.feedTry<FEED_EVERY)return;
+  if(!force&&S.feed&&S.feed.got&&now-S.feed.got<FEED_EVERY)return;T.feedTry=now;
+  if(typeof fetch!=='function'||(navigator.onLine===false&&!force))return;
+  fetch(FEED_URL+(force?'?refresh=1':''),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(d){
+    if(!d||!d.ok)throw new Error('bad data');d.got=Date.now();S.feed=d;
+    if(!S.feedSeen){S.feedSeen={draws:{},pdf:d.fixtures?d.fixtures.hash:null};}
+    if(!S.feedSeen.pdf&&d.fixtures)S.feedSeen.pdf=d.fixtures.hash;
+    T.feedErr=null;save();render();if(force)toast('League data updated');
+  }).catch(function(e){T.feedErr=String(e&&e.message||e);if(force){toast('Couldn’t reach the league feed');render();}});}
+function feedAlerts(){var n=feedNews(),h='';if(!n.draws.length&&!n.fix)return '';
+  n.draws.forEach(function(c){h+='<div class="feedalert"><div><b>New cup draw posted</b><div class="small">'+esc(c.name)+'</div></div><button class="btn gold sm" data-act="draws" data-k="'+esc(c.key)+'">View</button></div>';});
+  if(n.fix)h+='<div class="feedalert"><div><b>League fixture list updated</b><div class="small">Check for changed dates or venues</div></div><button class="btn gold sm" data-act="fixchg">View</button></div>';
+  return '<div class="card" style="padding-top:2px">'+h+'</div>';}
+function vLeague(){var F=S.feed,t=leagueTbl(),h='';
+  if(!t){h+='<div class="card"><h2>League table</h2><div class="small muted">'+(F?'The league feed loaded, but no table could be found in it.':'Not loaded yet.')+'</div><div class="note">The table comes from the league website, collected every few hours by the Lions GitHub job. It loads automatically when the phone is online.'+(T.feedErr?' Last try: '+esc(T.feedErr)+'.':'')+'</div><button class="btn gold" data-act="feedrefresh">Try now</button></div>';}
+  else{h+='<div class="card"><h2>'+esc(t.title||'League table')+'</h2>'+(t.asOf?'<div class="small muted" style="margin:-4px 0 6px">As of '+esc(sheetDate(t.asOf))+'</div>':'')+ltHTML(t,false)+
+      '<div class="note">From the league website, checked '+esc(feedAgo(F.at))+(F.stale?' (league site unreachable, showing the last copy)':'')+'.</div><button class="btn gold" data-act="leagueimg">League table image</button><button class="btn ghost" data-act="feedrefresh">Refresh now</button></div>';
+    var game=function(x,res){var us=feedLions(x.h)||feedLions(x.a),nm=function(n){return feedLions(n)?'<b class="gold">'+esc(n)+'</b>':esc(n);};
+      if(!res)return '<div class="lres'+(us?' us':'')+'"><div class="lt2">'+nm(x.h)+' <span class="muted">v</span> '+nm(x.a)+'</div></div>';
+      return '<div class="lres'+(us?' us':'')+'"><div class="lt2"><span>'+nm(x.h)+'</span><span class="sc">'+esc(x.hpins)+' – '+esc(x.apins)+'</span><span style="text-align:right">'+nm(x.a)+'</span></div>'+
+        '<div class="small muted lt2"><span>'+esc(x.hp)+' pts</span><span></span><span style="text-align:right">'+esc(x.ap)+' pts</span></div>'+
+        ((x.hn||x.an)?'<div class="small muted lt2"><span>Top: '+esc(x.hn)+(x.hs?' '+esc(x.hs):'')+'</span><span></span><span style="text-align:right">'+esc(x.an)+(x.as?' '+esc(x.as):'')+'</span></div>':'')+'</div>';};
+    if(t.results&&t.results.rows.length)h+='<div class="sec">Results · '+esc(sheetDate(t.results.date))+'</div><div class="card">'+t.results.rows.map(function(x){return game(x,true);}).join('')+'</div>';
+    if(t.fixtures&&t.fixtures.rows.length)h+='<div class="sec">Fixtures · '+esc(sheetDate(t.fixtures.date))+'</div><div class="card">'+t.fixtures.rows.map(function(x){return game(x,false);}).join('')+'</div>';}
+  if(F&&F.cups){var withPics=F.cups.filter(function(c){return c.images&&c.images.length;});
+    h+='<div class="sec">Cup draws on the league website</div><div class="card list">'+(withPics.length?withPics.map(function(c){var nw=feedNews().draws.indexOf(c)>-1;return '<div><button class="grow" style="text-align:left" data-act="draws" data-k="'+esc(c.key)+'"><div class="name">'+esc(c.name)+(nw?' <span class="chip o">New</span>':'')+'</div><div class="small muted">'+c.images.length+' picture'+(c.images.length>1?'s':'')+' posted</div></button></div>';}).join(''):'<div class="muted">No draws posted yet.</div>')+'</div>';}
+  if(F&&F.fixtures)h+='<div class="card"><a class="btn ghost lnk" href="'+esc(F.fixtures.url)+'" target="_blank" rel="noopener">Lions fixtures PDF (league site)</a></div>';
+  h+='<div class="card"><a class="btn ghost lnk" href="https://centralskittleleague.co.uk" target="_blank" rel="noopener">Open the league website</a></div>';
+  return h;}
+function drawsModal(k){var F=S.feed;if(!F)return;var c=(F.cups||[]).find(function(x){return x.key===k;});if(!c)return;var seen=(S.feedSeen=S.feedSeen||{draws:{}}).draws;
+  modal('<h4>'+esc(c.name)+'</h4>'+c.images.slice().reverse().map(function(im){return '<div class="small muted" style="margin-top:8px">'+esc(im.file)+(seen[im.file]?'':' · <b style="color:var(--gold)">new</b>')+'</div><img class="imgout" style="background:#fff" src="'+esc(im.url)+'" alt="'+esc(im.file)+'">';}).join('')+
+    '<div class="note">Pictures straight from the league website. Fill in our opponent with Edit fixture (fixtures showing Draw needed). Pinch to zoom.</div><a class="btn ghost lnk" href="'+esc(c.page)+'" target="_blank" rel="noopener">Open the page on the league site</a><button class="btn gold" data-act="drawseen" data-k="'+esc(k)+'">Mark as seen</button><button class="btn ghost" data-act="close">Close</button>');}
+function fixChgModal(){var F=S.feed;if(!F||!F.fixtures)return;
+  modal('<h4>League fixture list updated</h4><div class="small muted">The Lions fixtures PDF on the league website has changed since it was last checked. Open it and compare dates, opponents and venues with Fixtures in the app.</div><a class="btn gold lnk" href="'+esc(F.fixtures.url)+'" target="_blank" rel="noopener">Open the fixtures PDF</a><button class="btn ghost" data-tab="fixtures" data-act="close">Go to Fixtures</button><button class="btn ghost" data-act="fixseen">Mark as checked</button>');}
+function leagueImg(){var t=leagueTbl();if(!t)return;var cols=t.cols,others=cols.filter(function(c){return c!==t.tc&&c!==t.pos;});if(t.chg>=0)others.push(t.chg);
+  fontsReady().then(function(){var RH=68,H=228+40+56+t.body.length*(RH+6)+110,o=canvasFor(H),ctx=o.ctx;
+    var y=header(ctx,'League table',(S.rules.general.league+(t.title?' · '+t.title:'')).toUpperCase(),(t.asOf?'As of '+sheetDate(t.asOf):'From the league website · '+fdate(today(),true)))+30;
+    var hasPos=t.pos>=0,nameX=hasPos?130:72,nameW=Math.max(300,1032-nameX-others.length*92),cw=others.length?(1032-(nameX+nameW))/others.length:0;
+    var cx=function(i){return nameX+nameW+cw*i+cw/2;};
+    if(hasPos)txt(ctx,String(t.head[t.pos]).toUpperCase(),86,y+24,{s:18,c:MUTED,a:'center'});txt(ctx,String(t.head[t.tc]||'TEAM').toUpperCase(),nameX,y+24,{s:18,c:MUTED});others.forEach(function(c,i){txt(ctx,c===t.chg?'+/\u2212':String(t.head[c]).toUpperCase(),cx(i),y+24,{s:18,c:MUTED,a:'center',max:cw-6});});y+=46;
+    t.body.forEach(function(r,i){var us=feedLions(r[t.tc]);ctx.fillStyle=us?GOLD:(i%2?'#10234A':ROW);rr(ctx,40,y,1000,RH,10);ctx.fill();var col=us?NAVY:WHITE;
+      if(hasPos)txt(ctx,r[t.pos]||'',86,y+46,{s:28,w:'700',c:us?NAVY:MUTED,a:'center'});txt(ctx,r[t.tc],nameX,y+46,{s:30,w:'700',c:col,max:nameW-16});
+      others.forEach(function(c,k){var cn=c===t.chg?chgNum(t,r):0;txt(ctx,c===t.chg?chgTxt(cn):c===t.pts?ptsOut(t,r):(r[c]||''),cx(k),y+46,{s:28,w:c===t.pts||c===t.chg?'800':'500',c:us?NAVY:(c===t.pts?GOLD:c===t.chg?(cn>0?'#7BD88F':'#FF8A80'):WHITE),a:'center',max:cw-6});});y+=RH+6;});
+    txt(ctx,'+/\u2212 = places moved since last week',48,H-40,{s:18,c:MUTED});txt(ctx,'Up the Lions',1032,H-40,{s:22,w:'700',c:GOLD,a:'right'});
+    showImage(o.c,'league-table-'+today()+'.png','League table image');});}
+
+function teamSheetImg(){var f=curFx(),sel=selFor(f.id),line=(S.matches[f.id]?S.matches[f.id].lineup:sel.lineup);
+  var res=(sel.reserves||[]).filter(function(p){return line.indexOf(p)<0;});
+  fontsReady().then(function(){var H=1350+(res.length?40+res.length*52+20:0),o=canvasFor(H),ctx=o.ctx;
+    var y=header(ctx,fxTitle(f),'TEAM SHEET · '+fxComp(f).toUpperCase(),fdate(f.date,true)+' · '+(f.home?'Home':'Away')+(f.venue?' · '+f.venue:''));
+    y+=20;var bw=984,bh=232;
+    for(var s=0;s<4;s++){var by=y+s*(bh+20);ctx.fillStyle=PANEL;rr(ctx,48,by,bw,bh,18);ctx.fill();
+      txt(ctx,'SET '+(s+1)+(s===3?' · ANCHOR SET':''),76,by+46,{s:22,w:'700',c:GOLD,f:'o'});
+      for(var k=0;k<3;k++){var i=s*3+k,ry=by+70+k*52;ctx.fillStyle=k%2?'#10234A':ROW;rr(ctx,64,ry,bw-32,46,10);ctx.fill();
+        txt(ctx,String(i+1),96,ry+32,{s:22,w:'700',c:MUTED,a:'center'});txt(ctx,line[i]?outName(line[i],'teamsheet'):'TBC',132,ry+32,{s:26,w:'700',c:line[i]?WHITE:MUTED,max:700});
+        if(i===11){ctx.fillStyle=GOLD;rr(ctx,bw-120,ry+8,120,30,15);ctx.fill();txt(ctx,'ANCHOR',bw-60,ry+30,{s:16,w:'700',c:NAVY,a:'center'});}}}
+    if(res.length){var ry0=y+4*(bh+20),rh=40+res.length*52+20;ctx.fillStyle=PANEL;rr(ctx,48,ry0,bw,rh,18);ctx.fill();txt(ctx,'RESERVES',76,ry0+40,{s:22,w:'700',c:GOLD,f:'o'});
+      res.forEach(function(pid,i){var yy=ry0+56+i*52;ctx.fillStyle=i%2?'#10234A':ROW;rr(ctx,64,yy,bw-32,46,10);ctx.fill();txt(ctx,'R'+(i+1),96,yy+32,{s:20,w:'700',c:MUTED,a:'center'});txt(ctx,outName(pid,'teamsheet'),132,yy+32,{s:26,w:'600',max:700});});}
+    txt(ctx,'Up the Lions',1032,H-40,{s:22,w:'700',c:GOLD,a:'right'});txt(ctx,'The Lions Den',48,H-40,{s:18,c:MUTED});
+    showImage(o.c,'lions-team-sheet-'+f.date+'.png','Team sheet');});}
+
+function resultsImg(){var f=curFx(),m=S.matches[f.id],r=m.rules,R=result(m),pins=r.result==='pins',per=r.per,sets=r.sets;
+  fontsReady().then(function(){
+    var tableH=function(){return 70+44+sets*(per*48+2*34+14);};
+    var H=228+20+280+40+150+40+tableH()*2+40+40+60;
+    var o=canvasFor(H),ctx=o.ctx,home=homeT(m);
+    var title=f.home?'Lions v '+oppTeam(m):oppTeam(m)+' v Lions';
+    var y=header(ctx,title,(S.rules.general.league+' · '+fxComp(f)).toUpperCase(),fdate(f.date,true)+' · '+(f.home?'Home':'Away')+(f.venue?' · '+f.venue:''));
+    y+=20;
+    // result panel
+    ctx.fillStyle=PANEL;rr(ctx,48,y,984,280,22);ctx.fill();
+    var lc=R.A>=R.B?GOLD:MUTED;
+    var panelSide=function(t,x){var isL=t==='L';txt(ctx,isL?'LIONS':oppTeam(m).toUpperCase(),x,y+60,{s:22,w:isL?'700':'400',c:isL?GOLD:MUTED,a:'center',max:420});
+      txt(ctx,String(isL?R.A:R.B),x,y+180,{s:120,f:'o',w:isL?'700':'400',c:isL?WHITE:MUTED,a:'center'});
+      if(!pins)txt(ctx,(isL?R.l:R.o)+' points',x,y+218,{s:22,w:isL?'700':'400',c:isL?GOLD:MUTED,a:'center'});};
+    panelSide(homeT(m),294);panelSide(awayT(m),786);txt(ctx,'v',540,y+150,{s:28,c:MUTED,a:'center'});
+    ctx.fillStyle=GOLD;ctx.fillRect(48,y+232,984,48);
+    var setsWon=0,setsLost=0;for(var s=0;s<sets;s++){if(!setDone(m,s))continue;var a=setTot(m,'L',s),b=setTot(m,'O',s);if(a>b)setsWon++;else if(b>a)setsLost++;}
+    var banner=!R.done?'In progress':R.winner==='L'?'Lions win by '+(R.A-R.B)+' pins'+(pins?'':' · '+setsWon+' sets to '+setsLost):R.winner==='O'?oppTeam(m)+' win by '+(R.B-R.A)+' pins':R.winner==='D'?'Draw':'Tied on pins';
+    if(R.done&&R.A===R.B&&R.winner==='L')banner='Level on pins · Lions win';if(R.done&&R.A===R.B&&R.winner==='O')banner='Level on pins · '+oppTeam(m)+' win';
+    txt(ctx,banner.toUpperCase(),540,y+266,{s:26,w:'700',f:'o',c:NAVY,a:'center',max:950});
+    ctx.save();rr(ctx,48,y,984,280,22);ctx.restore();
+    y+=320;
+    // top scorers
+    var best=function(t){var bi=0;for(var p=1;p<mP(m);p++)if(pTot(m,t,p)>pTot(m,t,bi))bi=p;return bi;};var bl=best('L'),bo=best('O');
+    var tsBox=function(t,x){var isL=t==='L',b=isL?bl:bo;if(isL){ctx.strokeStyle=GOLD;ctx.lineWidth=3;rr(ctx,x,y,482,130,20);ctx.stroke();}else{ctx.fillStyle=PANEL;rr(ctx,x,y,482,130,20);ctx.fill();}
+      txt(ctx,isL?'LIONS TOP SCORER':(oppTeam(m)+' top scorer').toUpperCase(),x+28,y+38,{s:16,w:isL?'700':'400',c:isL?GOLD:MUTED,max:420});txt(ctx,slotName(m,t,b,'results'),x+28,y+98,{s:32,w:'700',max:300});txt(ctx,String(pTot(m,t,b)),x+452,y+102,{s:56,f:'o',w:'700',c:isL?GOLD:WHITE,a:'right'});};
+    tsBox(homeT(m),48);tsBox(awayT(m),550);
+    y+=170;
+    [homeT(m),awayT(m)].forEach(function(t,i){y=teamTable(ctx,m,t,t==='L'?'Lions':oppTeam(m),i===0?'Home':'Away',y)+(i===0?40:30);});
+    txt(ctx,'Gold ring = spare · V/C = very close (0) · BYM = beat your man · / = behind',48,H-40,{s:18,c:MUTED,max:800});txt(ctx,'Up the Lions',1032,H-40,{s:20,w:'700',c:GOLD,a:'right'});
+    showImage(o.c,'lions-result-'+f.date+'.png','Results image');});}
+function sumSetPts(m,t){var r=m.rules,n=0;for(var s=0;s<r.sets;s++){if(!setDone(m,s))continue;var a=setTot(m,'L',s),b=setTot(m,'O',s);var mine=t==='L'?a:b,their=t==='L'?b:a;if(mine>their)n+=r.setWin;else if(mine===their)n+=r.setTie;}return n;}
+function pt(ctx,x,y,p){if(p){ctx.fillStyle=GOLD;rr(ctx,x-34,y-20,68,38,19);ctx.fill();txt(ctx,'+'+p,x,y+9,{s:22,w:'700',c:NAVY,a:'center'});}else txt(ctx,'0',x,y+9,{s:22,c:MUTED,a:'center'});}
+function teamTable(ctx,m,t,title,side,y){var r=m.rules,per=r.per,hands=r.hands,W=984,setW=104,gx=48+16,colW=56,scW=74,isL=t==='L',bymW=64,RH=48,SH=34;
+  txt(ctx,title.toUpperCase(),48,y+34,{s:34,w:'600',f:'o',max:600});var tw=ctx.measureText(title.toUpperCase()).width;txt(ctx,side,48+Math.min(tw,600)+14,y+34,{s:20,c:MUTED});txt(ctx,'Total '+matchTot(m,t),1032,y+34,{s:26,f:'o',c:GOLD,a:'right'});
+  y+=70;var nameW=W-setW-10-16-hands*(colW+6)-scW-bymW,hx=function(h){return gx+nameW+h*(colW+6)+colW/2;},scx=gx+nameW+hands*(colW+6)+scW/2,byx=scx+scW/2+bymW/2;
+  txt(ctx,'PLAYER',gx,y+20,{s:14,c:MUTED});for(var h=0;h<hands;h++)txt(ctx,String(h+1),hx(h),y+20,{s:14,c:MUTED,a:'center'});txt(ctx,'SCORE',scx,y+20,{s:14,c:MUTED,a:'center'});if(isL)txt(ctx,'BYM',byx,y+20,{s:14,c:MUTED,a:'center'});txt(ctx,'SET',48+W-setW/2,y+20,{s:14,c:MUTED,a:'center'});
+  y+=44;
+  for(var s=0;s<r.sets;s++){var by=y,blockH=per*RH+2*SH;
+    for(var k=0;k<per;k++){var p=s*per+k,ry=by+k*RH;ctx.fillStyle=k%2?'#10234A':ROW;ctx.fillRect(48,ry,W-setW-10,RH);
+      txt(ctx,slotName(m,t,p,'results'),gx,ry+32,{s:21,w:'600',max:nameW-12});
+      for(h=0;h<hands;h++){var c=m[t][p][h],cxp=hx(h);if(!c)continue;
+        if(c.vc)txt(ctx,'V/C',cxp,ry+31,{s:16,c:MUTED,a:'center'});
+        else if(c.sp){ctx.strokeStyle=GOLD;ctx.lineWidth=2.5;rr(ctx,cxp-colW/2+2,ry+8,colW-4,32,16);ctx.stroke();txt(ctx,String(c.v),cxp,ry+32,{s:21,w:'700',c:GOLD,a:'center'});}
+        else txt(ctx,String(c.v),cxp,ry+32,{s:21,a:'center'});}
+      txt(ctx,String(pTot(m,t,p)),scx,ry+33,{s:23,w:'700',c:GOLD,a:'center'});
+      if(isL&&bym(m,p)){ctx.strokeStyle=GOLD;ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(byx-11,ry+25);ctx.lineTo(byx-3,ry+33);ctx.lineTo(byx+12,ry+15);ctx.stroke();}}
+    // down and up/down rows
+    var dy=by+per*RH,uy=dy+SH;ctx.fillStyle='#0D1F44';ctx.fillRect(48,dy,W-setW-10,2*SH);ctx.fillStyle=LINE;ctx.fillRect(48,dy,W-setW-10,1);ctx.fillRect(48,uy,W-setW-10,1);
+    txt(ctx,'Down',gx,dy+23,{s:16,w:'600',c:MUTED});txt(ctx,'Up / down',gx,uy+23,{s:16,w:'600',c:MUTED});
+    for(h=0;h<hands;h++){var dv=downVal(m,t,s,h),uv=upVal(m,t,s,h);if(dv!=null)txt(ctx,String(dv),hx(h),dy+24,{s:17,c:WHITE,a:'center'});if(uv!=null)txt(ctx,uv,hx(h),uy+24,{s:17,w:uv==='/'?'400':'700',c:uv==='/'?'#5C74A6':GOLD,a:'center'});}
+    txt(ctx,String(setTot(m,t,s)),scx,dy+24,{s:17,w:'700',c:WHITE,a:'center'});
+    ctx.fillStyle=GOLD;rr(ctx,48+W-setW,by,setW,blockH,10);ctx.fill();var spv=setPts(m,t,s),cxs=48+W-setW/2,mid=by+blockH/2-(spv?14:0);txt(ctx,'SET '+(s+1),cxs,mid-26,{s:13,w:'700',c:NAVY,a:'center'});txt(ctx,String(setTot(m,t,s)),cxs,mid+16,{s:38,w:'700',f:'o',c:NAVY,a:'center'});if(spv){ctx.fillStyle=NAVY;rr(ctx,cxs-38,mid+32,76,32,16);ctx.fill();txt(ctx,'+'+spv+' pts',cxs,mid+54,{s:17,w:'700',c:GOLD,a:'center'});}
+    y+=blockH+14;}
+  return y;}
+function avgImg(){var a=averages();fontsReady().then(function(){var H=228+60+70+a.length*52+120,o=canvasFor(H),ctx=o.ctx;
+  var y=header(ctx,'Season averages','LIONS · '+(S.rules.general.league).toUpperCase(),'League & cup matches · updated '+fdate(today(),true))+30;
+  var cols=[[48,'PLAYER','left'],[560,'GAMES','center'],[670,'PINS','center'],[790,'AVG','center'],[905,'PER HAND','center'],[1000,'BEST','center']];
+  cols.forEach(function(c){txt(ctx,c[1],c[0],y+20,{s:15,c:MUTED,a:c[2]});});y+=40;
+  a.forEach(function(x,i){ctx.fillStyle=i%2?'#10234A':ROW;rr(ctx,40,y,1000,48,8);ctx.fill();txt(ctx,(i+1)+'. '+outName(x.pid,'averages'),60,y+33,{s:23,w:'600',max:440});txt(ctx,String(x.games),560,y+33,{s:23,a:'center'});txt(ctx,String(x.pins),670,y+33,{s:23,a:'center'});txt(ctx,x.avgGame.toFixed(1),790,y+33,{s:27,w:'700',c:GOLD,a:'center'});txt(ctx,x.avgHand.toFixed(2),905,y+33,{s:21,c:MUTED,a:'center'});txt(ctx,String(x.high),1000,y+33,{s:23,a:'center'});y+=52;});
+  txt(ctx,'Avg = average score per match · Front Pin not included',48,H-40,{s:18,c:MUTED});txt(ctx,'Up the Lions',1032,H-40,{s:20,w:'700',c:GOLD,a:'right'});
+  showImage(o.c,'lions-averages-'+today()+'.png','Averages image');});}
+
+/* ---------------- text outputs ---------------- */
+function reportText(){var f=curFx(),m=S.matches[f.id],r=m.rules,R=result(m),L=[],pins=r.result==='pins',opp=oppTeam(m);
+  var title=f.home?'Lions '+R.A+' – '+R.B+' '+opp:opp+' '+R.B+' – '+R.A+' Lions';
+  L.push('🦁 *Match report: '+title+'*');L.push('_'+fxComp(f)+' · '+fdate(f.date)+' · '+(f.home?'Home':'Away')+'_');L.push('');
+  var won=[],lost=[];for(var s=0;s<r.sets;s++){var a=setTot(m,'L',s),b=setTot(m,'O',s);if(a>b)won.push(s+1);else if(b>a)lost.push(s+1);}
+  var lst=function(x){return x.length>1?x.slice(0,-1).join(', ')+' and '+x.slice(-1):String(x[0]);};
+  if(!R.done)L.push('Match still in progress.');
+  else if(R.winner==='L')L.push(pins?'Lions won by '+(R.A-R.B)+' pins.':'Lions won '+R.l+'–'+R.o+' on points'+(won.length?', taking set'+(won.length>1?'s ':' ')+lst(won):'')+' and the match by '+(R.A-R.B)+' pins.');
+  else if(R.winner==='O')L.push(pins?opp+' won by '+(R.B-R.A)+' pins.':opp+' won '+R.o+'–'+R.l+' on points.'+(won.length?' Lions took set'+(won.length>1?'s ':' ')+lst(won)+'.':''));
+  else L.push('Level on '+R.A+' pins'+(pins?'.':', '+R.l+'–'+R.o+' on points.'));
+  L.push('');
+  var bi=0;for(var p=1;p<mP(m);p++)if(pTot(m,'L',p)>pTot(m,'L',bi))bi=p;var bsp=m.L[bi].filter(function(c){return c&&c.sp;}).length;
+  L.push('*Top scorer:* '+slotName(m,'L',bi,'report')+' with '+pTot(m,'L',bi)+(bsp?', including '+bsp+' spare'+(bsp>1?'s':''):'')+'.');
+  var an=mP(m)-1;if(an!==bi)L.push('*Anchor:* '+slotName(m,'L',an,'report')+' closed it out with '+pTot(m,'L',an)+'.');
+  // steadiest
+  var sd=-1,sv=99;for(p=0;p<mP(m);p++){var v=m.L[p].map(val),mx=Math.max.apply(null,v),mn=Math.min.apply(null,v);if(mx-mn<sv&&p!==bi&&p!==an){sv=mx-mn;sd=p;}}
+  if(sd>=0&&sv<=2)L.push('*Steadiest:* '+slotName(m,'L',sd,'report')+', '+pTot(m,'L',sd)+' with every hand within '+sv+' pin'+(sv===1?'':'s')+'.');
+  var big=-1,bm=0;for(s=0;s<r.sets;s++){var d=setTot(m,'L',s)-setTot(m,'O',s);if(d>bm){bm=d;big=s;}}
+  if(big>=0)L.push('*Best set:* set '+(big+1)+', won by '+bm+' pins.');
+  L.push('*Spares:* '+(f.home?'Lions '+spares(m,'L')+', '+opp+' '+spares(m,'O'):opp+' '+spares(m,'O')+', Lions '+spares(m,'L'))+'.');
+  if(lost.length&&R.winner==='L')L.push('We dropped set'+(lost.length>1?'s ':' ')+lst(lost)+', otherwise a strong team performance.');
+  L.push('');L.push('Thanks all. Up the Lions 🦁');return L.join('\n');}
+function scoresText(){var f=curFx(),m=S.matches[f.id],R=result(m),opp=oppTeam(m),L=[];
+  var hT=homeT(m),aT=awayT(m),nm=function(t){return t==='L'?'Lions':opp;},tot=function(t){return t==='L'?R.A:R.B;},pt=function(t){return t==='L'?R.l:R.o;};
+  L.push(fxTitle(f)+' – '+fxComp(f)+' – '+f.date+' ('+(f.home?'Home':'Away')+')');L.push(nm(hT)+' '+tot(hT)+' – '+tot(aT)+' '+nm(aT)+(m.rules.result==='sets'?' · Points '+pt(hT)+'–'+pt(aT):''));
+  for(var s=0;s<m.rules.sets;s++)L.push('Set '+(s+1)+': '+nm(hT)+' '+setTot(m,hT,s)+' – '+setTot(m,aT,s)+' '+nm(aT));
+  [[hT,nm(hT).toUpperCase()+' (HOME)'],[aT,nm(aT).toUpperCase()+' (AWAY)']].forEach(function(x){L.push('');L.push(x[1]);for(var p=0;p<mP(m);p++){if(p%m.rules.per===0)L.push('Set '+(p/m.rules.per+1)+':');L.push((p+1)+'. '+slotName(m,x[0],p)+': '+m[x[0]][p].map(cellText).join(' ')+' = '+pTot(m,x[0],p));}});
+  L.push('');L.push('[n] = spare · V/C = very close (0)');return L.join('\n');}
+function textModal(title,t){modal('<h4>'+esc(title)+'</h4><textarea class="out" id="outText" readonly>'+esc(t)+'</textarea><button class="btn gold" data-act="copytext">Copy</button><button class="btn ghost" data-act="sharetext">Share</button><button class="btn ghost" data-act="close">Close</button>');T.text=t;}
+function copyText(t){try{navigator.clipboard.writeText(t).then(function(){toast('Copied');},function(){toast('Press and hold the text to copy');});}catch(e){toast('Press and hold the text to copy');}}
+
+function shortName(f){var p=String(f||'').replace(/\(.*?\)/g,'').trim().split(/\s+/).filter(Boolean);if(!p.length)return '';if(p.length===1)return p[0];return p[0].charAt(0).toUpperCase()+'. '+p.slice(1).join(' ');}
+
+/* ---------------- events ---------------- */
+document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.disabled)return;var d=b.dataset,f=curFx(),m=curMatch();
+  if(denied(needFor(d),m))return;
+  if(d.tab){if(d.fx)S.ui.fx=d.fx;S.ui.tab=d.tab;T.sel=null;T.spare=false;T.pick=null;closeModal();save();render();window.scrollTo(0,0);return;}
+  if(d.av){var sel=selFor(f.id);sel.avail[d.id]=sel.avail[d.id]===d.av?'':d.av;if(d.av==='out'){var i=sel.lineup.indexOf(d.id);if(i>-1&&!S.matches[f.id])sel.lineup[i]=null;var ri0=sel.reserves.indexOf(d.id);if(ri0>-1)sel.reserves.splice(ri0,1);}save();render();return;}
+  if(d.req!==undefined){var sl=selFor(f.id);sl.req[d.id]=+d.req;save();render();return;}
+  if(d.slot!==undefined&&!d.act){var i2=+d.slot,sl0=selFor(f.id);if(T.pick===null||T.pick===undefined){T.pick=i2;render();return;}
+    if(T.pick===i2){T.pick=null;render();pickPlayerModal(i2,'team');return;}
+    var A0=getSlot(sl0,T.pick),B0=getSlot(sl0,i2);if(T.pick>=12&&i2>=12){sl0.reserves[T.pick-12]=B0;sl0.reserves[i2-12]=A0;}else{if(T.pick<12)sl0.lineup[T.pick]=B0||null;else if(B0)sl0.reserves[T.pick-12]=B0;else sl0.reserves.splice(T.pick-12,1);if(i2<12)sl0.lineup[i2]=A0||null;else if(A0)sl0.reserves[i2-12]=A0;else sl0.reserves.splice(i2-12,1);}
+    T.pick=null;save();render();return;}
+  if(d.v!==undefined){enter(+d.v,false,false);return;}
+  if(d.sp!==undefined){enter(+d.sp,true,false);return;}
+  if(d.cell){var a=d.cell.split(','),cm=curMatch();if(cm&&lsLocked(cm,a[0],+a[1])){toast('L/S copies the lowest score from the earlier sets');return;}T.sel={t:a[0],p:+a[1],h:+a[2]};T.spare=false;S.ui.tab='score';render();window.scrollTo(0,0);return;}
+  if(d.name){var nn=d.name.split(',');if(nn[0]==='L'){var p=+nn[1];if(slotLocked(m,p)){toast((p+1)+'. '+slotName(m,'L',p)+' has thrown in this set, so the slot is locked');return;}pickPlayerModal(p,'match');}else oppNamesModal(Math.floor(+nn[1]/m.rules.per));return;}
+  if(d.tw){m.tieWinner=d.tw;save();render();return;}
+  if(d.nick){S.rules.general.nickOn[d.nick]=d.nv==='1';save();render();return;}
+  switch(d.act){
+    case 'close':closeModal();break;
+    case 'signin':case 'signup':case 'signout':case 'forgot':case 'claim':case 'newpw':authAct(d.act,d);break;
+    case 'acctmode':T.acct=d.m;render();break;
+    case 'saveaccess':case 'unlink':accessAct(d.act,d.id);break;
+    case 'takeover':m.scorer=meTag();T.sel=null;T.spare=false;save();render();toast('You’re scoring now');break;
+    case 'pullall':SY.ready=false;SY.pulled='';SY.at={};T.seedAsked=false;toast('Reloading…');pull(true);break;
+    case 'seedok':closeModal();SY.ready=true;SY.base={};SY.at={};NET.empty=false;sySave();push();toast('Uploading this phone’s data…');render();break;
+    case 'seedforce':modal('<h4>Replace the shared data?</h4><div class="small muted">Everyone’s phones will switch to this phone’s copy of the fixtures, squad, team sheets, results and rules.</div><button class="btn danger" data-act="seedok">Replace it</button><button class="btn ghost" data-act="close">Cancel</button>');break;
+    case 'subtick':S.subs=S.subs||{};var sx=S.subs[d.f]||(S.subs[d.f]={});if(sx[d.id])delete sx[d.id];else sx[d.id]=1;save();if(T.subsP)subsPlayerModal(T.subsP);else render();break;
+    case 'subsplayer':subsPlayerModal(d.id);break;
+    case 'subscopy':textModal('Subs',subsText());break;
+    case 'savesubs':var fe=parseInt(fval('sbFee'),10);S.rules.general.subFee=fe>0?fe:5;S.rules.general.subsFrom=fval('sbFrom')||subsFrom();save();render();toast('Subs settings saved');break;
+    case 'choosefx':chooseFxModal();break;
+    case 'pickfx':S.ui.fx=d.id;T.sel=null;T.pick=null;closeModal();if(S.ui.tab==='fixtures'){}save();render();toast('Fixture selected');break;
+    case 'suggest':var w=suggest(f.id);save();render();if(w.length)modal('<h4>Team suggested</h4>'+w.map(function(x){return '<div class="warn">'+esc(x)+'</div>';}).join('')+'<button class="btn gold" data-act="close">OK</button>');else toast('Team suggested');break;
+    case 'clearteam':selFor(f.id).lineup=Array(12).fill(null);selFor(f.id).reserves=[];T.pick=null;save();render();break;
+    case 'tput':var s1=selFor(f.id),ts=+d.slot;if(ts>=12&&ts-12>=s1.reserves.length)s1.reserves.push(d.id);else setSlot(s1,ts,d.id);closeModal();save();render();break;
+    case 'addres':var sr=selFor(f.id);pickPlayerModal(12+sr.reserves.length,'team');break;
+    case 'tclear':setSlot(selFor(f.id),+d.slot,null);closeModal();save();render();break;
+    case 'mput':var sx=selFor(f.id),old=m.lineup[+d.slot],rix=sx.reserves.indexOf(d.id);m.lineup[+d.slot]=d.id;if(rix>-1){if(old)sx.reserves[rix]=old;else sx.reserves.splice(rix,1);}else if(old)sx.reserves.push(old);sx.lineup=m.lineup.slice();lsFill(m);closeModal();save();render();break;
+    case 'mclear':m.lineup[+d.slot]=null;closeModal();save();render();break;
+    case 'mswap':var A=+d.a,B=+d.b;if(slotLocked(m,A)||slotLocked(m,B)){toast('That slot is locked');break;}var t2=m.lineup[A];m.lineup[A]=m.lineup[B];m.lineup[B]=t2;selFor(f.id).lineup=m.lineup.slice();closeModal();save();render();break;
+    case 'teamsheet':teamSheetImg();break;
+    case 'start':var nm=newMatch(S,f.id);nm.lineup=selFor(f.id).lineup.slice();nm.scorer=meTag();S.matches[f.id]=nm;T.sel=null;save();render();break;
+    case 'spare':T.spare=true;render();break;
+    case 'nospare':T.spare=false;render();break;
+    case 'vc':enter(0,false,true);break;
+    case 'undo':undo();break;
+    case 'cancelsel':T.sel=null;render();break;
+    case 'skip':var tg=target(m);if(!tg)break;var o=order(m),ix=o.findIndex(function(x){return x.t===tg.t&&x.p===tg.p&&x.h===tg.h;});T.sel=o[(ix+1)%o.length];render();break;
+    case 'allsets':T.allsets=!T.allsets;render();break;
+    case 'other':modal('<h4>Other score</h4><div class="field"><label for="oVal">Hand total</label><input id="oVal" type="number" inputmode="numeric" min="0" max="'+m.rules.maxHand+'"></div><label style="display:flex;gap:10px;align-items:center;min-height:44px"><input type="checkbox" id="oSp" style="width:22px;height:22px"> Mark as spare</label><button class="btn gold" data-act="otherok">Enter</button><button class="btn ghost" data-act="close">Cancel</button>');setTimeout(function(){var i=document.getElementById('oVal');if(i)i.focus();},50);break;
+    case 'otherok':var n=parseInt(document.getElementById('oVal').value,10);if(isNaN(n)||n<0||n>m.rules.maxHand){toast('Enter 0 to '+m.rules.maxHand);break;}var spc=document.getElementById('oSp').checked;closeModal();enter(n,spc,false);break;
+    case 'oppnames':oppNamesModal(+d.set);break;
+    case 'saveopp':var team=oppTeam(m),known=S.oppNames[team]||(S.oppNames[team]=[]);document.querySelectorAll('[data-onp]').forEach(function(inp){var v=inp.value.trim();m.opp[+inp.dataset.onp]=v;if(v&&known.indexOf(v)<0&&!/^l\s*\/\s*s$/i.test(v))known.push(v);});lsFill(m);closeModal();save();render();break;
+    case 'resimg':resultsImg();break;
+    case 'avgimg':avgImg();break;
+    case 'shareimg':shareImg();break;
+    case 'draws':drawsModal(d.k);break;
+    case 'drawseen':var cu=(S.feed.cups||[]).find(function(x){return x.key===d.k;});S.feedSeen=S.feedSeen||{draws:{}};if(cu)cu.images.forEach(function(im){S.feedSeen.draws[im.file]=1;});save();closeModal();render();break;
+    case 'fixchg':fixChgModal();break;
+    case 'fixseen':S.feedSeen.pdf=S.feed.fixtures.hash;save();closeModal();render();break;
+    case 'feedrefresh':toast('Checking the league website…');feedFetch(true);break;
+    case 'leagueimg':leagueImg();break;
+    case 'ltfull':T.ltFull=!T.ltFull;render();break;
+    case 'leaguecard':leagueCard();break;
+    case 'sendleague':sendLeague();break;
+    case 'copyleague':copyText(S.rules.general.leagueEmail);break;
+    case 'sign':sigModal();break;
+    case 'sigclear':var sp=T.sig&&T.sig[d.k];if(sp){var cx=sp.cv.getContext('2d');cx.save();cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,sp.cv.width,sp.cv.height);cx.restore();sp.st.inked=false;sp.st.old=false;}break;
+    case 'sigsave':m.sig=m.sig||{};['away','home'].forEach(function(k){var sp=T.sig&&T.sig[k];if(!sp)return;if(!sp.st.inked){delete m.sig[k];return;}if(sp.st.old&&!sp.st.changed&&m.sig[k])return;var u=sigTrim(sp.cv);if(u)m.sig[k]=u;else delete m.sig[k];});save();closeModal();render();toast('Signatures saved');break;
+    case 'report':textModal('Match report',reportText());break;
+    case 'copyres':textModal('All scores',scoresText());break;
+    case 'copytext':copyText(T.text);break;
+    case 'sharetext':try{if(navigator.share)navigator.share({text:T.text}).catch(function(){});else copyText(T.text);}catch(x){copyText(T.text);}break;
+    case 'addfx':fxModal(null);break;
+    case 'editfx':fxModal(d.id);break;
+    case 'savefx':var id=d.id,fx=id?fxById(id):{id:uid('F'),status:'scheduled'};fx.date=document.getElementById('fDate').value||today();fx.comp=document.getElementById('fComp').value;fx.round=document.getElementById('fRound').value.trim();fx.opp=document.getElementById('fOpp').value.trim();fx.home=document.getElementById('fHome').value==='1';fx.venue=document.getElementById('fVen').value.trim();fx.status=document.getElementById('fStat').value;
+      if(fx.status==='knockedout'){var later=S.fixtures.filter(function(x){return x.comp===fx.comp&&x.date>fx.date&&x.status==='scheduled'&&!S.matches[x.id];});later.forEach(function(x){x.status='knockedout';});if(later.length)toast(later.length+' later round(s) marked knocked out');}
+      if(!id)S.fixtures.push(fx);if(S.matches[fx.id])S.matches[fx.id].home=fx.home;closeModal();save();render();break;
+    case 'delfx':if(S.matches[d.id]){toast('Has scores: cancel it instead');break;}S.fixtures=S.fixtures.filter(function(x){return x.id!==d.id;});delete S.sel[d.id];if(S.ui.fx===d.id)S.ui.fx=null;closeModal();save();render();break;
+    case 'comps':compsModal();break;
+    case 'savecomps':document.querySelectorAll('[data-cname]').forEach(function(i){var c=compById(i.dataset.cname);if(i.value.trim())c.name=i.value.trim();});document.querySelectorAll('[data-ctype]').forEach(function(i){compById(i.dataset.ctype).type=i.value;});document.querySelectorAll('[data-carch]').forEach(function(i){compById(i.dataset.carch).archived=i.checked;});
+      var nc=document.getElementById('ncName').value.trim();if(nc)S.comps.push({id:uid('c'),name:nc,type:document.getElementById('ncType').value,archived:false});closeModal();save();render();toast('Competitions saved');break;
+    case 'addplayer':modal('<h4>Add player</h4><div class="field"><label>Full name</label><input id="npFull" placeholder="e.g. Chris Cooke" autocapitalize="words"></div><div class="field"><label>Name on team sheets (filled in for you)</label><input id="npName" placeholder="e.g. C. Cooke"></div><div class="field"><label>Nickname (optional)</label><input id="npNick"></div><div class="field"><label>Role (optional)</label><input id="npRole" placeholder="e.g. Treasurer"></div><div class="note">Players added here stay on this phone. To add someone for everyone, ask for them to be added to the squad in the next version.</div><button class="btn gold" data-act="saveplayer">Add</button><button class="btn ghost" data-act="close">Cancel</button>');setTimeout(function(){var f=document.getElementById('npFull');f.focus();f.oninput=function(){document.getElementById('npName').value=shortName(f.value);};},50);break;
+    case 'saveplayer':var nfull=document.getElementById('npFull').value.trim(),nmv=document.getElementById('npName').value.trim()||shortName(nfull);if(!nmv)break;S.players.push({id:uid('p'),name:nmv,full:nfull,nick:document.getElementById('npNick').value.trim(),role:document.getElementById('npRole').value.trim(),active:true});closeModal();save();render();toast(nmv+' added');break;
+    case 'bulkadd':modal('<h4>Paste a list</h4><div class="field"><label>One name per line, e.g. copied from the squad spreadsheet</label><textarea id="bulk"></textarea></div><button class="btn gold" data-act="savebulk">Add players</button><button class="btn ghost" data-act="close">Cancel</button>');break;
+    case 'savebulk':var have={};S.players.forEach(function(p){have[p.name.toLowerCase()]=1;});var added=0;document.getElementById('bulk').value.split(/\r?\n/).map(function(x){return x.split('\t')[0].trim();}).filter(Boolean).forEach(function(x){var dn=/^[A-Z]\.\s/.test(x)?x:shortName(x);if(!have[dn.toLowerCase()]){S.players.push({id:uid('p'),name:dn,full:dn===x?'':x,active:true});have[dn.toLowerCase()]=1;added++;}});closeModal();save();render();toast(added+' player(s) added');break;
+    case 'editplayer':var pl=player(d.id);modal('<h4>Edit player</h4><div class="field"><label>Full name</label><input id="epFull" value="'+esc(pl.full||'')+'"></div><div class="field"><label>Name on team sheets</label><input id="epName" value="'+esc(pl.name)+'"></div><div class="field"><label>Nickname (optional)</label><input id="epNick" value="'+esc(pl.nick||'')+'"></div><div class="field"><label>Role (optional)</label><input id="epRole" value="'+esc(pl.role||'')+'" placeholder="e.g. Captain"></div><label style="display:flex;gap:10px;align-items:center;min-height:44px"><input type="checkbox" id="epAct" style="width:22px;height:22px"'+(pl.active?' checked':'')+'> Active (in the current squad)</label><div class="note">Inactive players keep their past results but aren\u2019t offered for selection.</div><button class="btn gold" data-act="saveedit" data-id="'+pl.id+'">Save</button><button class="btn ghost" data-act="close">Cancel</button>');if(isAdmin())accessInject(d.id);break;
+    case 'saveedit':var pe=player(d.id),nv=document.getElementById('epName').value.trim();if(nv)pe.name=nv;pe.full=document.getElementById('epFull').value.trim();pe.nick=document.getElementById('epNick').value.trim();pe.role=document.getElementById('epRole').value.trim();pe.active=document.getElementById('epAct').checked;closeModal();save();render();break;
+    case 'editrule':ruleModal(d.id);break;
+    case 'addrule':ruleModal(null);break;
+    case 'saverule':var k=d.id||('t'+Date.now().toString(36)),rr0=k&&S.rules.types[k]?S.rules.types[k]:{};var gv=function(id){return parseInt(document.getElementById(id).value,10)||0;};
+      rr0.label=document.getElementById('rLabel').value.trim()||'New type';rr0.result=document.getElementById('rRes').value;rr0.setWin=gv('rSetWin');rr0.setTie=gv('rSetTie');rr0.matchWin=gv('rMatchWin');rr0.matchTie=gv('rMatchTie');rr0.tie=document.getElementById('rTie').value;rr0.extraHands=Math.max(1,gv('rExtra'));rr0.maxHand=Math.max(1,gv('rMax'));rr0.spareMin=Math.max(0,gv('rSpMin'));rr0.spareMax=Math.max(rr0.spareMin,Math.min(rr0.maxHand,gv('rSpMax')));rr0.sets=Math.max(1,gv('rSets'));rr0.per=Math.max(1,gv('rPer'));rr0.hands=Math.max(1,gv('rHands'));rr0.averages=document.getElementById('rAvg').checked;rr0.notes=document.getElementById('rNotes').value;
+      if(rr0.sets*rr0.per!==12)toast('Note: team picking is built for 12 players');
+      S.rules.types[k]=rr0;
+      // apply to in-progress (not finished) matches of this type with the same format
+      Object.keys(S.matches).forEach(function(fid){var mm=S.matches[fid];if(mm.type===k&&!allDone(mm)&&mm.rules.sets===rr0.sets&&mm.rules.per===rr0.per&&mm.rules.hands===rr0.hands)mm.rules=JSON.parse(JSON.stringify(rr0));});
+      closeModal();save();render();toast('Rules saved');break;
+    case 'savegeneral':var g=S.rules.general;g.leagueEmail=document.getElementById('gEmail').value.trim();g.sendWhen=document.getElementById('gWhen').value;g.home=document.getElementById('gHome').value.trim()||'Golden Lion';g.awayWeeks=Math.max(1,parseInt(document.getElementById('gAway').value,10)||3);save();toast('Saved');break;
+    case 'export':var js=JSON.stringify(S);try{var file=new File([js],'lions-hub-backup-'+today()+'.json',{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[file]}))navigator.share({files:[file]}).catch(function(){});else textModal('Backup',js);}catch(x){textModal('Backup',js);}break;
+    case 'exportcopy':textModal('Backup',JSON.stringify(S));break;
+    case 'importpaste':modal('<h4>Paste backup</h4><textarea class="out" id="impText"></textarea><button class="btn gold" data-act="doimport">Restore</button><button class="btn ghost" data-act="close">Cancel</button>');break;
+    case 'doimport':importData(document.getElementById('impText').value);break;
+    case 'reset':modal('<h4>Reset everything?</h4><div class="small muted">This removes all scores, availability and changes on this phone and reloads the starting data. Save a backup first if you need it.</div><button class="btn danger" data-act="resetok">Reset</button><button class="btn ghost" data-act="close">Cancel</button>');break;
+    case 'resetok':S=seed();S.subs={};closeModal();localSave();if(SB){SY.ready=false;SY.pulled='';SY.at={};SY.base={};sySave();pull(true);}render();toast('Reset done');break;
+  }
+});
+function importData(t){try{var d=JSON.parse(t);if(!d||!d.players||!d.fixtures)throw 0;S=d;S.players.forEach(function(p){delete p.phone;});delete S.regTemplate;S.squadV=0;syncSquad(S);S.pastV=0;syncPast(S);if(!S.rules.general.nickOn)S.rules.general.nickOn={teamsheet:false,live:false,results:false,report:false,averages:false};closeModal();save();render();toast('Backup restored');}catch(e){toast('That isn’t a valid backup');}}
+document.addEventListener('change',function(e){if(e.target.id==='fxSel'){if(e.target.value){S.ui.fx=e.target.value;T.sel=null;T.pick=null;T.spare=false;save();render();}return;}var fl=e.target.files&&e.target.files[0];if(!fl)return;
+  if(e.target.id==='impFile'){if(!isAdmin()){toast('Only admins can restore a backup');return;}var r=new FileReader();r.onload=function(){importData(r.result);};r.readAsText(fl);}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.onp!==undefined){e.preventDefault();var ins=[].slice.call(document.querySelectorAll('[data-onp]')),i=ins.indexOf(e.target);if(i<ins.length-1)ins[i+1].focus();else document.querySelector('[data-act="saveopp"]').click();}});
+
+/* ---------------- shared data, sign-in and roles (v2.0) ---------------- */
+var SB_URL='https://hjwpwiiebbnjykkywckx.supabase.co',SB_KEY='sb_publishable_bIlvRQY33E9Gg0mmUOFklQ_xnM9Ngy1';
+var SKEY=KEY+'-sync';
+var SY=(function(){try{return JSON.parse(localStorage.getItem(SKEY))||{};}catch(e){return {};}})();
+SY.base=SY.base||{};SY.at=SY.at||{};SY.dev=SY.dev||('d'+Math.random().toString(36).slice(2,10));
+var SB=null,PEOPLE=SY.people||[],NET={live:false,err:'',empty:false,pushing:false,pulling:false};
+if(!S.subs)S.subs={};
+function sySave(){SY.people=PEOPLE;try{localStorage.setItem(SKEY,JSON.stringify(SY));}catch(e){}}
+function hsh(s){var h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h.toString(36)+':'+s.length;}
+function errMsg(e){return (e&&(e.message||e.error_description||e.msg))||String(e);}
+function myRole(){var me=SY.me;return me&&!me.requested&&(me.role==='admin'||me.role==='scorer')?me.role:'viewer';}
+function isAdmin(){return myRole()==='admin';}
+function canEdit(){var r=myRole();return r==='admin'||r==='scorer';}
+function canScore(m){return canEdit()&&(!m||!m.scorer||m.scorer.dev===SY.dev||!target(m));}
+function roleLabel(){var me=SY.me;if(!me)return 'Viewer';if(me.requested)return 'Scorer access requested';return me.role==='admin'?'Admin':me.role==='scorer'?'Scorer':'Viewer (no scorer access)';}
+function meTag(){var me=SY.me||{},p=me.pid&&player(me.pid);return {pid:me.pid||null,name:p?fullName(p):(me.name||'Scorer'),dev:SY.dev,at:Date.now()};}
+function scorerKey(k){return k==='players'||k==='oppNames'||k.indexOf('sel:')===0||k.indexOf('match:')===0;}
+function writable(k){return isAdmin()||(canEdit()&&scorerKey(k));}
+function docsOf(){var o={players:{v:S.squadV||0,list:S.players},comps:S.comps,rules:S.rules,fixtures:S.fixtures,oppNames:S.oppNames};
+  Object.keys(S.sel).forEach(function(k){o['sel:'+k]=S.sel[k];});
+  Object.keys(S.matches).forEach(function(k){o['match:'+k]=S.matches[k];});
+  if(isAdmin())Object.keys(S.subs||{}).forEach(function(k){o['subs:'+k]=S.subs[k];});
+  return o;}
+function applyDoc(k,v){if(v==null)return;
+  if(k==='players'){if(v.list){S.players=v.list;S.squadV=v.v||0;}}
+  else if(k==='comps')S.comps=v;else if(k==='rules')S.rules=v;else if(k==='fixtures')S.fixtures=v;else if(k==='oppNames')S.oppNames=v;
+  else if(k.indexOf('sel:')===0)S.sel[k.slice(4)]=v;
+  else if(k.indexOf('match:')===0)S.matches[k.slice(6)]=v;
+  else if(k.indexOf('subs:')===0){S.subs=S.subs||{};S.subs[k.slice(5)]=v;}}
+function dirtyMap(){var r={};if(!SY.ready)return r;var o=docsOf();Object.keys(o).forEach(function(k){if(writable(k)&&hsh(JSON.stringify(o[k]))!==SY.base[k])r[k]=1;});return r;}
+function dirtyKeys(){return Object.keys(dirtyMap());}
+function fixups(){if((S.squadV||0)<SQUAD.v)syncSquad(S);var g=S.rules.general;if(!g.nickOn)g.nickOn={teamsheet:false,live:false,results:false,report:false,averages:false};if(!S.subs)S.subs={};if(!S.oppNames)S.oppNames={};}
+function setBase(keys){var o=docsOf();keys.forEach(function(k){if(o[k]!==undefined)SY.base[k]=hsh(JSON.stringify(o[k]));});}
+function localSave(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}sySave();}
+function modalOpen(){var md=document.getElementById('modal');return md&&md.style.display==='flex';}
+function renderSoon(){var ae=document.activeElement,typing=ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);if(modalOpen()||typing){T.pend=true;renderTop();return;}render();}
+function topStatus(){renderTop();if(S.ui.tab==='account'&&SY.session&&SY.me)renderSoon();}
+function syncState(){if(!SB)return {t:'This phone only',c:''};var n=dirtyKeys().length,on=navigator.onLine!==false;
+  if(!SY.ready)return {t:NET.empty?'Not started':(on?'Connecting…':'Offline'),c:'o'};
+  if(n&&!on)return {t:'Offline · '+n+' to send',c:'o'};if(n)return {t:'Sending…',c:'o'};
+  if(!on)return {t:'Offline',c:''};if(NET.err)return {t:'Check sharing',c:'o'};if(NET.live)return {t:'Live',c:'g'};return {t:'Connecting…',c:''};}
+function timeOf(iso){var d=new Date(iso);if(isNaN(d))return '';var p=function(n){return (n<10?'0':'')+n;};return (fdate?fdate(iso.slice(0,10))+' ':'')+p(d.getHours())+':'+p(d.getMinutes());}
+
+/* pull: remote wins for anything this phone hasn't changed and not yet sent */
+var pullAgain=false;
+function pull(full){if(!SB)return Promise.resolve();if(NET.pulling){pullAgain=true;return Promise.resolve();}
+  var first=!SY.ready,q=SB.from('docs').select('key,data,updated_at,updated_by');
+  if(!first&&!full&&SY.pulled)q=q.gt('updated_at',SY.pulled);
+  NET.pulling=true;
+  return q.then(function(r){NET.pulling=false;if(r.error)throw r.error;var rows=r.data||[];
+    if(first&&!rows.length){NET.empty=true;NET.err='';topStatus();if(isAdmin())seedAsk();else renderSoon();return;}
+    NET.empty=false;var dk=first?{}:dirtyMap(),got=[],maxAt=SY.pulled||'';
+    rows.forEach(function(row){if(row.updated_at>maxAt)maxAt=row.updated_at;if(!first&&SY.at[row.key]&&row.updated_at<=SY.at[row.key])return;if(dk[row.key])return;applyDoc(row.key,row.data);SY.at[row.key]=row.updated_at;got.push(row.key);});
+    SY.pulled=maxAt;if(first)SY.ready=true;fixups();setBase(got);NET.err='';localSave();
+    if(got.length||first)renderSoon();else topStatus();
+    if(dirtyKeys().length)syncKick();
+    if(pullAgain){pullAgain=false;pull(false);}})
+  .catch(function(e){NET.pulling=false;NET.err=errMsg(e);topStatus();});}
+/* push: send what this phone has changed and is allowed to change */
+var pushT=null;
+function syncKick(){if(!SB||!SY.ready)return;clearTimeout(pushT);pushT=setTimeout(push,300);}
+function push(){if(!SB||!SY.ready||NET.pushing||!SY.session)return;var ks=dirtyKeys();topStatus();if(!ks.length)return;
+  if(navigator.onLine===false)return;
+  var o=docsOf(),tag=SY.dev+'|'+meTag().name,hs={},rows=ks.map(function(k){hs[k]=hsh(JSON.stringify(o[k]));return {key:k,data:o[k],updated_by:tag};});
+  NET.pushing=true;
+  SB.from('docs').upsert(rows).select('key,updated_at').then(function(r){NET.pushing=false;if(r.error)throw r.error;
+    (r.data||[]).forEach(function(x){SY.base[x.key]=hs[x.key];SY.at[x.key]=x.updated_at;});NET.err='';sySave();topStatus();if(dirtyKeys().length)syncKick();})
+  .catch(function(e){NET.pushing=false;NET.err='Not sent yet: '+errMsg(e);topStatus();clearTimeout(pushT);pushT=setTimeout(push,15000);});}
+function onRemote(row){if(!row||!row.key)return;if(!SY.ready){pull(true);return;}
+  if((row.updated_by||'').indexOf(SY.dev+'|')===0)return;
+  if(SY.at[row.key]&&row.updated_at<=SY.at[row.key])return;
+  if(writable(row.key)&&dirtyMap()[row.key])return;
+  applyDoc(row.key,row.data);SY.at[row.key]=row.updated_at;fixups();setBase([row.key]);localSave();renderSoon();}
+function loadPeople(){if(!SB)return Promise.resolve();
+  return SB.from('people').select('pid,role,requested,name,uid').then(function(r){if(r.error)throw r.error;PEOPLE=r.data||[];
+    var mine=SY.uid?PEOPLE.filter(function(p){return p.uid===SY.uid;})[0]:null,was=myRole();
+    SY.me=mine&&SY.session?{pid:mine.pid,role:mine.role,requested:mine.requested,name:mine.name}:null;sySave();
+    if(myRole()!==was){render();if(SY.ready&&dirtyKeys().length)syncKick();if(!SY.ready&&NET.empty&&isAdmin())seedAsk();}else renderSoon();})
+  .catch(function(e){NET.err=errMsg(e);topStatus();});}
+function seedAsk(){if(T.seedAsked)return;T.seedAsked=true;
+  modal('<h4>Start the shared data?</h4><div class="small muted">The shared store is empty. This uploads this phone’s fixtures, squad, team sheets, results and rules, so every phone sees the same.</div><button class="btn gold" data-act="seedok">Start from this phone</button><button class="btn ghost" data-act="close">Not now</button>');}
+function sbInit(){if(!window.supabase||!window.supabase.createClient){NET.err='Sharing isn’t available in this copy of the app';return;}
+  try{SB=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'lions-den-auth'}});}catch(e){SB=null;NET.err=errMsg(e);return;}
+  SB.auth.onAuthStateChange(function(ev,ses){var had=SY.uid;SY.session=!!ses;SY.uid=ses&&ses.user?ses.user.id:null;SY.email=ses&&ses.user?ses.user.email:'';
+    if(ev==='SIGNED_OUT'){SY.me=null;sySave();render();}
+    if(ev==='PASSWORD_RECOVERY')newPwModal();
+    if(SY.uid&&SY.uid!==had)loadPeople();});
+  SB.auth.getSession().then(function(r){var ses=r&&r.data&&r.data.session;SY.session=!!ses;SY.uid=ses&&ses.user?ses.user.id:null;SY.email=ses&&ses.user?ses.user.email:'';if(!ses)SY.me=null;sySave();
+    return loadPeople();}).then(function(){return pull(!SY.ready);});
+  SB.channel('lions-den').on('postgres_changes',{event:'*',schema:'public',table:'docs'},function(p){onRemote(p.new);})
+    .on('postgres_changes',{event:'*',schema:'public',table:'people'},function(){loadPeople();})
+    .subscribe(function(st){NET.live=st==='SUBSCRIBED';topStatus();if(NET.live)pull(false);});
+  window.addEventListener('online',function(){pull(false);syncKick();topStatus();});
+  window.addEventListener('offline',function(){topStatus();});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden){pull(false);syncKick();}});}
+function newPwModal(){modal('<h4>Choose a new password</h4><div class="field"><label>New password (6 or more characters)</label><input id="npPw" type="password" autocomplete="new-password"></div><button class="btn gold" data-act="newpw">Save password</button><button class="btn ghost" data-act="close">Cancel</button>');}
+function fval(id){var e=document.getElementById(id);return e?e.value.trim():'';}
+function authAct(a,d){if(!SB){toast('Sharing isn’t available');return;}
+  var fail=function(e){modal('<h4>That didn’t work</h4><div class="warn">'+esc(errMsg(e))+'</div><button class="btn gold" data-act="close">OK</button>');};
+  if(a==='signin'){var em=fval('siEmail'),pw=fval('siPw');if(!em||!pw){toast('Enter your email and password');return;}toast('Signing in…');
+    SB.auth.signInWithPassword({email:em,password:pw}).then(function(r){if(r.error)throw r.error;SY.session=true;SY.uid=r.data.user.id;SY.email=r.data.user.email;return loadPeople();}).then(function(){toast(SY.me?'Signed in · '+roleLabel():'Signed in. Now pick your name.');pull(!SY.ready);render();}).catch(fail);}
+  else if(a==='signup'){var pid=fval('suPid'),em2=fval('suEmail'),pw2=fval('suPw');if(!pid){toast('Pick your name');return;}if(!em2||pw2.length<6){toast('Enter an email and a password of 6+ characters');return;}toast('Setting up…');
+    SB.auth.signUp({email:em2,password:pw2}).then(function(r){if(r.error)throw r.error;if(!r.data.session)throw new Error('Sign-in created, but it needs email confirmation. Ask an admin to switch off “Confirm email” in Supabase, then sign in.');
+      SY.session=true;SY.uid=r.data.user.id;SY.email=r.data.user.email;return claim(pid);}).catch(fail);}
+  else if(a==='claim'){var pid3=fval('clPid');if(!pid3){toast('Pick your name');return;}claim(pid3).catch(fail);}
+  else if(a==='signout'){SB.auth.signOut().then(function(){SY.session=false;SY.uid=null;SY.me=null;sySave();render();toast('Signed out');});}
+  else if(a==='forgot'){var em3=fval('siEmail');if(!em3){toast('Type your email first');return;}
+    SB.auth.resetPasswordForEmail(em3,{redirectTo:location.origin+location.pathname}).then(function(r){if(r.error)throw r.error;modal('<h4>Check your email</h4><div class="small muted">A reset link has been sent to '+esc(em3)+'. Open it on this phone. If nothing arrives, ask an admin to reset your password.</div><button class="btn gold" data-act="close">OK</button>');}).catch(fail);}
+  else if(a==='newpw'){var np=fval('npPw');if(np.length<6){toast('6 or more characters');return;}SB.auth.updateUser({password:np}).then(function(r){if(r.error)throw r.error;closeModal();toast('Password changed');}).catch(fail);}}
+function claim(pid){var p=player(pid);return SB.rpc('claim_player',{p_pid:pid,p_name:p?p.name:pid}).then(function(r){if(r.error)throw r.error;
+  toast(r.data==='requested'?'Request sent. An admin needs to approve you.':'Signed in as '+(r.data==='admin'?'an admin':'a scorer'));return loadPeople();}).then(function(){pull(!SY.ready);render();});}
+function personOf(pid){return PEOPLE.filter(function(x){return x.pid===pid;})[0]||null;}
+function accessBadge(pid){var x=personOf(pid);if(!x)return '';
+  if(x.requested&&x.uid)return isAdmin()?' <span class="chip o">Requested</span>':'';
+  return x.role==='admin'?' <span class="chip g">Admin</span>':x.role==='scorer'?' <span class="chip g">Scorer</span>':'';}
+function accessInject(pid){var x=personOf(pid)||{role:'none'},pl=player(pid),box=document.getElementById('mbox');if(!box||!pl)return;
+  var st=x.uid?(x.requested?'Has asked for scorer access.':'Has a sign-in linked.'):'No sign-in yet. If you switch them on, they get access as soon as they set up a sign-in in the app.';
+  box.insertAdjacentHTML('beforeend','<div class="card" style="margin-top:14px;background:var(--row)"><h2>App access</h2><div class="small muted">'+esc(st)+'</div><div class="field"><label>Can this player change things?</label><select id="acRole"><option value="none"'+(x.role==='none'?' selected':'')+'>No (viewer)</option><option value="scorer"'+(x.role==='scorer'?' selected':'')+'>Scorer</option><option value="admin"'+(x.role==='admin'?' selected':'')+'>Admin</option></select></div><button class="btn gold" data-act="saveaccess" data-id="'+pid+'">Save access</button>'+(x.uid?'<button class="btn ghost" data-act="unlink" data-id="'+pid+'">Unlink their sign-in</button>':'')+'<div class="note">Scorers can change the line-up, add a player, enter scores and opposition names, and sign the league card. Admins can change everything.</div></div>');}
+function accessAct(a,pid){if(!SB||navigator.onLine===false){toast('Needs signal');return;}var pl=player(pid);
+  if(a==='saveaccess'){var role=fval('acRole');if(SY.me&&pid===SY.me.pid&&role!=='admin'){toast('You can’t remove your own admin access');return;}
+    SB.from('people').upsert({pid:pid,role:role,requested:false,name:pl?pl.name:pid}).then(function(r){if(r.error)throw r.error;closeModal();toast('Access saved');return loadPeople();}).catch(function(e){toast(errMsg(e));});}
+  else if(a==='unlink'){SB.from('people').update({uid:null,requested:false}).eq('pid',pid).then(function(r){if(r.error)throw r.error;closeModal();toast('Sign-in unlinked');return loadPeople();}).catch(function(e){toast(errMsg(e));});}}
+function requestCount(){return isAdmin()?PEOPLE.filter(function(x){return x.requested&&x.uid;}).length:0;}
+function playerOptions(){return S.players.filter(function(p){return p.active;}).sort(firstSort).map(function(p){return '<option value="'+p.id+'">'+esc(fullName(p))+'</option>';}).join('');}
+function vAccount(){var st=syncState(),h='';
+  if(!SY.session){h+='<div class="card"><h2>'+(T.acct==='new'?'Set up a sign-in':'Sign in')+'</h2><div class="small muted">Only admins and scorers sign in. Everyone else can see everything without signing in.</div>';
+    if(T.acct==='new')h+='<div class="field"><label>Your name</label><select id="suPid"><option value="">Choose…</option>'+playerOptions()+'</select></div><div class="field"><label>Email</label><input id="suEmail" type="email" autocomplete="email" autocapitalize="off"></div><div class="field"><label>Choose a password (6 or more characters)</label><input id="suPw" type="password" autocomplete="new-password"></div><button class="btn gold" data-act="signup">Create sign-in</button><button class="btn ghost" data-act="acctmode" data-m="">I already have one</button><div class="note">If an admin has switched you on as a scorer, you can score straight away. Otherwise an admin approves you.</div>';
+    else h+='<div class="field"><label>Email</label><input id="siEmail" type="email" autocomplete="email" autocapitalize="off"></div><div class="field"><label>Password</label><input id="siPw" type="password" autocomplete="current-password"></div><button class="btn gold" data-act="signin">Sign in</button><button class="btn ghost" data-act="acctmode" data-m="new">New scorer? Set up a sign-in</button><button class="btn ghost" data-act="forgot">Forgot password</button>';
+    h+='</div>';}
+  else{var me=SY.me,p=me&&player(me.pid);
+    h+='<div class="card"><h2>Signed in</h2><div class="name">'+(me?esc(p?fullName(p):me.name):'Not linked to a player yet')+'</div><div class="small muted">'+esc(SY.email||'')+' · '+esc(roleLabel())+'</div>';
+    if(!me)h+='<div class="field"><label>Which player are you?</label><select id="clPid"><option value="">Choose…</option>'+playerOptions()+'</select></div><button class="btn gold" data-act="claim">Link my sign-in</button>';
+    else if(me.requested)h+='<div class="note">Waiting for an admin to approve your scorer access.</div>';
+    h+='<button class="btn ghost" data-act="signout">Sign out</button></div>';}
+  h+='<div class="card"><h2>Sharing</h2><div class="small muted">Status: <b>'+esc(st.t)+'</b>'+(SY.pulled?' · last change '+esc(timeOf(SY.pulled)):'')+'</div>'+(NET.err?'<div class="warn">'+esc(NET.err)+'</div>':'')+
+    '<div class="note">Every phone keeps its own copy, so the app works with no signal. Changes are sent when signal returns.</div><button class="btn ghost" data-act="pullall">Reload shared data</button>';
+  if(isAdmin())h+=NET.empty&&!SY.ready?'<button class="btn gold" data-act="seedok">Start shared data from this phone</button>':'<button class="btn ghost" data-act="seedforce">Replace shared data with this phone’s copy</button>';
+  return h+'</div>';}
+
+/* ---------------- subs (admins only) ---------------- */
+function subFee(){return +(S.rules.general.subFee||5);}
+function subsFrom(){return S.rules.general.subsFrom||'2026-11-09';}
+function subsOf(fid){S.subs=S.subs||{};return S.subs[fid]||{};}
+function nightPlayers(fid){var m=S.matches[fid],l=m?m.lineup:(S.sel[fid]&&S.sel[fid].lineup)||[],seen={};
+  return l.filter(function(id){if(!id||id==='LS'||seen[id]||!player(id))return false;seen[id]=1;return true;});}
+function subsTable(){var rows={};S.fixtures.forEach(function(f){var m=S.matches[f.id];if(!m||f.date<subsFrom()||f.status==='cancelled')return;var pd=subsOf(f.id);
+    nightPlayers(f.id).forEach(function(pid){var r=rows[pid]||(rows[pid]={pid:pid,n:0,paid:0,nights:[]});r.n++;if(pd[pid])r.paid++;r.nights.push(f.id);});});
+  return Object.keys(rows).map(function(k){var r=rows[k];r.owe=(r.n-r.paid)*subFee();return r;}).sort(function(a,b){return (b.owe-a.owe)||firstSort(player(a.pid),player(b.pid));});}
+function subsCard(f){if(!isAdmin())return '';var ids=nightPlayers(f.id);if(!ids.length)return '';var pd=subsOf(f.id),n=ids.filter(function(id){return pd[id];}).length;
+  return '<div class="sec">Subs · £'+subFee()+' a night</div><div class="card"><div class="chips" style="padding-top:0"><span class="chip '+(n===ids.length?'g':'o')+'">'+n+' of '+ids.length+' paid · £'+(n*subFee())+'</span></div><div class="list">'+
+    ids.map(function(id){return '<div><div class="grow name">'+esc(fullName(player(id)))+'</div><button class="btn sm '+(pd[id]?'gold':'ghost')+'" data-act="subtick" data-f="'+f.id+'" data-id="'+id+'">'+(pd[id]?'✓ Paid':'£'+subFee()+' due')+'</button></div>';}).join('')+
+    '</div><div class="note">Only admins see subs. Players in the line-up pay; reserves who don’t play don’t.</div></div>';}
+function vSubs(){if(!isAdmin())return '<div class="card">Subs are only shown to admins.</div>';var t=subsTable(),paid=0,owed=0;t.forEach(function(r){paid+=r.paid*subFee();owed+=r.owe;});
+  var h='<div class="card"><h2>Subs</h2><div class="chips" style="padding-top:0"><span class="chip g">£'+paid+' collected</span><span class="chip '+(owed?'o':'g')+'">£'+owed+' owed</span></div><div class="small muted">Counted from '+esc(fdate(subsFrom()))+', £'+subFee()+' for each night played.</div><button class="btn ghost" data-act="subscopy">Copy subs list</button></div>';
+  h+='<div class="card list">'+(t.length?t.map(function(r){return '<div><button class="grow" style="text-align:left" data-act="subsplayer" data-id="'+r.pid+'"><div class="name">'+esc(fullName(player(r.pid)))+'</div><div class="small muted">'+r.n+' night'+(r.n>1?'s':'')+' played · '+r.paid+' paid</div></button><span class="chip '+(r.owe?'o':'g')+'">'+(r.owe?'£'+r.owe+' owed':'Paid up')+'</span></div>';}).join(''):'<div class="muted">No nights played since '+esc(fdate(subsFrom()))+' yet.</div>')+'</div>';
+  h+='<div class="card"><h2>Settings</h2><div class="field"><label>Subs per night (£)</label><input id="sbFee" type="number" inputmode="numeric" value="'+subFee()+'"></div><div class="field"><label>Count nights from</label><input id="sbFrom" type="date" value="'+esc(subsFrom())+'"></div><button class="btn gold" data-act="savesubs">Save</button><div class="note">Nights before this date aren’t counted, so earlier matches don’t show as owing.</div></div>';
+  return h;}
+function subsPlayerModal(pid){T.subsP=pid;var r=subsTable().filter(function(x){return x.pid===pid;})[0];if(!r){closeModal();return;}
+  modal('<h4>'+esc(fullName(player(pid)))+'</h4><div class="small muted">'+(r.owe?'Owes £'+r.owe:'Paid up')+'</div><div class="list" style="margin-top:8px">'+r.nights.map(function(fid){var f=fxById(fid),pd=subsOf(fid)[pid];
+    return '<div><div class="grow"><div class="name">'+esc(fxTitle(f))+'</div><div class="small muted">'+esc(fdate(f.date))+'</div></div><button class="btn sm '+(pd?'gold':'ghost')+'" data-act="subtick" data-f="'+fid+'" data-id="'+pid+'">'+(pd?'✓ Paid':'£'+subFee()+' due')+'</button></div>';}).join('')+'</div><button class="btn ghost" data-act="close">Close</button>');}
+function subsText(){var t=subsTable(),out='Lions subs (from '+fdate(subsFrom())+', £'+subFee()+' a night)\n';
+  t.forEach(function(r){out+='\n'+fullName(player(r.pid))+': '+(r.owe?'owes £'+r.owe:'paid up')+' ('+r.paid+' of '+r.n+' nights paid)';});return out;}
+
+/* who can do what: every button is checked here, and the database checks again */
+var VIEW_ACTS={close:1,choosefx:1,pickfx:1,teamsheet:1,allsets:1,resimg:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,leaguecard:1,sendleague:1,copyleague:1,report:1,copyres:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
+var SCORE_ACTS={spare:1,nospare:1,vc:1,undo:1,cancelsel:1,skip:1,other:1,otherok:1};
+var EDIT_ACTS={suggest:1,clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1};
+var ADMIN_HIDE=['addfx','comps','bulkadd','editrule','addrule','savegeneral','importpaste','seedforce','subtick'];
+function needFor(d){if(d.tab)return 'view';if(d.v!==undefined||d.sp!==undefined||d.cell)return 'score';
+  if((d.slot!==undefined&&!d.act)||d.name||d.tw)return 'edit';if(d.av||d.req!==undefined||d.nick)return 'admin';
+  var a=d.act;if(!a||VIEW_ACTS[a])return 'view';if(SCORE_ACTS[a])return 'score';if(EDIT_ACTS[a])return 'edit';return 'admin';}
+function denied(nd,m){if(nd==='view')return false;
+  if(!canEdit()){toast(SY.session?(SY.me&&SY.me.requested?'Waiting for an admin to approve you':'Your sign-in doesn’t have scorer access'):'Sign in to change this (More → Sign in)');return true;}
+  if(nd==='admin'&&!isAdmin()){toast('Only admins can change this');return true;}
+  if(nd==='score'&&!canScore(m)){toast(m.scorer.name+' is scoring on another phone. Tap Take over first.');return true;}
+  return false;}
+(function(){var ed=Object.keys(EDIT_ACTS).concat(Object.keys(SCORE_ACTS)).concat(ADMIN_HIDE,['start']),sel=function(pre,l){return l.map(function(a){return pre+' [data-act="'+a+'"]';}).join(',');};
+  var css=sel('body.r-viewer',ed)+',body.r-viewer [data-av],body.r-viewer [data-req],body.r-viewer [data-nick],body.r-viewer [data-tw],body.r-viewer .pad,body.r-viewer .imp,'+
+    sel('body.r-scorer',ADMIN_HIDE)+',body.r-scorer [data-av],body.r-scorer [data-req],body.r-scorer [data-nick],body.r-scorer .imp{display:none!important}';
+  var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);})();
+function watchCard(m,tg,s0){var sc=m.scorer,at=SY.at['match:'+m.fid];
+  return '<div class="card now"><div class="between"><div class="grow"><div class="small muted">Live · Set <b class="gold">'+(s0+1)+'</b> · Hand <b class="gold">'+(tg.h+1)+'</b></div><div class="name">'+(sc?'Scoring by '+esc(sc.name):'Live scores')+'</div><div class="small muted">Next up: '+esc(slotName(m,tg.t,tg.p,'live'))+(at?' · updated '+esc(timeOf(at).slice(-5)):'')+'</div></div>'+
+    (canEdit()?'<button class="btn gold sm" data-act="takeover">Take over</button>':'')+'</div></div>';}
+
+document.getElementById('modal').addEventListener('click',function(e){if(e.target.id==='modal')closeModal();});
+if(!S.ui)S.ui={tab:'home',fx:null};
+render();
+sbInit();
+feedFetch(false);window.addEventListener('online',function(){feedFetch(false);});document.addEventListener('visibilitychange',function(){if(!document.hidden)feedFetch(false);});
+if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude|anthropic/.test(location.hostname)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+window.__hub={SY:function(){return SY;},NET:NET,docsOf:docsOf,dirtyKeys:dirtyKeys,needFor:needFor,subsTable:subsTable,myRole:myRole,pull:pull,push:push,people:function(){return PEOPLE;},render:render,T:T,S:function(){return S;},result:result,averages:averages,suggest:suggest,enter:enter,target:function(){return target(curMatch());},curMatch:curMatch,reportText:reportText,scoresText:scoresText,seed:seed,isLS:isLS,lsFill:lsFill,syncPast:syncPast,averages:averages,parseTable:parseTable,feedFetch:feedFetch,lionsPos:lionsPos,feedNews:feedNews,leagueImg:leagueImg,leagueCardCanvas:leagueCardCanvas,leagueMailText:leagueMailText,setS:function(x){S=x;render();}};
+})();
+</script>
+</body>
+</html>
