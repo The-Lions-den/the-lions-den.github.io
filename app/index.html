@@ -55,6 +55,7 @@ input,select,textarea{font:inherit}
 .k.cur{outline:3px solid var(--gold);outline-offset:-3px;background:rgba(244,196,48,.18)}
 .chg{margin-top:6px;font-size:17px}.chg b{color:var(--gold);font-size:22px}
 .lockc{border:1px solid var(--line)}
+.field input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;box-sizing:border-box;text-align:left}
 .chip{display:inline-block;padding:3px 9px;border-radius:12px;background:var(--row);font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
 .chip.g{background:var(--gold);color:var(--navy)}
 .chip.o{border:1.5px solid var(--gold);color:var(--gold);background:none}
@@ -440,7 +441,8 @@ function vHome(){var f=nextFx(),h=feedAlerts(),rq=requestCount();if(rq)h='<div c
   h+='<div class="sec">Upcoming fixtures</div><div class="card list">'+(up.length?up.map(function(x){return fxRow(x);}).join(''):'<div class="muted">Nothing else scheduled.</div>')+'</div>';
   return h;}
 
-function vTeam(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';if(!canEdit())return vTeamView(f);
+function fxPast(f){var m=S.matches[f.id];return f.date<today()||!!(m&&allDone(m));}
+function vTeam(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';var past=fxPast(f);if(!canEdit()||past){var hv=vTeamView(f);if(past&&isAdmin())hv+=subsCard(f)+'<div class="card"><button class="btn gold" data-act="teamsheet" style="margin-top:0">Team sheet image</button></div>';return hv;}
   var sel=selFor(f.id),am=avgMap(),R=rotationInfo(f.id),act=S.players.filter(function(p){return p.active;}).sort(firstSort);
   var counts={in:0,out:0,maybe:0};act.forEach(function(p){var a=sel.avail[p.id];if(a)counts[a]++;});
   var reqCount={};act.forEach(function(p){var r=sel.req[p.id];if(r&&sel.avail[p.id]!=='out')reqCount[r]=(reqCount[r]||0)+1;});
@@ -469,8 +471,9 @@ function vTeam(){var f=curFx();if(!f)return '<div class="card">Choose a fixture 
   return h;}
 
 function vTeamView(f){var sel=selFor(f.id),m=S.matches[f.id],line=m?m.lineup:sel.lineup,per=3,n=line.filter(Boolean).length;
-  if(!n)return '<div class="card"><h2>Team</h2><div class="small muted">The team for this match hasn’t been picked yet.</div></div>';
-  var h='<div class="card"><h2>Team</h2>';
+  var ttl=fxPast(f)?'Team as played':'Team';
+  if(!n)return '<div class="card"><h2>'+ttl+'</h2><div class="small muted">'+(fxPast(f)?'No team was recorded for this match.':'The team for this match hasn’t been picked yet.')+'</div></div>';
+  var h='<div class="card"><h2>'+ttl+'</h2>';
   for(var s=0;s<4;s++){h+='<div class="sec" style="margin-top:'+(s?'14':'0')+'px">Set '+(s+1)+'</div><div class="list">';
     for(var i=s*per;i<s*per+per;i++){var id=line[i];h+='<div><span class="muted" style="width:26px">'+(i+1)+'.</span><span class="grow name">'+(id?esc(outName(id,'teamsheet')):'<span class="muted">To be confirmed</span>')+'</span></div>';}
     h+='</div>';}
@@ -552,7 +555,13 @@ function vResults(){var f=curFx();if(!f)return '<div class="card">Choose a fixtu
   if(!R.done)h+='<div class="note">Match not finished yet: images and averages use the scores so far.</div>';
   return h;}
 
-function vMore(){return '<div class="card list">'+[['account',SY.session?'Signed in':'Sign in','Admins and scorers: '+(SY.session?roleLabel():'sign in to change things')]].concat(isAdmin()?[['subs','Subs','Who has paid, who owes']]:[]).concat([['league','League table','Division 2 table and cup draws from the league website'],['averages','Averages','Season averages table and image'],['squad','Squad','Add, rename or deactivate players'],['rules','Game rules','Scoring, ties, spare range, averages'],['settings','Settings','Names or nicknames on each output'],['backup','Backup & data','Save or restore everything']]).map(function(x){return '<div><button class="grow" style="text-align:left" data-tab="'+x[0]+'"><div class="name">'+x[1]+'</div><div class="small muted">'+x[2]+'</div></button><span class="muted">›</span></div>';}).join('')+'</div>';}
+function vMore(){var r=myRole(),items=SY.session?[['account','Signed in',roleLabel()]]:[];items=items.concat([
+  ['league','League table','Division 2 table and cup draws from the league website'],['averages','Averages','Season averages table and image'],['squad','Squad',isAdmin()?'Add, rename or deactivate players':'The Lions squad']]);
+  if(r!=='viewer')items.push(['rules','Game rules',isAdmin()?'Scoring, ties, spare range, averages':'Scoring rules for league and cups']);
+  if(r==='admin')items=items.concat([['subs','Subs','Who has paid, who owes'],['settings','Settings','Names or nicknames on each output'],['backup','Backup & data','Save or restore everything']]);
+  if(!SY.session)items.push(['account','Admin/scorer sign-in','For admins and scorers only']);
+  return '<div class="card list">'+items.map(function(x){return '<div><button class="grow" style="text-align:left" data-tab="'+x[0]+'"><div class="name">'+x[1]+'</div><div class="small muted">'+x[2]+'</div></button><span class="muted">›</span></div>';}).join('')+'</div>';}
+function tabAllowed(t){var r=myRole();if(['subs','settings','backup'].indexOf(t)>-1)return r==='admin';if(t==='rules')return r!=='viewer';return true;}
 
 function vAverages(){var a=averages();if(!a.length)return '<div class="card">No completed League or Cup matches yet.</div>';
   var rows=a.map(function(x,i){return '<tr><td class="n">'+(i+1)+'. '+esc(pname(x.pid))+'</td><td>'+x.games+'</td><td>'+x.pins+'</td><td class="t">'+x.avgGame.toFixed(1)+'</td><td>'+x.avgHand.toFixed(2)+'</td><td>'+x.spares+'</td><td>'+x.high+'</td></tr>';}).join('');
@@ -589,7 +598,7 @@ function vBackup(){return '<div class="card"><h2>Backup</h2><div class="small mu
   '<div class="card"><h2>Restore</h2><div class="small muted">Admins only. Loads a backup file and sends it to the shared data, replacing it for everyone.</div><label class="btn ghost imp" style="display:flex;align-items:center;justify-content:center">Choose backup file<input type="file" id="impFile" accept=".json,application/json,text/plain" style="display:none"></label><button class="btn ghost" data-act="importpaste">Paste backup text</button></div>'+
   '<div class="card"><h2>Start again</h2><div class="small muted">Clears this phone’s copy and reloads the shared data.</div><button class="btn danger" data-act="reset" style="margin-top:0">Reset to starting data</button></div>';}
 
-function render(){if(S.ui.tab==='results')S.ui.tab='score';document.body.className='r-'+myRole();renderTop();renderNav();var v=document.getElementById('view'),t=S.ui.tab;
+function render(){if(S.ui.tab==='results')S.ui.tab='score';if(!tabAllowed(S.ui.tab))S.ui.tab='more';document.body.className='r-'+myRole();renderTop();renderNav();var v=document.getElementById('view'),t=S.ui.tab;
   v.innerHTML=(['team','score'].indexOf(t)>-1?fxSelect():'')+(t==='home'?vHome():t==='team'?vTeam():t==='score'?vScore():t==='results'?vResults():t==='more'?vMore():t==='averages'?vAverages():t==='league'?vLeague():t==='fixtures'?vFixtures():t==='squad'?vSquad():t==='rules'?vRules():t==='backup'?vBackup():t==='settings'?vSettings():t==='account'?vAccount():t==='subs'?vSubs():vHome());}
 
 /* ---------------- modals ---------------- */
@@ -773,7 +782,7 @@ function leagueTbl(){var F=S.feed;return F&&F.table?parseTable(F.table.rows):nul
 function ordN(n){n=+n;var x=(n%100>10&&n%100<14)?'th':({1:'st',2:'nd',3:'rd'}[n%10]||'th');return n+x;}
 function lionsPos(){var t=leagueTbl();if(!t)return null;for(var i=0;i<t.body.length;i++)if(feedLions(t.body[i][t.tc])){var r=t.body[i];return {pos:t.pos>=0&&/^\d+$/.test(r[t.pos])?+r[t.pos]:i+1,pts:t.pts>=0?r[t.pts]:null,of:t.body.length};}return null;}
 function feedNews(){var F=S.feed,seen=S.feedSeen||{draws:{}},n={draws:[],fix:false};if(!F)return n;
-  (F.cups||[]).forEach(function(c){var nw=(c.images||[]).filter(function(im){return !seen.draws[im.file];});if(nw.length)n.draws.push(c);});
+  (F.cups||[]).forEach(function(c){var nw=(c.images||[]).filter(function(im){return !seen.draws[im.file]&&!(im.read&&isAdmin());});if(nw.length)n.draws.push(c);});
   if(F.fixtures&&seen.pdf&&F.fixtures.hash!==seen.pdf)n.fix=true;return n;}
 function feedAgo(iso){if(!iso)return '';var d=new Date(iso),m=Math.round((Date.now()-d)/60000);if(m<2)return 'just now';if(m<60)return m+' min ago';if(m<36*60)return Math.round(m/60)+' h ago';return fdate(d.toISOString().slice(0,10),true);}
 function feedFetch(force){var now=Date.now();if(!force&&T.feedTry&&now-T.feedTry<FEED_EVERY)return;
@@ -785,7 +794,21 @@ function feedFetch(force){var now=Date.now();if(!force&&T.feedTry&&now-T.feedTry
     if(!S.feedSeen.pdf&&d.fixtures)S.feedSeen.pdf=d.fixtures.hash;
     T.feedErr=null;save();render();if(force)toast('League data updated');
   }).catch(function(e){T.feedErr=String(e&&e.message||e);if(force){toast('Couldn’t reach the league feed');render();}});}
-function feedAlerts(){var n=feedNews(),h='';if(!n.draws.length&&!n.fix)return '';
+function drawKey(d){return [d.cup,d.round,d.date||'',d.bye?'bye':d.opp+'|'+(d.home?'H':'A')].join('|');}
+function drawComp(d){var id=d.cup==='cs'?'gd':d.cup;return S.comps.filter(function(c){return c.id===id;})[0]||null;}
+function normRound(r){return String(r||'').toLowerCase().replace(/[^a-z0-9]/g,'');}
+function drawFx(d){var c=drawComp(d);if(!c)return null;return S.fixtures.filter(function(f){return f.comp===c.id&&(d.date&&f.date===d.date||normRound(f.round).indexOf(normRound(d.round))>-1);})[0]||null;}
+function drawDone(d){var f=drawFx(d);if(!f)return false;if(['played','knockedout','cancelled'].indexOf(f.status)>-1)return true;return d.bye?f.status==='bye':(f.opp===d.opp&&!!f.home===!!d.home);}
+function pendingDraws(){if(!isAdmin()||!S.feed)return [];var seen=(S.feedSeen&&S.feedSeen.dr)||{};return (S.feed.draws||[]).filter(function(d){return drawComp(d)&&!seen[drawKey(d)]&&!drawDone(d);});}
+function drawText(d){return d.bye?'Lions have a bye':(d.home?'Lions v '+d.opp:d.opp+' v Lions')+(d.venue?' at '+d.venue:'');}
+function applyDraw(d){var c=drawComp(d),f=drawFx(d);
+  if(!f){f={id:'C'+Date.now().toString(36),date:d.date||today(),comp:c.id,round:d.round,opp:'',home:true,venue:'',status:'scheduled'};S.fixtures.push(f);}
+  if(d.bye){f.status='bye';}else{f.opp=d.opp;f.home=!!d.home;if(d.venue)f.venue=d.venue;f.status='scheduled';}
+  if(d.date)f.date=d.date;S.feedSeen=S.feedSeen||{draws:{}};S.feedSeen.dr=S.feedSeen.dr||{};S.feedSeen.dr[drawKey(d)]=1;return f;}
+function drawByKey(k){return (S.feed&&S.feed.draws||[]).filter(function(d){return drawKey(d)===k;})[0];}
+function feedAlerts(){var n=feedNews(),h='',pd=pendingDraws();
+  pd.forEach(function(d){var c=drawComp(d);h+='<div class="feedalert" style="display:block"><div><b>Cup draw: '+esc(c.name)+' · '+esc(d.round)+'</b><div class="small">'+(d.date?esc(fdate(d.date))+' · ':'')+esc(drawText(d))+'</div></div><div class="btns" style="grid-template-columns:1fr 1fr 1fr;margin-top:8px"><button class="btn gold sm" data-act="drawapply" data-dk="'+esc(drawKey(d))+'">'+(d.bye?'Mark bye':(drawFx(d)?'Fill in':'Add fixture'))+'</button><button class="btn ghost sm" data-act="drawedit" data-dk="'+esc(drawKey(d))+'">Edit first</button><button class="btn ghost sm" data-act="drawignore" data-dk="'+esc(drawKey(d))+'">Ignore</button></div></div>';});
+  if(!n.draws.length&&!n.fix&&!h)return '';
   n.draws.forEach(function(c){h+='<div class="feedalert"><div><b>New cup draw posted</b><div class="small">'+esc(c.name)+'</div></div><button class="btn gold sm" data-act="draws" data-k="'+esc(c.key)+'">View</button></div>';});
   if(n.fix)h+='<div class="feedalert"><div><b>League fixture list updated</b><div class="small">Check for changed dates or venues</div></div><button class="btn gold sm" data-act="fixchg">View</button></div>';
   return '<div class="card" style="padding-top:2px">'+h+'</div>';}
@@ -954,6 +977,8 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'close':closeModal();break;
     case 'signin':case 'signup':case 'signout':case 'forgot':case 'claim':case 'newpw':authAct(d.act,d);break;
     case 'acctmode':T.acct=d.m;render();break;
+    case 'drawapply':case 'drawedit':var dw=drawByKey(d.dk);if(!dw){toast('That draw has gone from the league site');break;}var dfx=applyDraw(dw);save();render();if(d.act==='drawedit')fxModal(dfx.id);else toast(dw.bye?'Marked as a bye':'Fixture updated');break;
+    case 'drawignore':S.feedSeen=S.feedSeen||{draws:{}};S.feedSeen.dr=S.feedSeen.dr||{};S.feedSeen.dr[d.dk]=1;save();render();break;
     case 'lockm':m.lock={at:Date.now(),by:meTag().name};if(m.everLocked)logChange(m,'Locked again');m.unlockedAt=null;T.sel=null;save();render();toast('Match locked');break;
     case 'unlockm':m.lock=null;m.unlockedAt=Date.now();m.everLocked=true;logChange(m,'Unlocked');T.sel=null;save();render();toast('Unlocked: changes are recorded');break;
     case 'fxf':S.ui.fxf=S.ui.fxf||{c:'all',s:'up'};S.ui.fxf[d.fk]=d.fv;localSave();render();break;
@@ -965,7 +990,6 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'seedforce':modal('<h4>Replace the shared data?</h4><div class="small muted">Everyone’s phones will switch to this phone’s copy of the fixtures, squad, team sheets, results and rules.</div><button class="btn danger" data-act="seedok">Replace it</button><button class="btn ghost" data-act="close">Cancel</button>');break;
     case 'subtick':S.subs=S.subs||{};var sx=S.subs[d.f]||(S.subs[d.f]={});if(sx[d.id])delete sx[d.id];else sx[d.id]=1;save();if(T.subsP)subsPlayerModal(T.subsP);else render();break;
     case 'subsplayer':subsPlayerModal(d.id);break;
-    case 'subscopy':textModal('Subs',subsText());break;
     case 'savesubs':var fe=parseInt(fval('sbFee'),10);S.rules.general.subFee=fe>0?fe:5;S.rules.general.subsFrom=fval('sbFrom')||subsFrom();save();render();toast('Subs settings saved');break;
     case 'choosefx':chooseFxModal();break;
     case 'pickfx':S.ui.fx=d.id;T.sel=null;T.pick=null;closeModal();if(S.ui.tab==='fixtures'){}save();render();toast('Fixture selected');break;
@@ -1207,7 +1231,7 @@ function subsCard(f){if(!isAdmin())return '';var ids=nightPlayers(f.id);if(!ids.
     ids.map(function(id){return '<div><div class="grow name">'+esc(fullName(player(id)))+'</div><button class="btn sm '+(pd[id]?'gold':'ghost')+'" data-act="subtick" data-f="'+f.id+'" data-id="'+id+'">'+(pd[id]?'✓ Paid':'£'+subFee()+' due')+'</button></div>';}).join('')+
     '</div><div class="note">Only admins see subs. Players in the line-up pay; reserves who don’t play don’t.</div></div>';}
 function vSubs(){if(!isAdmin())return '<div class="card">Subs are only shown to admins.</div>';var t=subsTable(),paid=0,owed=0;t.forEach(function(r){paid+=r.paid*subFee();owed+=r.owe;});
-  var h='<div class="card"><h2>Subs</h2><div class="chips" style="padding-top:0"><span class="chip g">£'+paid+' collected</span><span class="chip '+(owed?'o':'g')+'">£'+owed+' owed</span></div><div class="small muted">Counted from '+esc(fdate(subsFrom()))+', £'+subFee()+' for each night played.</div><button class="btn ghost" data-act="subscopy">Copy subs list</button></div>';
+  var h='<div class="card"><h2>Subs</h2><div class="chips" style="padding-top:0"><span class="chip g">£'+paid+' collected</span><span class="chip '+(owed?'o':'g')+'">£'+owed+' owed</span></div><div class="small muted">Counted from '+esc(fdate(subsFrom()))+', £'+subFee()+' for each night played.</div></div>';
   h+='<div class="card list">'+(t.length?t.map(function(r){return '<div><button class="grow" style="text-align:left" data-act="subsplayer" data-id="'+r.pid+'"><div class="name">'+esc(fullName(player(r.pid)))+'</div><div class="small muted">'+r.n+' night'+(r.n>1?'s':'')+' played · '+r.paid+' paid</div></button><span class="chip '+(r.owe?'o':'g')+'">'+(r.owe?'£'+r.owe+' owed':'Paid up')+'</span></div>';}).join(''):'<div class="muted">No nights played since '+esc(fdate(subsFrom()))+' yet.</div>')+'</div>';
   h+='<div class="card"><h2>Settings</h2><div class="field"><label>Subs per night (£)</label><input id="sbFee" type="number" inputmode="numeric" value="'+subFee()+'"></div><div class="field"><label>Count nights from</label><input id="sbFrom" type="date" value="'+esc(subsFrom())+'"></div><button class="btn gold" data-act="savesubs">Save</button><div class="note">Nights before this date aren’t counted, so earlier matches don’t show as owing.</div></div>';
   return h;}
