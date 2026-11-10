@@ -3,12 +3,12 @@ const html=fs.readFileSync(process.env.APP_HTML||require('path').join(__dirname,
 const wait=ms=>new Promise(r=>setTimeout(r,(ms||60)+350));
 let fails=0;const ok=(c,msg)=>{console.log((c?'PASS ':'FAIL ')+msg);if(!c)fails++;};
 function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',url:'https://the-lions-den.github.io/',pretendToBeVisual:true,
-  beforeParse(w){w.supabase={createClient:()=>client(B,w.localStorage)};w.scrollTo=()=>{};w.fetch=()=>Promise.reject(new Error('no net'));if(store)Object.keys(store).forEach(k=>w.localStorage.setItem(k,store[k]));}});
+  beforeParse(w){w.supabase={createClient:()=>(w.__c=client(B,w.localStorage))};w.scrollTo=()=>{};w.fetch=()=>Promise.reject(new Error('no net'));if(store)Object.keys(store).forEach(k=>w.localStorage.setItem(k,store[k]));}});
   const w=dom.window,d=w.document;const P={name,w,d,H:w.__hub,
     click(sel){const b=d.querySelector(sel);if(!b)throw new Error(name+': no '+sel);b.click();},
     has(sel){return !!d.querySelector(sel);},vis(sel){const b=d.querySelector(sel);return !!b&&w.getComputedStyle(b).display!=='none';},
     set(id,v){d.getElementById(id).value=v;},tab(t){P.click('#nav [data-tab="'+t+'"]')||0;},go(t,fx){const S=P.H.S();S.ui.tab=t;if(fx)S.ui.fx=fx;P.H.render();},
-    modal(){return d.getElementById('modal').style.display==='flex'?d.getElementById('mbox').textContent:'';},toast(){return d.getElementById('toast').textContent;}};return P;}
+    off(v){P.w.__c.off=v;if(!v)P.w.dispatchEvent(new P.w.Event('online'));},modal(){return d.getElementById('modal').style.display==='flex'?d.getElementById('mbox').textContent:'';},toast(){return d.getElementById('toast').textContent;}};return P;}
 (async()=>{
   // Andy's phone already has v1.15 data (with a team picked for L9)
   const A=phone('Andy');await wait(80);
@@ -110,9 +110,9 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   A.go('fixtures');ok(/Competition setup/.test(A.d.getElementById('view').textContent),'Fixtures tab works from the bottom bar');
   // v2.5: More page by role, past Team tab, cup draws, date box, no subs export
   const moreItems=P=>{P.go('more');return [...P.d.querySelectorAll('#view .list .name')].map(x=>x.textContent).join(',');};
-  ok(moreItems(V)==='League table,Averages,Squad,About the app,Admin/scorer sign-in','viewer More: '+moreItems(V));
-  ok(moreItems(C)==='Signed in,League table,Averages,Squad,Game rules,About the app','scorer More: '+moreItems(C));
-  ok(moreItems(A)==='Signed in,League table,Averages,Squad,Game rules,Subs,Settings,Backup & data,About the app','admin More: '+moreItems(A));
+  ok(moreItems(V)==='League table,Statistics,Squad,About the app,Admin/scorer sign-in','viewer More: '+moreItems(V));
+  ok(moreItems(C)==='Signed in,League table,Statistics,Squad,Game rules,About the app','scorer More: '+moreItems(C));
+  ok(moreItems(A)==='Signed in,League table,Statistics,Squad,Game rules,Subs,Settings,Backup & data,About the app','admin More: '+moreItems(A));
   V.go('settings');ok(V.H.S().ui.tab==='more','viewer sent back from Settings to More');
   A.go('team','L8');ok(!A.has('[data-av]')&&/Team as played/.test(A.d.getElementById('view').textContent)&&A.has('[data-act="subtick"]')&&A.has('[data-act="teamsheet"]'),'past match Team tab: team as played, subs and team sheet, no availability');
   A.go('team','L10');ok(A.has('[data-av]'),'upcoming match Team tab still has availability');
@@ -171,6 +171,49 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   const store={};for(let i=0;i<C.w.localStorage.length;i++){const k=C.w.localStorage.key(i);store[k]=C.w.localStorage.getItem(k);}
   const store2={};for(let i=0;i<R.w.localStorage.length;i++){const k=R.w.localStorage.key(i);store2[k]=R.w.localStorage.getItem(k);}
   B.down=true;const R2=phone('Craig reopened offline',store2);await wait(80);ok(R2.H.myRole()==='scorer'&&R2.H.S().matches.L9,'reopened offline: still scorer with data');B.down=false;
+
+  // ---- safer offline sync: two admin devices offline at once ----
+  const sA={};for(let i=0;i<A.w.localStorage.length;i++){const k=A.w.localStorage.key(i);sA[k]=A.w.localStorage.getItem(k);}
+  const sy=JSON.parse(sA['lions-hub-v1-sync']);sy.dev='dLAPTOP';sA['lions-hub-v1-sync']=JSON.stringify(sy);
+  const L=phone('Andy laptop',sA);await wait(150);ok(L.H.myRole()==='admin','second admin device ready');
+  const fxs=A.H.S().fixtures.filter(f=>f.status==='scheduled'),f1=fxs[0].id,f2=fxs[1].id;
+  A.off(true);L.off(true);
+  A.H.S().fixtures.find(f=>f.id===f1).venue='Venue from phone';A.H.save();
+  L.H.S().fixtures.find(f=>f.id===f2).venue='Venue from laptop';L.H.save();await wait(60);
+  A.off(false);await wait(250);L.off(false);await wait(400);await V.H.pull(true);await wait(100);
+  const vf=id=>(V.H.S().fixtures.find(f=>f.id===id)||{}).venue;
+  ok(vf(f1)==='Venue from phone'&&vf(f2)==='Venue from laptop','different fixtures edited offline on two devices: both kept ('+vf(f1)+' / '+vf(f2)+')');
+  ok((B.docs.fixtures.data.find(f=>f.id===f1)||{}).venue==='Venue from phone'&&(B.docs.fixtures.data.find(f=>f.id===f2)||{}).venue==='Venue from laptop','shared copy has both edits');
+  ok(A.H.clashKeys().length===0&&L.H.clashKeys().length===0,'no clash when the edits are different');
+  // same thing changed to different values -> clash prompt
+  A.off(true);L.off(true);
+  A.H.S().fixtures.find(f=>f.id===f1).venue='Clash A';A.H.save();
+  L.H.S().fixtures.find(f=>f.id===f1).venue='Clash L';L.H.save();await wait(60);
+  A.off(false);await wait(250);L.off(false);await wait(400);
+  ok(L.H.clashKeys().includes('fixtures'),'same fixture changed on both: laptop asked to choose');
+  ok((B.docs.fixtures.data.find(f=>f.id===f1)||{}).venue==='Clash A','shared copy not overwritten while waiting for a choice');
+  L.go('home');ok(/changed the fixture list while you were offline/.test(L.d.getElementById('view').textContent)&&L.has('[data-act="clashmine"]'),'clash card shown on Home');
+  L.click('[data-act="clashmine"]');await wait(400);await A.H.pull(true);await wait(100);
+  ok((A.H.S().fixtures.find(f=>f.id===f1)||{}).venue==='Clash L'&&L.H.clashKeys().length===0,'Keep mine: laptop version reaches the other device');
+  A.off(true);L.off(true);
+  A.H.S().fixtures.find(f=>f.id===f1).venue='Theirs test A';A.H.save();
+  L.H.S().fixtures.find(f=>f.id===f1).venue='Theirs test L';L.H.save();await wait(60);
+  A.off(false);await wait(250);L.off(false);await wait(400);
+  L.click('[data-act="clashtheirs"]');await wait(400);
+  ok((L.H.S().fixtures.find(f=>f.id===f1)||{}).venue==='Theirs test A'&&L.H.dirtyKeys().length===0,"Keep theirs: laptop takes the phone's version, nothing left to send");
+  // merge3 unit checks
+  const m3=A.H.merge3;
+  ok(JSON.stringify(m3({a:1,b:1},{a:2,b:1},{a:1,b:3},'ask').v)==='{"a":2,"b":3}','merge: different fields both kept');
+  ok(m3([{id:1,x:1}],[{id:1,x:1},{id:2,x:5}],[],'ask').v.length===1,'merge: their deletion respected, my new entry kept');
+  ok(JSON.stringify(m3(['a','b'],['a','b','c'],['b','d'],'ask').v)==='["b","d","c"]','merge: name lists combined');
+
+  // viewer cup-draw card: Lions draws only, Mark as seen only
+  V.H.S().feed={ok:true,draws:[{cup:'fp',round:'Semi Finals',date:'2099-01-27',home:true,opp:'Reptiles',venue:'',bye:false,file:'x.jpg'}],cups:[{key:'fp',name:'Front Pin',images:[{file:'x.jpg',url:'u'},{file:'y.jpg',url:'v'}]}],fixtures:{hash:'a'}};V.H.S().feedSeen={draws:{},pdf:'b'};
+  V.go('home');{const t=V.d.getElementById('view').textContent;ok(/Cup draw · Front Pin Cup · Semi Finals/.test(t)&&/Lions v Reptiles · .* · Home · Venue TBC/.test(t),'viewer sees Lions draw card: '+(t.match(/Cup draw[^M]*/)||[''])[0]);
+    ok(!V.has('[data-act="draws"]')&&!/No Lions fixture update/.test(t)&&!/fixture list updated/.test(t),'viewer: no View picture, no non-Lions picture alert, no PDF alert');}
+  V.click('[data-act="vdseen"]');ok(!/Cup draw ·/.test(V.d.getElementById('view').textContent),'viewer: Mark as seen hides the card');
+  V.go('home');ok(/pins this year so far/.test(V.d.getElementById('view').textContent),'Home tagline shows pins this year');
+  V.go('averages');{const t=V.d.getElementById('view').textContent;ok(/Team stats/.test(t)&&/Total pins hit/.test(t)&&/Average team score/.test(t)&&/Total team spares/.test(t)&&/Player averages/.test(t)&&!/\/hand/.test(t),'Statistics page: team stats + player table, Hand header');}
   const dump=(P,f)=>{const o={};for(let i=0;i<P.w.localStorage.length;i++){const k=P.w.localStorage.key(i);o[k]=P.w.localStorage.getItem(k);}fs.writeFileSync(f,JSON.stringify({store:o,people:Object.values(B.people)}));};if(process.env.DUMP){dump(A,'/tmp/store_A.json');dump(V,'/tmp/store_V.json');dump(C,'/tmp/store_C.json');}
   console.log(fails?fails+' FAILED':'ALL PASS');process.exit(0);
 })().catch(e=>{console.log('ERROR',e);process.exit(1);});

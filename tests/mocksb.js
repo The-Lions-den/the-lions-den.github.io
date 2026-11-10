@@ -6,9 +6,9 @@ function Backend(){const B={docs:{},people:{p10:{pid:'p10',role:'admin',uid:null
   B.scorerKey=k=>k==='players'||k==='oppNames'||k.startsWith('sel:')||k.startsWith('match:');
   B.canRead=(uid,k)=>!k.startsWith('subs:')||B.isAdmin(uid);
   B.canWrite=(uid,k)=>B.isAdmin(uid)||(B.isEditor(uid)&&B.scorerKey(k));
-  B.emit=(table,row)=>{setTimeout(()=>B.chans.forEach(c=>{if(c.dead)return;if(table==='docs'&&!B.canRead(c.client.uid(),row.key))return;(c.h[table]||[]).forEach(f=>f({new:JSON.parse(JSON.stringify(row))}));}),5);};
+  B.emit=(table,row)=>{setTimeout(()=>B.chans.forEach(c=>{if(c.dead||c.client.off)return;if(table==='docs'&&!B.canRead(c.client.uid(),row.key))return;(c.h[table]||[]).forEach(f=>f({new:JSON.parse(JSON.stringify(row))}));}),5);};
   return B;}
-function client(B,store){let ses=store?JSON.parse(store.getItem('mock-ses')||'null'):null;const keep=()=>store&&store.setItem('mock-ses',JSON.stringify(ses));const cbs=[];const uid=()=>ses&&ses.user.id;const P=v=>new Promise((res,rej)=>setTimeout(()=>B.down?rej(new Error('Failed to fetch')):res(v),2));
+function client(B,store){let ses=store?JSON.parse(store.getItem('mock-ses')||'null'):null;const keep=()=>store&&store.setItem('mock-ses',JSON.stringify(ses));const cbs=[];const uid=()=>ses&&ses.user.id;const P=v=>new Promise((res,rej)=>setTimeout(()=>(B.down||C.off)?rej(new Error('Failed to fetch')):res(v),2));
   const fire=(ev)=>{keep();cbs.forEach(f=>f(ev,ses));};
   const C={uid,auth:{onAuthStateChange(f){cbs.push(f);return {data:{subscription:{unsubscribe(){}}}};},getSession(){return Promise.resolve({data:{session:ses}});},
     signUp({email,password}){if(B.users[email])return P({data:{},error:{message:'User already registered'}});const id='u-'+Object.keys(B.users).length+'-'+email;B.users[email]={id,email,password};ses={user:{id,email}};setTimeout(()=>fire('SIGNED_IN'),1);return P({data:{user:ses.user,session:ses},error:null});},
@@ -22,12 +22,16 @@ function client(B,store){let ses=store?JSON.parse(store.getItem('mock-ses')||'nu
       if(r.uid===me)return P({data:r.requested||r.role==='none'?'requested':r.role,error:null});
       r.uid=me;r.requested=!(B.bootstrap||[]).includes(a.p_pid);B.emit('people',r);return P({data:r.requested?'requested':r.role,error:null});},
     from(table){return {
-      select(){let gt=null;const q={gt(c,v){gt=v;return q;},then(res,rej){return P(null).then(()=>{let rows=table==='docs'?Object.values(B.docs).filter(r=>B.canRead(uid(),r.key)&&(!gt||r.updated_at>gt)):Object.values(B.people);return {data:JSON.parse(JSON.stringify(rows)),error:null};}).then(res,rej);}};return q;},
+      select(){let gt=null,inK=null;const q={gt(c,v){gt=v;return q;},in(c,v){inK=v;return q;},then(res,rej){return P(null).then(()=>{let rows=table==='docs'?Object.values(B.docs).filter(r=>B.canRead(uid(),r.key)&&(!gt||r.updated_at>gt)&&(!inK||inK.includes(r.key))):Object.values(B.people);return {data:JSON.parse(JSON.stringify(rows)),error:null};}).then(res,rej);}};return q;},
       upsert(rows){rows=[].concat(rows);const run=()=>{if(table==='docs'){for(const r of rows)if(!B.canWrite(uid(),r.key))return {data:null,error:{message:'new row violates row-level security policy for table "docs"'}};
           const out=rows.map(r=>{const row={key:r.key,data:JSON.parse(JSON.stringify(r.data)),updated_at:B.now(),updated_by:r.updated_by};B.docs[r.key]=row;B.log.push(r.key);B.emit('docs',row);return {key:r.key,updated_at:row.updated_at};});return {data:out,error:null};}
         if(!B.isAdmin(uid()))return {data:[],error:null};rows.forEach(r=>{B.people[r.pid]=Object.assign(B.people[r.pid]||{uid:null},r);B.emit('people',B.people[r.pid]);});return {data:rows,error:null};};
         const t={select(){return P(null).then(run);},then(a,b){return P(null).then(run).then(a,b);}};return t;},
-      update(obj){return {eq(c,v){return P(null).then(()=>{if(!B.isAdmin(uid()))return {data:[],error:null};Object.assign(B.people[v],obj);B.emit('people',B.people[v]);return {data:[B.people[v]],error:null};});}};}};},
+      update(obj){if(table==='docs'){const cond={};const run=()=>P(null).then(()=>{const k=cond.key,r=B.docs[k];if(!B.canWrite(uid(),k))return {data:null,error:{message:'new row violates row-level security policy for table "docs"'}};
+          if(!r||(cond.updated_at&&r.updated_at!==cond.updated_at))return {data:[],error:null};B.races=(B.races||0);
+          const row={key:k,data:JSON.parse(JSON.stringify(obj.data)),updated_at:B.now(),updated_by:obj.updated_by};B.docs[k]=row;B.log.push(k);B.emit('docs',row);return {data:[{key:k,updated_at:row.updated_at}],error:null};});
+        const q={eq(c,v){cond[c]=v;return q;},select(){return run();},then(a,b){return run().then(a,b);}};return q;}
+        return {eq(c,v){return P(null).then(()=>{if(!B.isAdmin(uid()))return {data:[],error:null};Object.assign(B.people[v],obj);B.emit('people',B.people[v]);return {data:[B.people[v]],error:null};});}};}};},
     channel(){const ch={client:C,h:{},on(ev,f,cb){ch.h[f.table]=(ch.h[f.table]||[]).concat(cb);return ch;},subscribe(cb){B.chans.push(ch);setTimeout(()=>cb('SUBSCRIBED'),3);return ch;}};return ch;}};
   return C;}
 module.exports={Backend,client};
