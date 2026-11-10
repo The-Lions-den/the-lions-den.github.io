@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "description": "Lions Den multi-phone sync test (node tests/sync.js)",
+  "dependencies": { "jsdom": "^31.0.0" }
+}

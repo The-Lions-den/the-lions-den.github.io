@@ -25,3 +25,9 @@ Backups are encrypted with the passphrase saved as the `BACKUP_PASSPHRASE` secre
 
 ## Each season
 Check the page addresses in the CONFIG section of `scripts/feed.py` still match the league website, and update the squad and fixtures in the app.
+
+## Building a new version
+1. Edit `app/index.html` (the whole app is in this one file; `scripts/feed.py` for the league reader).
+2. Run `scripts/build.sh "what changed"`. It checks the app, runs the multi-phone test (`tests/sync.js`),
+   bumps the version in `app/sw.js`, commits, pushes and waits for GitHub, then prints the times.
+Phones pick up the new version the next time the app is opened.
