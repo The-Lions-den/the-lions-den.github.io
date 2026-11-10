@@ -42,7 +42,7 @@ def grab(url):
 # ---------------- reading the cup draw pictures ----------------
 import difflib, shutil, subprocess, tempfile
 MONTHS = {m: i + 1 for i, m in enumerate(['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'])}
-ROUND_RE = re.compile(r'(ROUND\s*\d+|R\s*\d+\b|QUARTER[\s-]*FINALS?|SEMI[\s-]*FINALS?|FINALS?|PRELIM\w*|TOURNAMENT\s*\d*)', re.I)
+ROUND_RE = re.compile(r'(ROUND\s*\d+|\bR\s*\d+\b|QUARTER[\s-]*FINALS?|SEMI[\s-]*FINALS?|FINALS?|PRELIM\w*|TOURNAMENT\s*\d*)', re.I)
 DATE_RE = re.compile(r'(\d{1,2})\s*(?:ST|ND|RD|TH)?\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*', re.I)
 
 def season_date(day, mon):
@@ -54,20 +54,9 @@ def season_date(day, mon):
     except Exception:
         return None
 
-def ocr_words(img):
-    """Run Tesseract on an enlarged copy of the picture; returns text lines as lists of (x, word)."""
-    if not shutil.which('tesseract'):
-        return None
-    with tempfile.TemporaryDirectory() as d:
-        src, big = os.path.join(d, 'in'), os.path.join(d, 'big.png')
-        open(src, 'wb').write(img)
-        conv = shutil.which('magick') or shutil.which('convert')
-        if conv:
-            subprocess.run([conv, src, '-resize', '300%', '-colorspace', 'Gray', '-sharpen', '0x1', big], check=False, capture_output=True)
-        if not os.path.exists(big):
-            big = src
-        r = subprocess.run(['tesseract', big, 'stdout', '--psm', '6', 'tsv'], capture_output=True, text=True)
-    lines = {}
+def _tess(path, psm):
+    r = subprocess.run(['tesseract', path, 'stdout', '--psm', str(psm), 'tsv'], capture_output=True, text=True)
+    words = []
     for row in r.stdout.splitlines()[1:]:
         c = row.split('\t')
         if len(c) < 12 or not c[11].strip():
@@ -77,9 +66,78 @@ def ocr_words(img):
                 continue
         except ValueError:
             continue
-        key = (int(c[2]), int(c[3]), int(c[4]))
-        lines.setdefault(key, []).append((int(c[6]), c[11].strip()))
-    return [sorted(v) for k, v in sorted(lines.items())]
+        words.append((int(c[6]), c[11].strip()))
+    return sorted(words)
+
+def ocr_words(img):
+    """Read a spreadsheet-style picture row by row.
+    Rubs out the table's grid lines, finds each text row, and reads it on its own.
+    Returns rows as lists of (column number, x, text) for parse_draw."""
+    if not shutil.which('tesseract'):
+        return None
+    try:
+        from PIL import Image, ImageOps
+    except ImportError:
+        return None
+    im = Image.open(io.BytesIO(img)).convert('L')
+    w, h = im.size
+    px = im.load()
+    def runs(flags):
+        out, start = [], None
+        for i, f in enumerate(flags + [False]):
+            if f and start is None:
+                start = i
+            elif not f and start is not None:
+                out.append((start, i)); start = None
+        return out
+    # grid lines: thin rows/columns clearly darker than the pixels just either side (coloured header bands are even, so they don't count)
+    rmean = [sum(px[x, y] for x in range(0, w, 2)) / (w / 2) for y in range(h)]
+    cmean = [sum(px[x, y] for y in range(0, h, 2)) / (h / 2) for x in range(w)]
+    def lines(mean, n):
+        out = []
+        for i in range(n):
+            nb = [mean[j] for j in (i - 3, i - 2, i + 2, i + 3) if 0 <= j < n]
+            if nb and mean[i] < min(nb) - 10:
+                out.append(i)
+        return out
+    rfull = [sum(1 for x in range(0, w, 2) if px[x, y] < 235) / (w / 2) for y in range(h)]
+    cfull = [sum(1 for y in range(0, h, 2) if px[x, y] < 235) / (h / 2) for x in range(w)]
+    hl = [y for y in lines(rmean, h) if rfull[y] > 0.85]
+    vl = [x for x in lines(cmean, w) if cfull[x] > 0.85]
+    vr = runs([x in set(vl) for x in range(w)])
+    clean = im.copy()
+    cp = clean.load()
+    for y in hl:
+        for x in range(w):
+            cp[x, y] = 255
+    for x in vl:
+        for y in range(h):
+            cp[x, y] = 255
+    clean = clean.point(lambda v: 0 if v < 150 else 255)
+    cpx = clean.load()
+    textf = [any(cpx[x, y] == 0 for x in range(0, w)) for y in range(h)]
+    bands = [(max(0, a0 - 2), min(h, b0 + 2)) for a0, b0 in runs(textf) if b0 - a0 >= 5]
+    edges = [(a0 + b0) / 2 for a0, b0 in vr]
+    out = []
+    with tempfile.TemporaryDirectory() as d:
+        for i, (y0, y1) in enumerate(bands):
+            strip = clean.crop((0, y0, w, y1))
+            strip = ImageOps.expand(strip.resize((w * 3, (y1 - y0) * 3)), border=20, fill=255)
+            path = os.path.join(d, 'r%d.png' % i)
+            strip.save(path)
+            words = [((x - 20) / 3, t) for x, t in _tess(path, 7)]
+            if not words:
+                continue
+            row, col, last = [], 0, None
+            for x, t in words:
+                if len(edges) >= 3:
+                    col = sum(1 for e in edges if e < x)
+                elif last is not None and x - last > 40:
+                    col += 1
+                last = x + 7 * len(t)
+                row.append((col, x, t))
+            out.append(row)
+    return out
 
 def best_team(name, teams):
     name = re.sub(r'[^A-Za-z0-9&\' ]', ' ', name).strip()
@@ -95,40 +153,41 @@ def is_lions(name):
     return difflib.SequenceMatcher(None, re.sub(r'[^a-z]', '', name.lower()), 'lions').ratio() >= 0.8
 
 def parse_draw(lines, teams):
-    """lines: [[(x, word), ...], ...] from ocr_words. Returns sections with fixtures and byes."""
-    secs, cur, venue_x, v_x = [], None, None, None
+    """lines: rows of (column, x, word) from ocr_words. Returns sections with fixtures and byes."""
+    secs, cur = [], None
     for ln in lines:
-        text = ' '.join(w for _, w in ln)
+        text = ' '.join(t for _, _, t in ln)
         up = text.upper()
         rm = ROUND_RE.search(up)
-        if rm and ('VENUE' in up or 'CUP' in up or 'SHIELD' in up or DATE_RE.search(up)):
+        vi = next((i for i, (c, x, t) in enumerate(ln) if re.fullmatch(r'[vV][vVsSoOyY]?\.?|[yY]', t)), None)
+        if rm and vi is None:
             dm = DATE_RE.search(up)
-            rd = re.sub(r'\s+', ' ', rm.group(1)).title().replace('Semi-Final', 'Semi Final')
-            rd = re.sub(r'^R\s*(\d+)$', r'Round \1', rd)
+            rd = re.sub(r'\s+', ' ', rm.group(1)).title()
             rd = re.sub(r'(?i)^(?:round|r)\s*(\d+)$', r'Round \1', rd.strip())
             rd = re.sub(r'(?i)quarter\s*-?\s*final', 'Quarter Final', rd)
             rd = re.sub(r'(?i)semi\s*-?\s*final', 'Semi Final', rd)
             cur = {'round': rd, 'date': season_date(dm.group(1), MONTHS[dm.group(2).upper()[:3]]) if dm else None, 'rows': [], 'byes': []}
             secs.append(cur)
-            venue_x = next((x for x, w in ln if w.upper().startswith('VENUE')), None)
             continue
         if cur is None:
             continue
-        if up.startswith('BYE'):
-            rest = re.sub(r'^BYE[\'’S]*\s*[-:–]?\s*', '', text, flags=re.I)
+        if re.match(r'^\W*[B3]YE', up):
+            rest = re.sub(r'^\W*[B3]YE[\'’S]*\s*[-:–]?\s*', '', text, flags=re.I)
             cur['byes'] += [best_team(n, teams) for n in re.split(r'[,&]| and ', rest) if n.strip()]
             continue
-        vi = next((i for i, (x, w) in enumerate(ln) if re.fullmatch(r'[vV]{1,2}[sS]?\.?|[yY]', w)), None)
         if vi is None:
             continue
-        home = ' '.join(w for _, w in ln[:vi])
-        after = ln[vi + 1:]
-        if venue_x is not None:
-            away = ' '.join(w for x, w in after if x < venue_x - 15)
-            venue = ' '.join(w for x, w in after if x >= venue_x - 15)
-        else:
-            away, venue = ' '.join(w for _, w in after), ''
-        cur['rows'].append({'home': best_team(home, teams), 'away': best_team(away, teams), 'venue': venue.strip(' |')})
+        vcol = ln[vi][0]
+        home_col = min(c for c, _, _ in ln[:vi]) if vi else None
+        home = ' '.join(t for c, _, t in ln[:vi] if c == home_col) if home_col is not None else ''
+        right = ln[vi + 1:]
+        away_col = min((c for c, _, _ in right), default=None)
+        away = ' '.join(t for c, _, t in right if c == away_col)
+        last_col = max((c for c, _, _ in right), default=None)
+        venue = ' '.join(t for c, _, t in right if c == last_col) if last_col is not None and last_col != away_col else ''
+        if re.fullmatch(r'[\d+ ]*', venue or '') or venue.strip(' |[]“"\'').upper() in ('TBC', 'TBA', 'BC', 'TB'):
+            venue = ''
+        cur['rows'].append({'home': best_team(home, teams), 'away': best_team(away, teams), 'venue': venue.strip(' |[]')})
     return secs
 
 def lions_draws(key, img_file, secs):
@@ -206,6 +265,7 @@ def main(out_path, prev_path=None):
             im['rounds'] = [s['round'] + (' ' + s['date'] if s['date'] else '') for s in secs]
             draws += lions_draws(c['key'], im['file'], secs)
     out['draws'] = draws
+    print('cup draws read:', [(d['cup'], d['round'], d['date'], 'bye' if d['bye'] else d['opp']) for d in draws])
 
     # ---- fixtures PDF fingerprint ----
     pdf = grab(SITE + FIXTURES_PDF)
