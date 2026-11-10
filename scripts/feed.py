@@ -201,6 +201,24 @@ def lions_draws(key, img_file, secs):
             out.append({'cup': key, 'round': sc['round'], 'date': sc['date'], 'home': True, 'opp': '', 'venue': '', 'bye': True, 'file': img_file})
     return out
 
+def table_positions(rows):
+    """League positions from the table sheet: {'asOf': text, 'pos': {team: position}}."""
+    as_of, pi, ni, pos = '', -1, -1, {}
+    for row in rows:
+        low = [c.strip().lower() for c in row]
+        for c in row:
+            m = re.search(r'as of\s*(.+)', c, re.I)
+            if m and not as_of:
+                as_of = m.group(1).strip()
+        if pi < 0 and 'pos' in low and ('name' in low or 'team' in low):
+            pi = low.index('pos'); ni = low.index('name') if 'name' in low else low.index('team')
+            continue
+        if pi >= 0 and len(row) > max(pi, ni):
+            p, n = row[pi].strip(), row[ni].strip()
+            if p.isdigit() and n and 'vacant' not in n.lower() and n not in pos:
+                pos[n] = int(p)
+    return {'asOf': as_of, 'pos': pos} if as_of and pos else None
+
 def main(out_path, prev_path=None):
     out = {'ok': True, 'at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S+00:00'), 'errors': []}
 
@@ -273,6 +291,23 @@ def main(out_path, prev_path=None):
         out['fixtures'] = {'url': SITE + FIXTURES_PDF, 'page': SITE + FIXTURES_PAGE, 'hash': hashlib.md5(pdf).hexdigest(), 'bytes': len(pdf)}
     else:
         out['errors'].append('Could not read the fixtures PDF')
+
+    # ---- our own position changes (+/-) since the last "As of" table ----
+    prev = {}
+    if prev_path and os.path.exists(prev_path):
+        try:
+            prev = json.load(open(prev_path, encoding='utf-8'))
+        except Exception:
+            prev = {}
+    cur = table_positions((out.get('table') or {}).get('rows', []))
+    if cur:
+        pc = prev.get('posCur')
+        base = pc if (pc and pc.get('asOf') != cur['asOf']) else prev.get('posBase')
+        out['posCur'] = cur
+        if base:
+            out['posBase'] = base
+            out['move'] = {n: base['pos'][n] - p for n, p in cur['pos'].items() if n in base['pos']}
+        print('positions as of', cur['asOf'], '- changes:', out.get('move', 'no earlier table yet'))
 
     # league site down: keep the last good copy, marked stale
     if 'table' not in out and prev_path and os.path.exists(prev_path):
