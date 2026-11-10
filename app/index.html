@@ -63,6 +63,38 @@ input,select,textarea{font:inherit}
 .vdcard{display:block;width:100%;text-align:left;background:none;border:0;color:inherit;font:inherit;padding:0;cursor:pointer}
 .tagline{margin:4px 0 10px;padding:12px 14px;border-radius:14px;background:linear-gradient(90deg,rgba(246,182,48,.18),rgba(246,182,48,.04));color:var(--gold);font:600 18px Oswald,sans-serif;letter-spacing:.3px;text-align:center}.tagline b{font-size:22px}
 /* tables that cope with large phone text: scroll sideways, name column stays put */
+.plink{background:none;border:0;color:inherit;font:inherit;text-align:left;padding:0;min-height:0;text-decoration:underline;text-decoration-color:rgba(246,182,48,.5);text-underline-offset:3px}
+.seasons{margin-bottom:6px}
+#printv{display:none}
+body.printing #printv{display:block;position:fixed;inset:0;z-index:300;background:#5b6475;overflow:auto;-webkit-overflow-scrolling:touch}
+body.printing{overflow:hidden}
+.pvbar{position:sticky;top:0;display:flex;gap:8px;align-items:center;padding:8px;padding-top:max(8px,env(safe-area-inset-top));background:var(--navy);z-index:2}
+.pvbar .btn{margin:0;width:auto;padding:0 14px}.pvbar select{height:40px;border-radius:10px;background:var(--row);color:#fff;border:1px solid var(--line);padding:0 8px;font-size:15px}
+.pvwrap{padding:8px;overflow:hidden}
+.pvpage{background:#fff;color:#000;width:281mm;padding:4mm;box-sizing:content-box;transform-origin:0 0;font-family:Arial,Helvetica,sans-serif}
+.ps-title{text-align:center;font-weight:700;font-size:13pt;letter-spacing:.5px}
+.ps-sub{text-align:center;font-size:7.5pt;margin:1mm 0 2mm}
+table.ps{width:281mm;table-layout:fixed;border-collapse:collapse;font-size:7.5pt;color:#000}
+table.ps th,table.ps td{border:0.6pt solid #000;padding:0 .5px;text-align:center;height:5mm;white-space:nowrap;overflow:hidden;font-weight:400;color:#000;font-size:7.5pt;letter-spacing:0;text-transform:none;line-height:1;font-family:Arial,Helvetica,sans-serif;background:#fff}
+table.ps tr.ft td{font-size:6.5pt;letter-spacing:-.2px}
+table.ps .nm{text-align:left;padding-left:1.5mm}
+table.ps .b{font-weight:700}
+table.ps th.ha{font-weight:700;height:4mm}
+table.ps th.blank{border:0}
+table.ps th.rot{height:30mm;vertical-align:bottom;padding:1mm 0}
+table.ps th.rot div{writing-mode:vertical-rl;transform:rotate(180deg);margin:0 auto;font-size:7pt;white-space:nowrap;max-height:28mm;overflow:hidden}
+table.ps th.rot.b div{font-weight:700}
+table.ps tr.first td{border-top:1.4pt solid #000}
+table.ps tr.ft td.bl,table.ps tr.ft td.nm{text-align:left;padding-left:1.2mm;font-weight:700;font-size:6.5pt;letter-spacing:0}
+table.ps tr.ft td.b:last-child{font-size:8pt}
+@media print{
+  @page{size:A4 landscape;margin:8mm}
+  html,body{background:#fff!important}
+  body>*:not(#printv){display:none!important}
+  body.printing #printv,#printv{display:block!important;position:static!important;background:#fff!important;overflow:visible!important}
+  .pvbar{display:none!important}.pvwrap{padding:0!important;height:auto!important}
+  .pvpage{transform:none!important;padding:0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px;background:linear-gradient(to right,var(--panel) 30%,rgba(0,0,0,0)) left/40px 100% no-repeat local,linear-gradient(to left,var(--panel) 30%,rgba(0,0,0,0)) right/40px 100% no-repeat local,radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.45),rgba(0,0,0,0)) right/12px 100% no-repeat scroll}
 .tscroll table{table-layout:auto;width:100%;min-width:max-content}
 .tscroll th,.tscroll td{white-space:nowrap;padding-left:5px;padding-right:5px}
@@ -273,7 +305,7 @@ function newMatch(D,fid){
 /* ---------------- state ---------------- */
 var S;try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){S=null;}
 if(!S||!S.players)S=seed();
-S.players.forEach(function(p){delete p.phone;});delete S.regTemplate;syncSquad(S);syncPast(S);
+S.players.forEach(function(p){delete p.phone;});delete S.regTemplate;syncSquad(S);syncPast(S);seasonFixups(S);
 if(!S.rules.general.nickOn)S.rules.general.nickOn={teamsheet:false,live:false,results:false,report:false,averages:false};
 var T={sel:null,spare:false,pick:null,repos:null};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast('Could not save on this phone');}if(typeof syncKick==='function')syncKick();}
@@ -296,7 +328,7 @@ function fxTitle(f){var o=f.opp||'TBC';return f.home?'Lions v '+o:o+' v Lions';}
 function fxComp(f){var c=compById(f.comp);return (c?c.name:'')+(f.round?' · '+f.round:'');}
 function sortedFx(){return S.fixtures.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 function playable(f){return f.status==='scheduled'||f.status==='played';}
-function nextFx(){var t=today(),l=sortedFx();for(var i=0;i<l.length;i++){var f=l[i];if(f.date>=t&&f.status==='scheduled'&&!(S.matches[f.id]&&S.matches[f.id].done))return f;}return null;}
+function nextFx(){var t=today(),l=sortedFx();for(var i=0;i<l.length;i++){var f=l[i];if(f.date>=t&&f.status==='scheduled'&&!isFrozenFx(f)&&!(S.matches[f.id]&&S.matches[f.id].done))return f;}return null;}
 function curFx(){var f=S.ui.fx&&fxById(S.ui.fx);if(!f){f=nextFx();if(f)S.ui.fx=f.id;}return f;}
 function selFor(fid){if(!S.sel[fid])S.sel[fid]={avail:{},req:{},lineup:Array(12).fill(null),reserves:[]};if(!S.sel[fid].reserves)S.sel[fid].reserves=[];return S.sel[fid];}
 function getSlot(sel,i){return i<12?sel.lineup[i]:sel.reserves[i-12];}
@@ -377,21 +409,161 @@ function chaseHint(m,tg){
 function curMatch(){var f=curFx();return f?S.matches[f.id]||null:null;}
 
 /* ---------------- averages ---------------- */
-function averages(){
+function averages(sid){sid=sid||curSeason();
   var st={};
-  Object.keys(S.matches).forEach(function(fid){var m=S.matches[fid];if(!m.rules.averages)return;if(!allDone(m))return;
-    m.lineup.forEach(function(pid,p){if(!pid||pid==='LS')return;var a=st[pid]||(st[pid]={pid:pid,games:0,pins:0,hands:0,spares:0,high:0,vc:0});
-      var tot=pTot(m,'L',p),fx=fxById(fid),hm=!fx||fx.home;a.games++;a.pins+=tot;if(hm){a.hg=(a.hg||0)+1;a.hp=(a.hp||0)+tot;}else{a.ag=(a.ag||0)+1;a.ap=(a.ap||0)+tot;}a.hands+=m.L[p].filter(function(c){return !!c;}).length;a.high=Math.max(a.high,tot);
+  Object.keys(S.matches).forEach(function(fid){var m=S.matches[fid];if(!m.rules.averages)return;if(!allDone(m))return;if(!inSeason(fid,sid))return;
+    m.lineup.forEach(function(pid,p){if(!pid||pid==='LS')return;var a=st[pid]||(st[pid]={pid:pid,games:0,pins:0,hands:0,spares:0,high:0,vc:0,f50:0});
+      var tot=pTot(m,'L',p),fx=fxById(fid),hm=!fx||fx.home;a.games++;a.pins+=tot;if(hm){a.hg=(a.hg||0)+1;a.hp=(a.hp||0)+tot;}else{a.ag=(a.ag||0)+1;a.ap=(a.ap||0)+tot;}a.hands+=m.L[p].filter(function(c){return !!c;}).length;a.high=Math.max(a.high,tot);if(tot>=50)a.f50=(a.f50||0)+1;
       m.L[p].forEach(function(c){if(c&&c.sp)a.spares++;if(c&&c.vc)a.vc++;});});});
   return Object.keys(st).map(function(k){var a=st[k];a.avgHand=a.hands?a.pins/a.hands:0;a.avgGame=a.games?a.pins/a.games:0;return a;}).sort(function(x,y){return (y.avgGame-x.avgGame)||(y.avgHand-x.avgHand);});
 }
-function teamStats(){ // pins: every finished match (Front Pin included); averages & spares: League and Cup only (rules.averages)
+function teamStats(sid){sid=sid||curSeason(); // pins: every finished match (Front Pin included); averages & spares: League and Cup only (rules.averages)
   var z=function(){return {pins:0,n:0,tot:0,sp:0};},o={all:z(),home:z(),away:z()};
-  Object.keys(S.matches).forEach(function(fid){var m=S.matches[fid];if(!m||!allDone(m))return;var fx=fxById(fid),w=(!fx||fx.home)?o.home:o.away,t=matchTot(m,'L');
+  Object.keys(S.matches).forEach(function(fid){var m=S.matches[fid];if(!m||!allDone(m))return;if(!inSeason(fid,sid))return;var fx=fxById(fid),w=(!fx||fx.home)?o.home:o.away,t=matchTot(m,'L');
     [o.all,w].forEach(function(b){b.pins+=t;if(m.rules.averages){b.n++;b.tot+=t;m.L.forEach(function(row){(row||[]).forEach(function(c){if(c&&c.sp)b.sp++;});});}});});
   return o;}
 function n0(n){return Number(n||0).toLocaleString('en-GB');}
-function avgMap(){var o={};averages().forEach(function(a){o[a.pid]=a;});return o;}
+function avgMap(){var o={};seasonAverages(prevSeasonId(curSeason())).forEach(function(a){o[a.pid]=a;}); // early in a season, last season's form fills the gaps
+  averages().forEach(function(a){o[a.pid]=a;});return o;}
+/* ---------------- seasons (v3.1) ---------------- */
+/* Every fixture belongs to a season ('2026-27'). rules.general.season = the current season; rules.general.closed = closed seasons (read-only).
+   Closed seasons keep a summary in S.seasons[id] (shared doc 'seasons'). Seasons from before the app are built in below (BUILTIN_SEASONS). */
+var BUILTIN_SEASONS={'2025-26':{id:'2025-26',builtin:true,src:'Andy Evans’ end-of-season sheet',
+  m:'EFTB A 476 573 L 2|Choppers H 513 557 L 2|Reptiles A 478 520 L 2|Box Tops H 508 486 W 12|Century B A 464 519 L 2|Persuaders H 499 472 W 8|Hornets A 504 508 L 4|Wookers H 494 503 L 4|Alleycats A 507 511 L 4|Wurzels H 498 510 L 2|Renegades A 495 468 W 12|Century A A 516 489 W 12|St Johns B H 484 505 L 0|Walnut B A 503 579 L 2|EFTB H 505 538 L 2|Choppers A 460 505 L 2|Reptiles H 526 487 W 10|Box Tops A 529 514 W 10|Century B H 494 477 W 12|Persuaders A 446 489 L 2|Hornets H 513 512 W 10|Wookers A 445 456 L 6|Alleycats H 491 530 L 4|Wurzels A 472 516 L 0|Renegades H 510 498 W 12|Century A H 507 474 W 12|St Johns B A 455 544 L 0|Walnut B H 488 516 L 2',
+  p:[['p24',12,'39 47 55 49 - 49 39 - 65 46 - 43 42 43 44 - 49 38 - 41 46 37 52 - 41 - - 42'],
+     ['p11',7,'- - - - 46 38 40 42 39 42 30 44 36 44 49 50 48 48 50 33 - 39 - 47 44 53 47 40'],
+     ['p16',8,'- 44 37 46 36 44 45 45 53 45 53 42 - 40 - 42 45 44 - 43 42 44 45 55 30 - 34 35'],
+     ['p12',8,'- 47 - 38 45 49 40 44 43 36 64 49 - 42 37 - - 53 31 33 41 43 - 40 42 41 44 35'],
+     ['p10',12,'49 46 33 40 41 51 48 37 38 34 49 42 - 36 - 35 55 49 50 36 40 46 40 42 51 36 - 40'],
+     ['p13',9,'48 35 37 52 36 36 40 49 40 37 39 43 - 51 45 40 39 40 43 41 - 34 46 38 48 42 - 51'],
+     ['p17',7,'- 46 - 47 45 34 44 - 38 42 - 39 42 35 45 - - 42 41 - 39 - 40 - 47 43 37 42'],
+     ['p1',9,'41 39 39 42 35 35 - 38 45 48 40 37 45 37 44 39 46 49 43 41 52 33 - 38 43 43 41 38'],
+     ['p15',4,'38 - 41 44 35 - - 32 - - 41 44 46 - 48 40 41 - 40 - - - 44 37 37 - 48 -'],
+     ['p8',10,'44 40 33 - 36 42 58 44 42 49 33 40 43 45 36 - 40 46 41 31 45 35 44 28 - 38 39 46'],
+     ['p5',4,'42 37 44 33 - - - - 36 - 37 58 45 - 41 44 39 43 41 - 40 35 42 - 36 - 30 -'],
+     ['p22',1,'36 44 - 41 34 45 - 38 - 36 - - 39 - - - 42 - 42 - 37 - 40 35 - 45 33 -'],
+     ['p9',5,'39 39 40 39 - 38 35 39 36 - 39 35 - 40 - 41 43 44 35 35 51 35 32 38 45 41 38 41'],
+     ['p3',4,'- - - 37 39 - 34 43 - 39 - - 43 46 38 - - - 37 37 41 27 - 38 - 48 38 37'],
+     ['p19',2,'40 49 - - - - 43 - 32 - 36 - 31 - - - 39 - - - - - - - - - - -'],
+     ['p7',3,'26 - 36 - - - - - - - - - - - - 34 - - - 45 39 - 33 - 46 40 - 41'],
+     ['p23',4,'34 - - - 36 - 38 - - 44 34 - 33 44 37 38 - 33 - 30 - 37 33 36 - 37 26 -']]}};
+function dateSeason(d){d=String(d||today());var y=+d.slice(0,4),mo=+d.slice(5,7);if(mo<8)y--;return y+'-'+String((y+1)%100).padStart(2,'0');}
+function nextSeasonId(id){var y=+String(id).slice(0,4)+1;return y+'-'+String((y+1)%100).padStart(2,'0');}
+function prevSeasonId(id){var y=+String(id).slice(0,4)-1;return y+'-'+String((y+1)%100).padStart(2,'0');}
+function seasonLabel(id){return String(id||'').replace('-','/');}
+function curSeason(){return (S.rules&&S.rules.general&&S.rules.general.season)||dateSeason(today());}
+function fxSeason(f){return (f&&f.season)||dateSeason(f&&f.date);}
+function closedSeasons(){return (S.rules.general.closed||[]).slice();}
+function isFrozenFx(f){return !!f&&closedSeasons().indexOf(fxSeason(f))>-1;}
+function isFrozenFid(fid){return isFrozenFx(fxById(fid));}
+function inSeason(fid,id){var f=fxById(fid);return f?fxSeason(f)===id:id===curSeason();}
+function seasonFixtures(id){return S.fixtures.filter(function(f){return fxSeason(f)===id;});}
+function isLiveSeason(id){return id===curSeason()||seasonFixtures(id).some(function(f){return !!S.matches[f.id];});}
+function seasonSummary(id){return (S.seasons&&S.seasons[id])||BUILTIN_SEASONS[id]||null;}
+function seasonList(){var o={};o[curSeason()]=1;S.fixtures.forEach(function(f){o[fxSeason(f)]=1;});closedSeasons().forEach(function(k){o[k]=1;});
+  Object.keys(S.seasons||{}).forEach(function(k){o[k]=1;});Object.keys(BUILTIN_SEASONS).forEach(function(k){o[k]=1;});
+  return Object.keys(o).filter(function(k){return isLiveSeason(k)||seasonSummary(k);}).sort().reverse();}
+function viewSeason(){var s=S.ui.season;return s&&seasonList().indexOf(s)>-1?s:curSeason();}
+function seasonFixups(D){D=D||S;var ch=false;(D.fixtures||[]).forEach(function(f){if(!f.season){f.season=dateSeason(f.date);ch=true;}});if(!D.seasons)D.seasons={};return ch;}
+function seasonChips(){var l=seasonList();if(l.length<2)return '';var v=viewSeason();
+  return '<div class="reqs fxf seasons">'+l.map(function(id){return '<button class="'+(id===v?'on':'')+'" data-act="season" data-s="'+id+'">'+esc(seasonLabel(id))+(id===curSeason()?'':closedSeasons().indexOf(id)>-1||seasonSummary(id)?' ✓':'')+'</button>';}).join('')+'</div>';}
+function sheetName(pid){var p=player(pid);if(!p)return pid;var w=String(fullName(p)).replace(/\(.*?\)/g,'').trim().split(/\s+/);return w.length>1?w[0].charAt(0).toUpperCase()+' '+w.slice(1).join(' '):w[0];}
+
+/* The season sheet: league matches only, in fixture order, one row per player. Same shape for live seasons and saved summaries. */
+function sheetData(id){var sm=seasonSummary(id);
+  if(!isLiveSeason(id)&&sm){if(sm.sheet)return sm.sheet;if(sm.builtin)return builtinSheet(sm);}
+  var fx=seasonFixtures(id).filter(function(f){return compType(f)==='league'&&f.status!=='vacant'&&f.status!=='cancelled'&&f.status!=='bye';}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+  var rows={},M=fx.map(function(f,i){var m=S.matches[f.id],done=!!(m&&allDone(m)),R=done?result(m):null;
+    if(done)m.lineup.forEach(function(pid,p){if(!pid||pid==='LS')return;var r=rows[pid]||(rows[pid]={pid:pid,s:{},sp:0});r.s[i]=pTot(m,'L',p);m.L[p].forEach(function(c){if(c&&c.sp)r.sp++;});});
+    return {fid:f.id,date:f.date,opp:f.opp||'TBC',home:!!f.home,played:done,for:done?R.A:null,against:done?R.B:null,res:done?(R.A>R.B?'W':R.A<R.B?'L':'D'):'',pts:done?R.l:null,
+      tsp:done?spares(m,'L'):0};});
+  return finishSheet(id,M,Object.keys(rows).map(function(k){var r=rows[k];return {pid:k,scores:M.map(function(x,i){return r.s[i]==null?null:r.s[i];}),spares:r.sp};}));}
+function builtinSheet(sm){var M=sm.m.split('|').map(function(t){var w=t.trim().split(' '),n=w.length;return {opp:w.slice(0,n-5).join(' '),home:w[n-5]==='H',played:true,for:+w[n-4],against:+w[n-3],res:w[n-2],pts:+w[n-1]};});
+  var P=sm.p.map(function(r){return {pid:r[0],spares:r[1],scores:r[2].split(' ').map(function(x){return x==='-'?null:+x;})};});
+  var sp=P.reduce(function(a,r){return a+r.spares;},0);return finishSheet(sm.id,M,P,sp);}
+function finishSheet(id,M,P,teamSp){var tot=0;M.forEach(function(x){if(x.played){tot+=x.pts;x.tot=tot;}else x.tot=null;});
+  P.forEach(function(r){var g=0,pins=0,hg=0,hp=0,ag=0,ap=0,f50=0,hi=0;r.scores.forEach(function(v,i){if(v==null)return;g++;pins+=v;if(M[i].home){hg++;hp+=v;}else{ag++;ap+=v;}if(v>=50)f50++;hi=Math.max(hi,v);});
+    r.name=sheetName(r.pid);r.games=g;r.pins=pins;r.hg=hg;r.hp=hp;r.ag=ag;r.ap=ap;r.f50=f50;r.high=hi;r.avg=g?pins/g:0;});
+  P=P.filter(function(r){return r.games>0;}).sort(function(a,b){return (b.avg-a.avg)||(b.games-a.games);});
+  var pl=M.filter(function(x){return x.played;}),h=pl.filter(function(x){return x.home;}),a=pl.filter(function(x){return !x.home;}),sum=function(l,k){return l.reduce(function(s,x){return s+x[k];},0);};
+  if(teamSp==null)teamSp=sum(pl,'tsp');
+  return {season:id,matches:M,players:P,totals:{played:pl.length,w:pl.filter(function(x){return x.res==='W';}).length,d:pl.filter(function(x){return x.res==='D';}).length,l:pl.filter(function(x){return x.res==='L';}).length,
+    for:sum(pl,'for'),against:sum(pl,'against'),avgHome:h.length?sum(h,'for')/h.length:null,avgAway:a.length?sum(a,'for')/a.length:null,spares:teamSp,points:tot}};}
+/* Statistics for a season saved as a summary only (no app matches): league-only, from the sheet */
+function sheetAverages(sh){return sh.players.map(function(r){return {pid:r.pid,games:r.games,pins:r.pins,hg:r.hg,hp:r.hp,ag:r.ag,ap:r.ap,spares:r.spares,f50:r.f50,high:r.high,avgGame:r.avg,avgHand:r.games?r.pins/(r.games*6):0,vc:0,hands:r.games*6};});}
+function sheetTeamStats(sh){var pl=sh.matches.filter(function(x){return x.played;}),z=function(l){return {pins:l.reduce(function(s,x){return s+x.for;},0),n:l.length,tot:l.reduce(function(s,x){return s+x.for;},0),sp:null};};
+  var o={all:z(pl),home:z(pl.filter(function(x){return x.home;})),away:z(pl.filter(function(x){return !x.home;}))};o.all.sp=sh.totals.spares;return o;}
+function seasonAverages(id){if(isLiveSeason(id))return averages(id);var sm=seasonSummary(id);if(sm&&sm.averages)return sm.averages;return sheetAverages(sheetData(id));}
+function seasonTeamStats(id){if(isLiveSeason(id))return teamStats(id);var sm=seasonSummary(id);if(sm&&sm.team)return sm.team;return sheetTeamStats(sheetData(id));}
+
+/* ---- printable season sheet (copy of Andy Evans' LIONS LEAGUE AVERAGES) ---- */
+function f2(n){return n==null?'':Number(n).toFixed(2);}
+function sheetHTML(id){var sh=sheetData(id),M=sh.matches,P=sh.players,t=sh.totals,nM=Math.max(M.length,1);
+  var nameW=24,totW=[8,9,10,10,10,8,9],tw=totW.reduce(function(a,b){return a+b;},0),mW=Math.max(4,(281-nameW-tw)/nM);
+  var col='<colgroup><col style="width:'+nameW+'mm">'+M.map(function(){return '<col style="width:'+mW.toFixed(2)+'mm">';}).join('')+totW.map(function(w){return '<col style="width:'+w+'mm">';}).join('')+'</colgroup>';
+  var rot=function(t,b){return '<th class="rot'+(b?' b':'')+'"><div>'+esc(t)+'</div></th>';},asOf=fdate(today(),true);
+  var h='<div class="ps-title">LIONS LEAGUE AVERAGES</div><div class="ps-sub">'+esc(seasonLabel(id))+(isLiveSeason(id)&&id===curSeason()?' · as of '+esc(asOf):' · final')+'</div>';
+  h+='<table class="ps">'+col+'<thead><tr><th></th>'+M.map(function(x){return '<th class="ha">'+(x.home?'H':'A')+'</th>';}).join('')+'<th colspan="7" class="blank"></th></tr>';
+  h+='<tr><th class="nm">NAME</th>'+M.map(function(x){return rot(String(x.opp).toUpperCase());}).join('')+rot('GAMES PLAYED',1)+rot('TOTAL PINS')+rot('HOME AVERAGE')+rot('AWAY AVERAGE')+rot('AVERAGE',1)+rot('SPARES')+rot('GAMES 50 & OVER')+'</tr></thead><tbody>';
+  P.forEach(function(r){h+='<tr><td class="nm">'+esc(r.name)+'</td>'+r.scores.map(function(v){return '<td>'+(v==null?'':v)+'</td>';}).join('')+
+    '<td class="b">'+r.games+'</td><td>'+r.pins+'</td><td>'+(r.hg?f2(r.hp/r.hg):'')+'</td><td>'+(r.ag?f2(r.ap/r.ag):'')+'</td><td class="b">'+f2(r.avg)+'</td><td>'+r.spares+'</td><td>'+r.f50+'</td></tr>';});
+  if(!P.length)h+='<tr><td class="nm">&nbsp;</td>'+M.map(function(){return '<td></td>';}).join('')+'<td colspan="7"></td></tr>';
+  var box=[['TOTAL PINS HIT',n0(t.for)],['TOTAL PINS AGAINST',n0(t.against)],['AVER’ HOME SCORE',t.avgHome==null?'':t.avgHome.toFixed(1)],['AVER’ AWAY SCORE',t.avgAway==null?'':t.avgAway.toFixed(1)],['TEAM SPARES',t.spares==null?'':t.spares]];
+  [['SCORE FOR','for'],['SCORE AGAINST','against'],['RESULT','res'],['POINTS','pts'],['TOTAL POINTS','tot']].forEach(function(b,i){
+    h+='<tr class="'+(i===0?'ft first':'ft')+'"><td class="nm b">'+b[0]+'</td>'+M.map(function(x){var v=x.played?x[b[1]]:'';return '<td>'+(v==null?'':esc(v))+'</td>';}).join('')+'<td colspan="5" class="bl">'+box[i][0]+'</td><td colspan="2" class="b">'+esc(box[i][1])+'</td></tr>';});
+  return h+'</tbody></table>';}
+function openPrintSheet(id,auto){id=id||viewSeason();var el=document.getElementById('printv');if(!el){el=document.createElement('div');el.id='printv';document.body.appendChild(el);}
+  var l=seasonList();el.innerHTML='<div class="pvbar"><button class="btn gold sm" data-act="doprint">Print / Save as PDF</button>'+(l.length>1?'<select id="pvSeason">'+l.map(function(s){return '<option value="'+s+'"'+(s===id?' selected':'')+'>'+esc(seasonLabel(s))+'</option>';}).join('')+'</select>':'')+'<button class="btn ghost sm" data-act="closeprint">Close</button></div><div class="pvwrap"><div class="pvpage">'+sheetHTML(id)+'</div></div>';
+  document.body.classList.add('printing');T.printS=id;var sel=document.getElementById('pvSeason');if(sel)sel.onchange=function(){openPrintSheet(sel.value,false);};fitPrint();
+  if(auto)setTimeout(function(){try{window.print();}catch(e){}},400);}
+function fitPrint(){var p=document.querySelector('#printv .pvpage'),w=document.querySelector('#printv .pvwrap');if(!p||!w)return;p.style.transform='';var s=Math.min(1,(window.innerWidth-16)/p.offsetWidth);p.style.transform='scale('+s+')';w.style.height=(p.offsetHeight*s+16)+'px';}
+window.addEventListener('resize',function(){if(document.body.classList.contains('printing'))fitPrint();});
+window.addEventListener('afterprint',function(){fitPrint();});
+function closePrint(){document.body.classList.remove('printing');var el=document.getElementById('printv');if(el)el.innerHTML='';}
+
+/* ---- comparisons across seasons (league matches only, so every season compares like for like) ---- */
+function allSheets(){return seasonList().map(function(id){return sheetData(id);}).filter(function(sh){return sh.matches.length;});}
+function upDown(now,was,dp){if(now==null||was==null)return '';var d=now-was;if(Math.abs(d)<(dp?0.005:0.5))return ' <span class="muted small">=</span>';
+  return ' <span class="small" style="color:var(--'+(d>0?'green':'red')+')">'+(d>0?'▲':'▼')+Math.abs(d).toFixed(dp||0)+'</span>';}
+function playerHistory(pid){var rows=allSheets().map(function(sh){var r=sh.players.filter(function(x){return x.pid===pid;})[0];return r?{season:sh.season,r:r}:null;}).filter(Boolean);
+  var h='<h4>'+esc(fullName(player(pid)||{name:pid}))+'</h4><div class="small muted">Season by season · league matches only</div>';
+  if(!rows.length)return h+'<div class="card muted" style="margin-top:8px">No league matches recorded yet.</div><button class="btn ghost" data-act="close">Close</button>';
+  h+='<div class="tscroll" style="margin-top:8px"><table class="avg"><thead><tr><th class="n">Season</th><th>Gm</th><th>Pins</th><th>Avg</th><th>Home</th><th>Away</th><th>Spr</th><th>50+</th><th>Best</th></tr></thead><tbody>';
+  rows.forEach(function(x,i){var o=rows[i+1]&&rows[i+1].r,r=x.r;h+='<tr><td class="n">'+esc(seasonLabel(x.season))+'</td><td>'+r.games+upDown(r.games,o&&o.games)+'</td><td>'+r.pins+'</td><td class="t">'+f2(r.avg)+upDown(r.avg,o&&o.avg,2)+'</td><td>'+haTxt(r.hg,r.hp)+'</td><td>'+haTxt(r.ag,r.ap)+'</td><td>'+r.spares+'</td><td>'+r.f50+upDown(r.f50,o&&o.f50)+'</td><td>'+r.high+'</td></tr>';});
+  return h+'</tbody></table></div><div class="note">▲▼ = change from the season before.</div><button class="btn ghost" data-act="close">Close</button>';}
+function teamHistoryHTML(){var L=allSheets();if(!L.length)return '';
+  var h='<div class="card"><h2>Season by season</h2><div class="tscroll"><table class="avg"><thead><tr><th class="n">Season</th><th>Pos</th><th>P</th><th>W</th><th>D</th><th>L</th><th>Pts</th><th>Pins</th><th>Avg H</th><th>Avg A</th><th>Spr</th></tr></thead><tbody>';
+  L.forEach(function(sh,i){var t=sh.totals,o=L[i+1]&&L[i+1].totals,sm=seasonSummary(sh.season),pos=sh.season===curSeason()?lionsPos():sm&&sm.pos;
+    h+='<tr><td class="n">'+esc(seasonLabel(sh.season))+(sh.season===curSeason()&&closedSeasons().indexOf(sh.season)<0?' <span class="small muted">so far</span>':'')+'</td><td>'+(pos&&pos.pos?ordN(pos.pos):'–')+'</td><td>'+t.played+'</td><td>'+t.w+'</td><td>'+t.d+'</td><td>'+t.l+'</td><td class="t">'+t.points+'</td><td>'+n0(t.for)+'</td><td>'+(t.avgHome==null?'–':t.avgHome.toFixed(1)+upDown(t.avgHome,o&&o.avgHome,1))+'</td><td>'+(t.avgAway==null?'–':t.avgAway.toFixed(1)+upDown(t.avgAway,o&&o.avgAway,1))+'</td><td>'+(t.spares==null?'–':t.spares)+'</td></tr>';});
+  return h+'</tbody></table></div><div class="note">League matches only. Pos = league position (this season: the latest table; earlier seasons: the final table when the season was closed in the app). Avg H / Avg A = average team score at home / away, with ▲▼ against the season before.</div></div>';}
+function recordsHTML(){var L=allSheets();if(!L.length)return '';var best=function(list,key){var mx=-1e9,w=[];list.forEach(function(x){if(x[key]>mx){mx=x[key];w=[x];}else if(x[key]===mx)w.push(x);});return {v:mx,w:w};};
+  var ind=[],f50=[],team=[],win=[];L.forEach(function(sh){sh.players.forEach(function(r){r.scores.forEach(function(v,i){if(v!=null)ind.push({v:v,t:r.name+' v '+sh.matches[i].opp+' · '+seasonLabel(sh.season)});});if(r.f50)f50.push({v:r.f50,t:r.name+' · '+seasonLabel(sh.season)});});
+    sh.matches.forEach(function(x){if(!x.played)return;team.push({v:x.for,t:(x.home?'v ':'at ')+x.opp+' · '+seasonLabel(sh.season)});if(x.for>x.against)win.push({v:x.for-x.against,t:x.for+'–'+x.against+' '+(x.home?'v ':'at ')+x.opp+' · '+seasonLabel(sh.season)});});});
+  var row=function(l,lab,unit){if(!l.length)return '';var b=best(l,'v');return '<div><div class="grow"><div class="name">'+lab+'</div><div class="small muted">'+b.w.slice(0,4).map(function(x){return esc(x.t);}).join('<br>')+(b.w.length>4?'<br>+ '+(b.w.length-4)+' more':'')+'</div></div><span class="t5a">'+b.v+(unit||'')+'</span></div>';};
+  return '<div class="card"><h2>Records</h2><div class="list">'+row(ind,'Highest individual score')+row(f50,'Most 50+ scores in a season')+row(team,'Best team score')+row(win,'Biggest win',' pins')+'</div><div class="note">League matches, all seasons in the app.</div></div>';}
+function lastYearHTML(){var id=curSeason(),now=sheetData(id),was=sheetData(prevSeasonId(id));var n=now.totals.played;if(!n||!was.matches.length)return '';
+  var cut=function(sh){var pl=sh.matches.filter(function(x){return x.played;}).slice(0,n),idx=pl.map(function(x){return sh.matches.indexOf(x);}),pts=pl.reduce(function(a,x){return a+x.pts;},0),pins=pl.reduce(function(a,x){return a+x.for;},0);
+    var pp={};sh.players.forEach(function(r){var g=0,s=0;idx.forEach(function(i){if(r.scores[i]!=null){g++;s+=r.scores[i];}});if(g)pp[r.pid]={g:g,avg:s/g};});
+    return {n:pl.length,pts:pts,pins:pins,avg:pl.length?pins/pl.length:0,w:pl.filter(function(x){return x.res==='W';}).length,pp:pp};};
+  var a=cut(now),b=cut(was);var h='<div class="card"><h2>This time last year</h2><div class="small muted">After '+n+' league match'+(n>1?'es':'')+': '+esc(seasonLabel(id))+' v '+esc(seasonLabel(was.season))+'</div>'+
+    '<div class="tscroll"><table class="avg stat" style="margin-top:6px"><thead><tr><th class="n"></th><th>'+esc(seasonLabel(id))+'</th><th>'+esc(seasonLabel(was.season))+'</th></tr></thead><tbody>'+
+    '<tr><td class="n">Points</td><td class="t">'+a.pts+upDown(a.pts,b.pts)+'</td><td>'+b.pts+'</td></tr><tr><td class="n">Wins</td><td class="t">'+a.w+'</td><td>'+b.w+'</td></tr><tr><td class="n">Average team score</td><td class="t">'+a.avg.toFixed(1)+upDown(a.avg,b.avg,1)+'</td><td>'+b.avg.toFixed(1)+'</td></tr><tr><td class="n">Total pins</td><td class="t">'+n0(a.pins)+'</td><td>'+n0(b.pins)+'</td></tr></tbody></table></div>';
+  var both=Object.keys(a.pp).filter(function(k){return b.pp[k];}).sort(function(x,y){return a.pp[y].avg-a.pp[x].avg;});
+  if(both.length)h+='<div class="tscroll"><table class="avg" style="margin-top:10px"><thead><tr><th class="n">Player</th><th>Avg now</th><th>Gm</th><th>Last year</th><th>Gm</th></tr></thead><tbody>'+both.map(function(k){return '<tr><td class="n">'+esc(pname(k))+'</td><td class="t">'+f2(a.pp[k].avg)+upDown(a.pp[k].avg,b.pp[k].avg,2)+'</td><td>'+a.pp[k].g+'</td><td>'+f2(b.pp[k].avg)+'</td><td>'+b.pp[k].g+'</td></tr>';}).join('')+'</tbody></table></div>';
+  return h+'<div class="note">Same number of league matches played in each season; players who played in both.</div></div>';}
+
+/* ---- close the season (admins, once a year) ---- */
+function closeSeasonHTML(){var id=curSeason();return '<div class="card"><h2>Close season</h2><div class="small muted">Once the last match of '+esc(seasonLabel(id))+' is played: freezes the season (scores can’t be changed), saves its final table, averages and season sheet, and starts '+esc(seasonLabel(nextSeasonId(id)))+' empty. Squad, nicknames, rules and settings carry over. Nothing is deleted.</div><button class="btn ghost" data-act="closeseason">Close season '+esc(seasonLabel(id))+'…</button></div>';}
+function closeSeasonModal(){var id=curSeason(),up=seasonFixtures(id).filter(function(f){return f.status==='scheduled'&&!(S.matches[f.id]&&allDone(S.matches[f.id]));}).length;
+  modal('<h4>Close season '+esc(seasonLabel(id))+'?</h4><div class="small muted">This freezes every '+esc(seasonLabel(id))+' fixture and score for everyone, and starts '+esc(seasonLabel(nextSeasonId(id)))+'. Save a backup first.</div>'+(up?'<div class="warn">'+up+' fixture'+(up>1?'s are':' is')+' still to play in '+esc(seasonLabel(id))+'.</div>':'')+
+    '<button class="btn ghost" data-act="export">Save backup file first</button><div class="field"><label>Type '+esc(seasonLabel(id))+' to confirm</label><input id="csName" autocomplete="off" placeholder="'+esc(seasonLabel(id))+'"></div><button class="btn danger" data-act="closeseasonok">Close season</button><button class="btn ghost" data-act="close">Cancel</button>');}
+function closeSeason(){var id=curSeason(),inp=document.getElementById('csName');if(!inp||inp.value.trim()!==seasonLabel(id)){toast('Type '+seasonLabel(id)+' exactly to confirm');return;}
+  var t=leagueTbl(),lp=lionsPos();S.seasons=S.seasons||{};
+  S.seasons[id]={id:id,closedAt:Date.now(),by:meTag().name,pos:lp,table:t?{asOf:t.asOf||'',rows:(S.feed&&S.feed.table&&S.feed.table.rows)||[]}:null,sheet:sheetData(id),
+    averages:averages(id).map(function(a){var o={};['pid','games','pins','hg','hp','ag','ap','spares','f50','high','avgGame','avgHand','vc','hands'].forEach(function(k){if(a[k]!=null)o[k]=a[k];});return o;}),team:teamStats(id)};
+  seasonFixups(S);S.rules.general.closed=closedSeasons().concat([id]);S.rules.general.season=nextSeasonId(id);S.ui.season=null;closeModal();save();render();toast('Season '+seasonLabel(id)+' closed. Welcome to '+seasonLabel(nextSeasonId(id))+'!');}
+function frozenMsg(){toast('Season closed: its fixtures and scores can’t be changed');}
+
 
 /* ---------------- suggest ---------------- */
 function rotationInfo(fid){
@@ -435,7 +607,7 @@ function renderNav(){var tabs=[['home','Home'],['team','Team'],['score','Scores'
 function renderTop(){
   document.getElementById('top').innerHTML='<svg viewBox="0 0 '+LOGO_W+' 1000" class="logo" role="img" aria-label="Lion’s logo"><path fill="'+GOLD+'" fill-rule="evenodd" d="'+LOGO_D+'"/></svg><div class="grow"><div class="h1">The Lions Den</div><div class="sub">'+esc(S.rules.general.home+' · '+S.rules.general.league)+'</div></div>'+(function(){var st=syncState();return '<button class="sync '+st.c+'" data-tab="account"><i></i>'+esc(st.t)+'</button>';})();}
 function venTxt(f){return f.venue?' · '+f.venue:(f.status==='scheduled'&&f.date>=today()?' · Venue TBC':'');}
-function fxSelect(){var f=curFx(),l=sortedFx().filter(function(x){return x.status!=='vacant'&&x.status!=='bye';});
+function fxSelect(){var f=curFx(),cs=curSeason(),l=sortedFx().filter(function(x){return x.status!=='vacant'&&x.status!=='bye'&&(fxSeason(x)===cs||(f&&f.id===x.id));});
   return '<div class="card fxsel"><label for="fxSel" class="small muted">Fixture</label><select id="fxSel">'+(f?'':'<option value="">Choose a fixture</option>')+l.map(function(x){var m=S.matches[x.id],dn=m&&allDone(m);return '<option value="'+x.id+'"'+(f&&f.id===x.id?' selected':'')+'>'+esc(fdate(x.date)+' · '+fxTitle(x)+(dn?' ✓':x.status!=='scheduled'?' ('+x.status+')':''))+'</option>';}).join('')+'</select>'+
     (f?'<div class="small muted" style="margin-top:6px">'+esc(fxComp(f)+' · '+(f.home?'Home':'Away')+venTxt(f))+'</div>':'')+'</div>';}
 function fxRow(f,act){var m=S.matches[f.id],r=m&&allDone(m)?result(m):null,tag='',draw=f.status==='scheduled'&&!f.opp&&compType(f)!=='league'&&!m&&f.date>=today();
@@ -558,14 +730,14 @@ function finishedHTML(f,m){var R=result(m),r=m.rules,lk=isLocked(m),ed=canEdit()
     if(r.tie==='captains')h+='<div class="small muted">Pins are level. Who did the captains agree won?</div><div class="btns" style="grid-template-columns:1fr 1fr 1fr"><button class="btn '+(m.tieWinner==='L'?'gold':'ghost')+'" data-tw="L">Lions</button><button class="btn '+(m.tieWinner==='D'?'gold':'ghost')+'" data-tw="D">Draw</button><button class="btn '+(m.tieWinner==='O'?'gold':'ghost')+'" data-tw="O">'+esc(oppTeam(m))+'</button></div>';
     else h+='<div class="warn">Pins are level. Game Rules say play '+r.extraHands+' extra hand(s). Record the outcome once played.</div><div class="btns" style="grid-template-columns:1fr 1fr"><button class="btn '+(m.tieWinner==='L'?'gold':'ghost')+'" data-tw="L">Lions won</button><button class="btn '+(m.tieWinner==='O'?'gold':'ghost')+'" data-tw="O">'+esc(oppTeam(m))+' won</button></div>';
     h+='</div>';}
-  if(lk)h+='<div class="card lockc"><div class="between"><div><div class="name">🔒 Match locked</div><div class="small muted">'+esc(lockLine(m))+'</div></div>'+(isAdmin()?'<button class="btn ghost sm" data-act="unlockm">Unlock</button>':'')+'</div>'+(isAdmin()?'<div class="note">Unlock to correct a score. Every change is recorded below.</div>':'')+'</div>';
+  if(lk&&canEdit())h+='<div class="card lockc"><div class="between"><div><div class="name">🔒 Match locked</div><div class="small muted">'+esc(lockLine(m))+'</div></div>'+(isAdmin()&&!isFrozenFx(f)?'<button class="btn ghost sm" data-act="unlockm">Unlock</button>':'')+'</div>'+(isFrozenFx(f)?'<div class="note">Season '+esc(seasonLabel(fxSeason(f)))+' is closed: these scores are final.</div>':isAdmin()?'<div class="note">Unlock to correct a score. Every change is recorded below.</div>':'')+'</div>';
   else if(canEdit())h+='<div class="card now" style="text-align:center"><div class="h1 gold" style="font-size:20px">Match finished</div><div class="small muted">Check the scores against the board, then lock the match. Tap any score below to correct it first.</div><div class="btns"><button class="btn gold" data-act="lockm">Lock match</button><button class="btn ghost" data-act="undo">Undo last</button></div><div class="note">If nobody locks it, it locks itself at 6am tomorrow.</div></div>';
   for(var st=0;st<r.sets;st++)h+=ed?setTable(m,st):roTable(m,st);
   if(isAdmin())h+='<div class="card"><h2>Share</h2><button class="btn gold" data-act="resimg" style="margin-top:0">Results image</button><button class="btn ghost" data-act="report">Match report text</button><button class="btn ghost" data-act="copyres">Copy all scores as text</button></div>';
   var sg=m.sig||{},ns=(sg.away?1:0)+(sg.home?1:0);
   if(canEdit())h+='<div class="card"><h2>League result card</h2><div class="note" style="margin-top:0">'+(f.home?'Home match: the away captain normally sends the card in, but you can still make one.':'Away match: send the completed card to '+esc(S.rules.general.leagueEmail)+'.')+'</div>'+
     '<button class="btn ghost" data-act="sign">'+(ns===2?'Captains signed ✓ (re-sign)':ns===1?'Captains sign (1 of 2 done)':'Captains sign')+'</button><button class="btn gold" data-act="leaguecard">Create league card</button></div>';
-  if(m.log&&m.log.length)h+='<div class="card"><h2>Changes after locking</h2><div class="list">'+m.log.slice().reverse().map(function(x){return '<div><div class="grow"><div class="small">'+esc(x.what)+'</div><div class="small muted">'+esc(x.by)+' · '+esc(clock(x.at))+'</div></div></div>';}).join('')+'</div></div>';
+  if(canEdit()&&m.log&&m.log.length)h+='<div class="card"><h2>Changes after locking</h2><div class="list">'+m.log.slice().reverse().map(function(x){return '<div><div class="grow"><div class="small">'+esc(x.what)+'</div><div class="small muted">'+esc(x.by)+' · '+esc(clock(x.at))+'</div></div></div>';}).join('')+'</div></div>';
   return h;}
 function vResults(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';var m=S.matches[f.id];
   if(!m)return '<div class="card">No scores recorded for this fixture yet.</div>';
@@ -593,6 +765,10 @@ var ABOUT={
   intro:'Our own Lions app: live scores, fixtures, the league table and everyone’s averages, all in one place. Add it to your phone like an app, or visit it as a website on any computer.',
   install:'On your phone, open the-lions-den.github.io and tap Share → Add to Home Screen (iPhone) or ⋮ → Add to Home screen (Android). No sign-in needed to view.',
   news:[ /* newest first: [version, date, role, text] */
+    ['v3.1','10 Nov 2026','all','Seasons: pick a season on Statistics and Fixtures. Last season (2025/26) is in, from Andy Evans\u2019 averages sheet.'],
+    ['v3.1','10 Nov 2026','all','Print season sheet: the league averages sheet on one A4 page, or save it as a PDF.'],
+    ['v3.1','10 Nov 2026','all','Statistics: a 50+ column, season-by-season history, records and \u201cthis time last year\u201d. Tap a player for their seasons.'],
+    ['v3.1','10 Nov 2026','admin','Close season (Backup & data): freezes the season and starts the next one.'],
     ['v3.0','10 Nov 2026','all','Averages is now Statistics: team stats (average score, pins, spares \u2013 overall, home and away), home and away averages per player, averages to 2 decimal places.'],
     ['v3.0','10 Nov 2026','all','Home shows the pins we\u2019ve hit this season and the full league table.'],
     ['v3.0','10 Nov 2026','all','Tables now scroll sideways on phones with large text, with names kept in view.'],
@@ -611,7 +787,7 @@ var ABOUT={
       ['🎳','Scores','follow the match live, hand by hand, from anywhere'],
       ['📅','Fixtures','every league and cup fixture, filter by competition'],
       ['📊','League table','updated automatically from the league website, with ▲▼ position changes, last week’s results and cup draws'],
-      ['📈','Averages','everyone’s season stats']]],
+      ['📈','Statistics','everyone’s averages, past seasons, records and a printable season sheet']]],
     ['scorer','Scorers can',[
       ['🎳','','Score the match live on one phone – everyone else watches in real time'],
       ['🔁','','Take over scoring from another phone if needed'],
@@ -639,29 +815,39 @@ function vAbout(){var news=ABOUT.news.filter(function(n){return aboutSees(n[2]);
 function tabAllowed(t){var r=myRole();if(['subs','settings','backup'].indexOf(t)>-1)return r==='admin';if(t==='rules')return r!=='viewer';return true;}
 
 function haTxt(g,p){return g?(p/g).toFixed(2):'\u2013';}
-function vAverages(){var a=averages(),ts=teamStats(),h='';
-  var cell=function(b,k){return k==='avg'?(b.n?(b.tot/b.n).toFixed(1):'\u2013'):k==='pins'?n0(b.pins):n0(b.sp);};
-  h+='<div class="card"><h2>Team stats</h2><div class="tscroll"><table class="avg stat"><thead><tr><th class="n"></th><th>Overall</th><th>Home</th><th>Away</th></tr></thead><tbody>'+
+function vAverages(){var sid=viewSeason(),live=isLiveSeason(sid),a=seasonAverages(sid),ts=seasonTeamStats(sid),h=seasonChips()?'<div class="card fxfc">'+seasonChips()+'</div>':'';
+  var cur=sid===curSeason(),lbl=seasonLabel(sid);
+  if(!live)h+='<div class="card small muted" style="padding:10px 14px">'+esc(lbl)+(seasonSummary(sid)&&seasonSummary(sid).builtin?' · from '+esc(seasonSummary(sid).src)+' · league matches only':' · closed season')+'</div>';
+  else if(!cur)h+='<div class="card small muted" style="padding:10px 14px">'+esc(lbl)+' · closed season, scores are final</div>';
+  var cell=function(b,k){return k==='avg'?(b.n?(b.tot/b.n).toFixed(1):'–'):k==='pins'?n0(b.pins):b.sp==null?'–':n0(b.sp);};
+  h+='<div class="card"><h2>Team stats'+(cur?'':' · '+esc(lbl))+'</h2><div class="tscroll"><table class="avg stat"><thead><tr><th class="n"></th><th>Overall</th><th>Home</th><th>Away</th></tr></thead><tbody>'+
     [['avg','Average team score'],['pins','Total pins hit'],['sp','Total team spares']].map(function(r){return '<tr><td class="n">'+r[1]+'</td><td class="t">'+cell(ts.all,r[0])+'</td><td>'+cell(ts.home,r[0])+'</td><td>'+cell(ts.away,r[0])+'</td></tr>';}).join('')+
-    '</tbody></table></div><div class="note">Pins hit include every match recorded in this app (Front Pin too). Average team score and spares: League and Cup matches.</div></div>';
-  if(!a.length)return h+'<div class="card">No completed League or Cup matches yet.</div>';
-  var rows=a.map(function(x,i){return '<tr><td class="n">'+(i+1)+'. '+esc(pname(x.pid))+'</td><td>'+x.games+'</td><td>'+x.pins+'</td><td class="t">'+x.avgGame.toFixed(2)+'</td><td>'+haTxt(x.hg,x.hp)+'</td><td>'+haTxt(x.ag,x.ap)+'</td><td>'+x.avgHand.toFixed(2)+'</td><td>'+x.spares+'</td><td>'+x.high+'</td></tr>';}).join('');
-  return h+'<div class="card"><h2>Player averages</h2><div class="tscroll"><table class="avg"><thead><tr><th class="n">Player</th><th>Gm</th><th>Pins</th><th>Avg</th><th>Home</th><th>Away</th><th>Hand</th><th>Spr</th><th>Best</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="note">League and Cup matches recorded in this app (Front Pin excluded). Avg = average score per match; Home / Away = average score per match at home / away; Hand = average per hand. Sorted by average score.</div><button class="btn gold" data-act="avgimg">Averages image</button></div>';}
+    '</tbody></table></div><div class="note">'+(live?'Pins hit include every match recorded in this app (Front Pin too). Average team score and spares: League and Cup matches.':'League matches only.')+'</div></div>';
+  if(!a.length)h+='<div class="card">No completed League or Cup matches '+(cur?'yet':'in '+esc(lbl))+'.</div>';
+  else{var rows=a.map(function(x,i){return '<tr><td class="n"><button class="plink" data-act="phist" data-id="'+esc(x.pid)+'">'+(i+1)+'. '+esc(pname(x.pid))+'</button></td><td>'+x.games+'</td><td>'+x.pins+'</td><td class="t">'+x.avgGame.toFixed(2)+'</td><td>'+haTxt(x.hg,x.hp)+'</td><td>'+haTxt(x.ag,x.ap)+'</td><td>'+(live?x.avgHand.toFixed(2):'–')+'</td><td>'+x.spares+'</td><td>'+x.high+'</td><td>'+(x.f50||0)+'</td></tr>';}).join('');
+    h+='<div class="card"><h2>Player averages</h2><div class="tscroll"><table class="avg"><thead><tr><th class="n">Player</th><th>Gm</th><th>Pins</th><th>Avg</th><th>Home</th><th>Away</th><th>Hand</th><th>Spr</th><th>Best</th><th>50+</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="note">'+(live?'League and Cup matches recorded in this app (Front Pin excluded). ':'League matches only. ')+'Avg = average score per match; Home / Away = average score per match at home / away; Hand = average per hand; 50+ = matches with a score of 50 or more. Sorted by average score. Tap a name for that player’s seasons.</div>'+(live&&cur?'<button class="btn gold" data-act="avgimg">Averages image</button>':'')+'</div>';}
+  h+='<div class="card"><h2>Season sheet</h2><div class="small muted">The league averages sheet for '+esc(lbl)+', ready to print on one A4 page (landscape) or save as a PDF.</div><button class="btn gold" data-act="printsheet">Print season sheet</button></div>';
+  if(cur)h+=lastYearHTML();
+  return h+teamHistoryHTML()+recordsHTML();}
 
 function fxPlayed(f){var m=S.matches[f.id];return f.status==='played'||!!(m&&allDone(m));}
-function fxFilter(){var q=S.ui.fxf||{c:'all',s:'up'},t=today();return sortedFx().filter(function(f){
-  if(q.c!=='all'&&f.comp!==q.c)return false;var pl=fxPlayed(f);
+function fxFilter(){var q=S.ui.fxf||{c:'all',s:'up'},t=today(),sid=viewSeason();return sortedFx().filter(function(f){
+  if(fxSeason(f)!==sid)return false;if(q.c!=='all'&&f.comp!==q.c)return false;var pl=fxPlayed(f);
   if(q.s==='up')return !pl&&f.date>=t;if(q.s==='played')return pl;return true;});}
-function vFixtures(){var q=S.ui.fxf||{c:'all',s:'up'},used={};S.fixtures.forEach(function(f){used[f.comp]=1;});
+function vFixtures(){var q=S.ui.fxf||{c:'all',s:'up'},used={},sid=viewSeason();if(!isLiveSeason(sid))return pastFixtures(sid);S.fixtures.forEach(function(f){if(fxSeason(f)===sid)used[f.comp]=1;});
   var SHORT={league:'League',fp:'Front Pin',ko:'KO Cup',gd:'GD Cup',gdt:'GD tournament'};
   var chip=function(k,v,l){return '<button class="'+(q[k]===v?'on':'')+'" data-act="fxf" data-fk="'+k+'" data-fv="'+esc(v)+'">'+esc(l)+'</button>';};
-  var h='<div class="card fxfc"><div class="reqs fxf">'+chip('c','all','All')+S.comps.filter(function(c){return !c.archived&&used[c.id];}).map(function(c){return chip('c',c.id,SHORT[c.id]||c.name);}).join('')+'</div>'+
+  var h='<div class="card fxfc">'+seasonChips()+'<div class="reqs fxf">'+chip('c','all','All')+S.comps.filter(function(c){return !c.archived&&used[c.id];}).map(function(c){return chip('c',c.id,SHORT[c.id]||c.name);}).join('')+'</div>'+
     '<div class="reqs fxf">'+chip('s','up','Upcoming')+chip('s','played','Played')+chip('s','all','All')+'</div></div>';
   var groups={},list=fxFilter();if(!list.length)h+='<div class="card muted">No fixtures match.</div>';
   list.forEach(function(f){var k=f.date.slice(0,7);(groups[k]=groups[k]||[]).push(f);});
   Object.keys(groups).forEach(function(k){var d=new Date(k+'-15T12:00:00');h+='<div class="sec">'+MON[d.getMonth()]+' '+d.getFullYear()+'</div><div class="card list">'+groups[k].map(function(f){return fxRow(f,'editfx');}).join('')+'</div>';});
-  if(isAdmin())h+='<div class="smbtns"><button class="btn ghost sm" data-act="addfx">Add fixture</button><button class="btn ghost sm" data-act="comps">Competition setup</button></div>';
+  if(isAdmin()&&sid===curSeason())h+='<div class="smbtns"><button class="btn ghost sm" data-act="addfx">Add fixture</button><button class="btn ghost sm" data-act="comps">Competition setup</button></div>';
   return h;}
+function pastFixtures(sid){var sh=sheetData(sid),sm=seasonSummary(sid);
+  var h='<div class="card fxfc">'+seasonChips()+'<div class="small muted" style="margin-top:6px">'+esc(seasonLabel(sid))+' league results'+(sm&&sm.builtin?' from '+esc(sm.src):'')+'. Cup results weren’t kept for this season.</div></div>';
+  return h+'<div class="card list">'+sh.matches.map(function(x,i){var sc=x.home?x.for+'–'+x.against:x.against+'–'+x.for;
+    return '<div class="li"><div class="grow"><div class="name">'+esc(x.home?'Lions v '+x.opp:x.opp+' v Lions')+'</div><div class="small muted">League · match '+(i+1)+' · '+(x.home?'Home':'Away')+' · '+x.pts+' pts</div></div><span class="chip '+(x.res==='W'?'g':'')+'">'+(x.res==='W'?'Won':x.res==='L'?'Lost':'Drawn')+' '+sc+'</span></div>';}).join('')+'</div>';}
 function vSquad(){var act=S.players.slice().sort(function(a,b){return (b.active-a.active)||firstSort(a,b);});
   var n=S.players.filter(function(p){return p.active;}).length;
   return '<div class="card"><div class="small muted" style="margin-bottom:8px">'+n+' active players. The registered squad is built into the app and updates with each new version.</div><div class="btns" style="margin-top:0"><button class="btn gold" data-act="addplayer">Add player</button><button class="btn ghost" data-act="bulkadd">Paste a list</button></div></div><div class="card list">'+
@@ -676,7 +862,7 @@ function vRules(){var h='';
   var g=S.rules.general;
   h+='<div class="card"><button class="btn ghost" data-act="addrule" style="margin-top:0">Add a new match type</button></div><div class="card"><h2>General</h2><div class="field"><label>League results email</label><input id="gEmail" value="'+esc(g.leagueEmail)+'"></div><div class="field"><label>Send results when Lions are</label><select id="gWhen"><option value="away"'+(g.sendWhen==='away'?' selected':'')+'>Away</option><option value="home"'+(g.sendWhen==='home'?' selected':'')+'>Home</option><option value="both"'+(g.sendWhen==='both'?' selected':'')+'>Home and away</option></select></div><div class="field"><label>Home venue</label><input id="gHome" value="'+esc(g.home)+'"></div><div class="field"><label>Weeks away before a returning player starts as a reserve (league)</label><input id="gAway" type="number" inputmode="numeric" value="'+(g.awayWeeks||3)+'"></div><button class="btn gold" data-act="savegeneral">Save</button><div class="note">A finished match keeps the rules it was played under, so editing a rule won’t change past results.</div></div>';
   return h;}
-function vBackup(){return '<div class="card"><h2>Backup</h2><div class="small muted">The team data is shared online, and every phone keeps its own copy. A backup file is a spare copy for safekeeping.</div><button class="btn gold" data-act="export">Save backup file</button><button class="btn ghost" data-act="exportcopy">Copy backup as text</button></div>'+
+function vBackup(){return closeSeasonHTML()+'<div class="card"><h2>Backup</h2><div class="small muted">The team data is shared online, and every phone keeps its own copy. A backup file is a spare copy for safekeeping.</div><button class="btn gold" data-act="export">Save backup file</button><button class="btn ghost" data-act="exportcopy">Copy backup as text</button></div>'+
   '<div class="card"><h2>Restore</h2><div class="small muted">Admins only. Loads a backup file and sends it to the shared data, replacing it for everyone.</div><label class="btn ghost imp" style="display:flex;align-items:center;justify-content:center">Choose backup file<input type="file" id="impFile" accept=".json,application/json,text/plain" style="display:none"></label><button class="btn ghost" data-act="importpaste">Paste backup text</button></div>'+
   '<div class="card"><h2>Start again</h2><div class="small muted">Clears this phone’s copy and reloads the shared data.</div><button class="btn danger" data-act="reset" style="margin-top:0">Reset to starting data</button></div>';}
 
@@ -1068,6 +1254,8 @@ function shortName(f){var p=String(f||'').replace(/\(.*?\)/g,'').trim().split(/\
 /* ---------------- events ---------------- */
 document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.disabled)return;var d=b.dataset,f=curFx(),m=curMatch();
   if(denied(needFor(d),m))return;
+  if(m&&f&&isFrozenFx(f)&&(lockBlocked(d)||d.act==='unlockm'||d.act==='lockm')){frozenMsg();return;}
+  if((d.act==='editfx'||d.act==='savefx'||d.act==='delfx')&&d.id&&isFrozenFid(d.id)){frozenMsg();return;}
   if(m&&isLocked(m)&&lockBlocked(d)){toast(isAdmin()?'Match locked. Tap Unlock on the Scores tab to correct it.':'Match locked. Ask an admin to unlock it.');return;}
   if(d.tab){if(d.fx)S.ui.fx=d.fx;S.ui.tab=d.tab;T.sel=null;T.spare=false;T.pick=null;closeModal();save();render();window.scrollTo(0,0);return;}
   if(d.av){var sel=selFor(f.id);sel.avail[d.id]=sel.avail[d.id]===d.av?'':d.av;if(d.av==='out'){var i=sel.lineup.indexOf(d.id);if(i>-1&&!S.matches[f.id])sel.lineup[i]=null;var ri0=sel.reserves.indexOf(d.id);if(ri0>-1)sel.reserves.splice(ri0,1);}save();render();return;}
@@ -1084,6 +1272,13 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(d.nick){S.rules.general.nickOn[d.nick]=d.nv==='1';save();render();return;}
   switch(d.act){
     case 'close':closeModal();break;
+    case 'season':S.ui.season=d.s===curSeason()?null:d.s;localSave();render();break;
+    case 'phist':modal(playerHistory(d.id));break;
+    case 'printsheet':openPrintSheet(viewSeason(),true);break;
+    case 'doprint':try{window.print();}catch(e){toast('Use the browser\u2019s Print or Share \u2192 Print');}break;
+    case 'closeprint':closePrint();break;
+    case 'closeseason':closeSeasonModal();break;
+    case 'closeseasonok':closeSeason();break;
     case 'signin':case 'signup':case 'signout':case 'forgot':case 'claim':case 'newpw':authAct(d.act,d);break;
     case 'acctmode':T.acct=d.m;render();break;
     case 'drawapply':case 'drawedit':var dw=drawByKey(d.dk);if(!dw){toast('That draw has gone from the league site');break;}var dfx=applyDraw(dw);save();render();if(d.act==='drawedit')fxModal(dfx.id);else toast(dw.bye?'Marked as a bye':'Fixture updated');break;
@@ -1149,7 +1344,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'sharetext':try{if(navigator.share)navigator.share({text:T.text}).catch(function(){});else copyText(T.text);}catch(x){copyText(T.text);}break;
     case 'addfx':fxModal(null);break;
     case 'editfx':fxModal(d.id);break;
-    case 'savefx':var id=d.id,fx=id?fxById(id):{id:uid('F'),status:'scheduled'};fx.date=document.getElementById('fDate').value||today();fx.comp=document.getElementById('fComp').value;fx.round=document.getElementById('fRound').value.trim();fx.opp=document.getElementById('fOpp').value.trim();fx.home=document.getElementById('fHome').value==='1';fx.venue=document.getElementById('fVen').value.trim();fx.status=document.getElementById('fStat').value;
+    case 'savefx':var id=d.id,fx=id?fxById(id):{id:uid('F'),status:'scheduled'};fx.date=document.getElementById('fDate').value||today();if(!id){var ds=dateSeason(fx.date);fx.season=closedSeasons().indexOf(ds)>-1?curSeason():ds;}fx.comp=document.getElementById('fComp').value;fx.round=document.getElementById('fRound').value.trim();fx.opp=document.getElementById('fOpp').value.trim();fx.home=document.getElementById('fHome').value==='1';fx.venue=document.getElementById('fVen').value.trim();fx.status=document.getElementById('fStat').value;
       if(fx.status==='knockedout'){var later=S.fixtures.filter(function(x){return x.comp===fx.comp&&x.date>fx.date&&x.status==='scheduled'&&!S.matches[x.id];});later.forEach(function(x){x.status='knockedout';});if(later.length)toast(later.length+' later round(s) marked knocked out');}
       if(!id)S.fixtures.push(fx);if(S.matches[fx.id])S.matches[fx.id].home=fx.home;closeModal();save();render();break;
     case 'delfx':if(S.matches[d.id]){toast('Has scores: cancel it instead');break;}S.fixtures=S.fixtures.filter(function(x){return x.id!==d.id;});delete S.sel[d.id];if(S.ui.fx===d.id)S.ui.fx=null;closeModal();save();render();break;
@@ -1205,20 +1400,20 @@ function roleLabel(){var me=SY.me;if(!me)return 'Viewer';if(me.requested)return 
 function meTag(){var me=SY.me||{},p=me.pid&&player(me.pid);return {pid:me.pid||null,name:p?fullName(p):(me.name||'Scorer'),dev:SY.dev,at:Date.now()};}
 function scorerKey(k){return k==='players'||k==='oppNames'||k.indexOf('sel:')===0||k.indexOf('match:')===0;}
 function writable(k){return isAdmin()||(canEdit()&&scorerKey(k));}
-function docsOf(){var o={players:{v:S.squadV||0,list:S.players},comps:S.comps,rules:S.rules,fixtures:S.fixtures,oppNames:S.oppNames};
+function docsOf(){var o={players:{v:S.squadV||0,list:S.players},comps:S.comps,rules:S.rules,fixtures:S.fixtures,oppNames:S.oppNames,seasons:S.seasons||{}};
   Object.keys(S.sel).forEach(function(k){o['sel:'+k]=S.sel[k];});
   Object.keys(S.matches).forEach(function(k){o['match:'+k]=S.matches[k];});
   if(isAdmin())Object.keys(S.subs||{}).forEach(function(k){o['subs:'+k]=S.subs[k];});
   return o;}
 function applyDoc(k,v){if(v==null)return;
   if(k==='players'){if(v.list){S.players=v.list;S.squadV=v.v||0;}}
-  else if(k==='comps')S.comps=v;else if(k==='rules')S.rules=v;else if(k==='fixtures')S.fixtures=v;else if(k==='oppNames')S.oppNames=v;
+  else if(k==='comps')S.comps=v;else if(k==='rules')S.rules=v;else if(k==='fixtures')S.fixtures=v;else if(k==='oppNames')S.oppNames=v;else if(k==='seasons')S.seasons=v;
   else if(k.indexOf('sel:')===0)S.sel[k.slice(4)]=v;
   else if(k.indexOf('match:')===0)S.matches[k.slice(6)]=v;
   else if(k.indexOf('subs:')===0){S.subs=S.subs||{};S.subs[k.slice(5)]=v;}}
 function dirtyMap(){var r={};if(!SY.ready)return r;var o=docsOf();Object.keys(o).forEach(function(k){if(writable(k)&&hsh(JSON.stringify(o[k]))!==SY.base[k])r[k]=1;});return r;}
 function dirtyKeys(){return Object.keys(dirtyMap());}
-function fixups(){if((S.squadV||0)<SQUAD.v)syncSquad(S);var g=S.rules.general;if(!g.nickOn)g.nickOn={teamsheet:false,live:false,results:false,report:false,averages:false};if(!S.subs)S.subs={};if(!S.oppNames)S.oppNames={};}
+function fixups(){if((S.squadV||0)<SQUAD.v)syncSquad(S);seasonFixups(S);var g=S.rules.general;if(!g.nickOn)g.nickOn={teamsheet:false,live:false,results:false,report:false,averages:false};if(!S.subs)S.subs={};if(!S.oppNames)S.oppNames={};}
 function setBase(keys){var o=docsOf();keys.forEach(function(k){if(o[k]!==undefined){var j=JSON.stringify(o[k]);SY.base[k]=hsh(j);BJ[k]=j;}});}
 /* ---- 3-way merge: base = last synced copy, m = this phone, t = the shared copy now ---- */
 function jeq(a,b){return JSON.stringify(a)===JSON.stringify(b);}
@@ -1238,7 +1433,7 @@ function merge3(b,m,t,pol,path,cl){cl=cl||[];path=path||[];
   if(prim(m)&&prim(t)&&(b===undefined||prim(b))){var bs=b||[],out2=[];t.concat(m).forEach(function(x){if(out2.indexOf(x)>-1)return;var gone=bs.indexOf(x)>-1&&(m.indexOf(x)<0||t.indexOf(x)<0);if(!gone)out2.push(x);});return {v:out2,clash:cl};}
   cl.push(path.join('/'));return {v:pol==='theirs'?t:m,clash:cl};}
 function docLabel(k){var f=k.indexOf(':')>-1?fxById(k.split(':')[1]):null,fx=f?fxTitle(f)+' ('+fdate(f.date)+')':'a match';
-  return k==='fixtures'?'the fixture list':k==='players'?'the squad':k==='rules'?'the game rules':k==='comps'?'the competitions':k==='oppNames'?'the opposition names':
+  return k==='fixtures'?'the fixture list':k==='players'?'the squad':k==='rules'?'the game rules':k==='comps'?'the competitions':k==='oppNames'?'the opposition names':k==='seasons'?'the past seasons':
     k.indexOf('sel:')===0?'the team for '+fx:k.indexOf('match:')===0?'the scores for '+fx:k.indexOf('subs:')===0?'the subs for '+fx:k;}
 function byName(tag){var n=String(tag||'').split('|')[1];return n||'Someone';}
 function clashKeys(){return Object.keys(T.clash||{});}
@@ -1403,7 +1598,7 @@ function subsText(){var t=subsTable(),out='Lions subs (from '+fdate(subsFrom())+
   t.forEach(function(r){out+='\n'+fullName(player(r.pid))+': '+(r.owe?'owes £'+r.owe:'paid up')+' ('+r.paid+' of '+r.n+' nights paid)';});return out;}
 
 /* who can do what: every button is checked here, and the database checks again */
-var VIEW_ACTS={vdseen:1,clashmine:1,clashtheirs:1,close:1,choosefx:1,pickfx:1,allsets:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,imseen:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,fxf:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
+var VIEW_ACTS={season:1,phist:1,printsheet:1,doprint:1,closeprint:1,vdseen:1,clashmine:1,clashtheirs:1,close:1,choosefx:1,pickfx:1,allsets:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,imseen:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,fxf:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
 var SCORE_ACTS={spare:1,nospare:1,vc:1,undo:1,cancelsel:1,skip:1,other:1,otherok:1};
 var EDIT_ACTS={suggest:1,clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,lockm:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1,leaguecard:1,sendleague:1,copyleague:1};
 var ADMIN_HIDE=['teamsheet','resimg','report','copyres','addfx','comps','bulkadd','editrule','addrule','savegeneral','importpaste','seedforce','subtick'];
@@ -1430,7 +1625,7 @@ render();
 sbInit();
 feedFetch(false);window.addEventListener('online',function(){feedFetch(false);});document.addEventListener('visibilitychange',function(){if(!document.hidden)feedFetch(false);});
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude|anthropic/.test(location.hostname)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
-window.__hub={save:save,merge3:merge3,teamStats:teamStats,clashKeys:clashKeys,viewerDraws:viewerDraws,SY:function(){return SY;},NET:NET,docsOf:docsOf,dirtyKeys:dirtyKeys,needFor:needFor,subsTable:subsTable,myRole:myRole,pull:pull,push:push,people:function(){return PEOPLE;},render:render,T:T,S:function(){return S;},result:result,averages:averages,suggest:suggest,enter:enter,target:function(){return target(curMatch());},curMatch:curMatch,reportText:reportText,scoresText:scoresText,seed:seed,isLS:isLS,lsFill:lsFill,syncPast:syncPast,averages:averages,parseTable:parseTable,feedFetch:feedFetch,lionsPos:lionsPos,feedNews:feedNews,leagueImg:leagueImg,leagueCardCanvas:leagueCardCanvas,leagueMailText:leagueMailText,setS:function(x){S=x;render();}};
+window.__hub={sheetData:sheetData,seasonList:seasonList,curSeason:curSeason,seasonAverages:seasonAverages,openPrintSheet:openPrintSheet,isFrozenFx:isFrozenFx,averages31:averages,save:save,merge3:merge3,teamStats:teamStats,clashKeys:clashKeys,viewerDraws:viewerDraws,SY:function(){return SY;},NET:NET,docsOf:docsOf,dirtyKeys:dirtyKeys,needFor:needFor,subsTable:subsTable,myRole:myRole,pull:pull,push:push,people:function(){return PEOPLE;},render:render,T:T,S:function(){return S;},result:result,averages:averages,suggest:suggest,enter:enter,target:function(){return target(curMatch());},curMatch:curMatch,reportText:reportText,scoresText:scoresText,seed:seed,isLS:isLS,lsFill:lsFill,syncPast:syncPast,averages:averages,parseTable:parseTable,feedFetch:feedFetch,lionsPos:lionsPos,feedNews:feedNews,leagueImg:leagueImg,leagueCardCanvas:leagueCardCanvas,leagueMailText:leagueMailText,setS:function(x){S=x;render();}};
 })();
 </script>
 </body>

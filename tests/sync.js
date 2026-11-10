@@ -3,7 +3,7 @@ const html=fs.readFileSync(process.env.APP_HTML||require('path').join(__dirname,
 const wait=ms=>new Promise(r=>setTimeout(r,(ms||60)+350));
 let fails=0;const ok=(c,msg)=>{console.log((c?'PASS ':'FAIL ')+msg);if(!c)fails++;};
 function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',url:'https://the-lions-den.github.io/',pretendToBeVisual:true,
-  beforeParse(w){w.supabase={createClient:()=>(w.__c=client(B,w.localStorage))};w.scrollTo=()=>{};w.fetch=()=>Promise.reject(new Error('no net'));if(store)Object.keys(store).forEach(k=>w.localStorage.setItem(k,store[k]));}});
+  beforeParse(w){w.print=()=>{};w.supabase={createClient:()=>(w.__c=client(B,w.localStorage))};w.scrollTo=()=>{};w.fetch=()=>Promise.reject(new Error('no net'));if(store)Object.keys(store).forEach(k=>w.localStorage.setItem(k,store[k]));}});
   const w=dom.window,d=w.document;const P={name,w,d,H:w.__hub,
     click(sel){const b=d.querySelector(sel);if(!b)throw new Error(name+': no '+sel);b.click();},
     has(sel){return !!d.querySelector(sel);},vis(sel){const b=d.querySelector(sel);return !!b&&w.getComputedStyle(b).display!=='none';},
@@ -14,7 +14,7 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   const A=phone('Andy');await wait(80);
   ok(A.H.myRole()==='viewer','Andy starts as a viewer before signing in');
   A.go('fixtures');ok(!A.has('[data-act="addfx"]')&&!A.has('[data-act="comps"]'),'Fixture admin buttons not shown to viewers');
-  ok(/League/.test(A.d.querySelector('.fxf').textContent)&&!/League Div 2/.test(A.d.querySelector('.fxf').textContent)&&!/Competition/.test(A.d.querySelector('#main, body').textContent.split('Upcoming')[0]),'short chip names, no filter labels');
+  ok(/League/.test(A.d.querySelector('.fxf:not(.seasons)').textContent)&&!/League Div 2/.test(A.d.querySelector('.fxf:not(.seasons)').textContent)&&!/Competition/.test(A.d.querySelector('#main, body').textContent.split('Upcoming')[0]),'short chip names, no filter labels');
   A.go('home');ok(!A.has('[data-act="editfx"]'),'viewer: no Edit fixture on home');
   A.go('more');ok(/About the app/.test(A.d.getElementById('view').textContent),'About the app on More for viewers');
   A.go('about');{const t=A.d.getElementById('view').textContent;ok(/What’s in it/.test(t)&&!/Scorers can/.test(t)&&!/Admins also can/.test(t)&&!/subs/i.test(t)&&!/Sign-up alerts/.test(t),'viewer About page: team list only, no admin news');}ok(!/Availability &/.test(A.d.body.textContent)||true,'');
@@ -88,7 +88,7 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   A.go('results','L8');ok(A.has('[data-act="resimg"]')&&A.has('[data-act="leaguecard"]'),'admin Results: everything');A.go('team','L9');ok(A.vis('[data-act="teamsheet"]'),'admin: team sheet image');
   // v2.4: Scores tab, locking, change log, edit highlight
   ok([...A.d.querySelectorAll('#nav button')].map(b=>b.textContent.trim()).join(',')==='Home,Team,Scores,Fixtures,More','nav: Home, Team, Scores, Fixtures, More');
-  V.go('score','L8');ok(/Match locked/.test(V.d.getElementById('view').textContent)&&!V.has('#view [data-cell]')&&!V.has('[data-act="unlockm"]'),'past match locked for viewer, read-only');
+  V.go('score','L8');ok(!/Match locked/.test(V.d.getElementById('view').textContent)&&!V.has('#view [data-cell]')&&!V.has('[data-act="unlockm"]'),'past match read-only for viewer, no lock card');
   ok((V.d.getElementById('view').textContent.match(/Set \d/g)||[]).length>=4,'Scores tab shows all set tables after the match');
   A.go('score','L8');ok(A.has('[data-act="unlockm"]')&&!A.has('#view [data-cell]'),'admin sees Unlock, tables read-only while locked');
   A.click('[data-act="unlockm"]');await wait(100);ok(A.has('#view [data-cell]'),'after Unlock, scores can be tapped');
@@ -99,7 +99,7 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   A.click('[data-v="'+((curV.v+1)%10)+'"]');await wait(100);
   A.click('[data-act="lockm"]');await wait(150);
   const lg=A.H.S().matches.L8.log||[];ok(lg.length===3&&/Unlocked/.test(lg[0].what)&&/→/.test(lg[1].what)&&/Locked again/.test(lg[2].what),'change log: '+lg.map(x=>x.what).join(' | '));
-  V.go('score','L8');await wait(20);ok(/Changes after locking/.test(V.d.getElementById('view').textContent)&&/A\. Nancollis|Andy Nancollis/.test(V.d.getElementById('view').textContent),'viewer sees the change log');
+  V.go('score','L8');await wait(20);ok(!/Changes after locking/.test(V.d.getElementById('view').textContent),'viewer does not see the change log');A.go('score','L8');ok(/Changes after locking/.test(A.d.getElementById('view').textContent)&&/A\. Nancollis|Andy Nancollis/.test(A.d.getElementById('view').textContent),'admin sees the change log');
   C.go('score','L8');ok(!C.has('[data-act="unlockm"]')&&/Match locked/.test(C.d.getElementById('view').textContent),'scorer cannot unlock');
   // finish L9 then lock as scorer
   A.go('score','L9');let guard=0;while(A.has('[data-v="5"]')&&guard++<200)A.click('[data-v="5"]');await wait(200);
@@ -214,6 +214,28 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   V.click('[data-act="vdseen"]');ok(!/Cup draw ·/.test(V.d.getElementById('view').textContent),'viewer: Mark as seen hides the card');
   V.go('home');ok(/pins this year so far/.test(V.d.getElementById('view').textContent),'Home tagline shows pins this year');
   V.go('averages');{const t=V.d.getElementById('view').textContent;ok(/Team stats/.test(t)&&/Total pins hit/.test(t)&&/Average team score/.test(t)&&/Total team spares/.test(t)&&/Player averages/.test(t)&&!/\/hand/.test(t),'Statistics page: team stats + player table, Hand header');}
+  // v3.1: lock card/log hidden from viewers; 50+; seasons; print sheet; close season
+  V.go('score','L8');{const t=V.d.getElementById('view').textContent;ok(!/Match locked/.test(t)&&!/Changes after locking/.test(t)&&/Set 1/.test(t),'viewer: finished match shows scores but no lock card or change log');}
+  A.go('score','L8');ok(/Match locked/.test(A.d.getElementById('view').textContent),'admin: lock card shown');
+  {const sc=[C].find(p=>p.H.myRole()==='scorer');if(sc){sc.go('score','L8');ok(/Match locked/.test(sc.d.getElementById('view').textContent),'scorer: lock card shown');}else ok(true,'(no scorer phone left at this point)');}
+  V.go('averages');{const t=V.d.getElementById('view').textContent;ok(/50\+/.test(t)&&V.has('[data-act="printsheet"]')&&V.has('[data-act="season"][data-s="2025-26"]'),'Statistics: 50+ column, Print season sheet, season picker');}
+  ok(A.H.averages31().every(a=>typeof a.f50==='number'),'averages carry 50+ counts');
+  {const sh=V.H.sheetData('2025-26'),t=sh.totals;ok(t.for===13780&&t.against===14256&&t.spares===109&&t.points===152&&sh.players.length===17&&t.avgHome.toFixed(1)==='502.1'&&t.avgAway.toFixed(1)==='482.1','2025/26 built in: totals match Andy Evans’ sheet');
+   const nw=sh.players[0];ok(nw.name==='N White'&&nw.games===20&&nw.pins===907&&nw.avg.toFixed(2)==='45.35'&&nw.f50===3,'2025/26 top row N White 20 / 907 / 45.35 / 3');}
+  V.click('[data-act="season"][data-s="2025-26"]');{const t=V.d.getElementById('view').textContent;ok(/Team stats · 2025\/26/.test(t)&&/13,780/.test(t)&&/45\.35/.test(t),'season picker shows 2025/26 statistics');}
+  V.go('fixtures');ok(/EFTB v Lions/.test(V.d.getElementById('view').textContent)&&!V.has('[data-act="addfx"]'),'Fixtures 2025/26 shows past league results');
+  V.click('[data-act="season"][data-s="2026-27"]');V.go('averages');V.click('[data-act="phist"][data-id="p11"]');ok(/2025\/26/.test(V.modal())&&/2026\/27/.test(V.modal()),'player history lists both seasons');V.click('[data-act="close"]');
+  V.click('[data-act="printsheet"]');{const p=V.d.getElementById('printv');ok(V.d.body.classList.contains('printing')&&/LIONS LEAGUE AVERAGES/.test(p.textContent)&&/GAMES 50 & OVER/.test(p.textContent)&&/TOTAL POINTS/.test(p.textContent)&&/TEAM SPARES/.test(p.textContent),'print sheet opens (title, 50+ column, bottom rows, summary box)');}
+  V.click('[data-act="closeprint"]');ok(!V.d.body.classList.contains('printing'),'print sheet closes');
+  ok(/Close season 2026\/27/.test((A.go('backup'),A.d.getElementById('view').textContent))&&!C.H.needFor({act:'closeseasonok'})!=='admin','Close season on Backup page for admins');
+  A.click('[data-act="closeseason"]');A.set('csName','2026/28');A.click('[data-act="closeseasonok"]');ok(A.H.curSeason()==='2026-27','wrong confirmation text: season not closed');
+  A.set('csName','2026/27');A.click('[data-act="closeseasonok"]');await wait(300);
+  ok(A.H.curSeason()==='2027-28'&&B.docs.seasons&&B.docs.seasons.data['2026-27']&&B.docs.seasons.data['2026-27'].sheet.matches.length>0,'season closed: 2027/28 started, 2026/27 summary shared');
+  await V.H.pull(true);await wait(150);ok(V.H.curSeason()==='2027-28'&&V.H.seasonList().join()==='2027-28,2026-27,2025-26','viewer phone gets the new season: '+V.H.seasonList().join());
+  V.go('averages');ok(/No completed League or Cup matches yet/.test(V.d.getElementById('view').textContent),'new season starts empty');
+  ok(A.H.isFrozenFx(A.H.S().fixtures.find(f=>f.id==='L8')),'2026/27 fixtures frozen');
+  A.go('score','L8');ok(!A.has('[data-act="unlockm"]')&&/scores are final/.test(A.d.getElementById('view').textContent),'closed season: no Unlock, scores final');
+  A.go('home');ok(!/Gatecrashers/.test((A.d.querySelector('.card.now')||{textContent:''}).textContent),'closed season fixtures not offered as the next match');
   const dump=(P,f)=>{const o={};for(let i=0;i<P.w.localStorage.length;i++){const k=P.w.localStorage.key(i);o[k]=P.w.localStorage.getItem(k);}fs.writeFileSync(f,JSON.stringify({store:o,people:Object.values(B.people)}));};if(process.env.DUMP){dump(A,'/tmp/store_A.json');dump(V,'/tmp/store_V.json');dump(C,'/tmp/store_C.json');}
   console.log(fails?fails+' FAILED':'ALL PASS');process.exit(0);
 })().catch(e=>{console.log('ERROR',e);process.exit(1);});
