@@ -14,7 +14,7 @@ git pull -q --rebase --autostash
 # 1. the app's script must parse
 node -e "const h=require('fs').readFileSync('app/index.html','utf8');new Function(h.split('<script>')[1].split('</script>')[0]);" \
   && echo "app script: OK"
-python3 -m py_compile scripts/feed.py && echo "feed.py: OK"
+python3 -m py_compile scripts/feed.py && rm -rf scripts/__pycache__ && echo "feed.py: OK"
 
 # 2. multi-phone test
 if [ -z "${SKIP_TESTS:-}" ]; then
@@ -58,6 +58,6 @@ done
 T2=$(date +%s)
 echo "== GitHub run $RID: $ST - GitHub part $((T2-T1))s, total $((T2-T0))s"
 gh run view "$RID" -R $REPO --log 2>/dev/null \
-  | grep -E "positions as of|cup draws read|feed.json written|could not read" | sed 's/^.*Z //' | cut -c1-220 | head -12 || true
+  | grep -E "positions as of|draw pictures|fixtures PDF|cup draws read|feed.json written|could not read" | sed 's/^.*Z //' | cut -c1-220 | head -12 || true
 [[ $ST == "completed success" ]] || { echo "!! GitHub run did not succeed - check: gh run view $RID -R $REPO --log-failed"; exit 1; }
 echo "== $VER live at https://the-lions-den.github.io"
