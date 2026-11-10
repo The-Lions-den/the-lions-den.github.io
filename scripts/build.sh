@@ -29,6 +29,8 @@ fi
 CUR=$(grep -o "lions-den-v[0-9]*-[0-9]*" app/sw.js | head -1)
 MAJ=$(echo "$CUR" | sed 's/lions-den-v\([0-9]*\)-.*/\1/'); MIN=$(echo "$CUR" | sed 's/.*-\([0-9]*\)$/\1/')
 NEW="lions-den-v$MAJ-$((MIN+1))"; VER="v$MAJ.$((MIN+1))"
+# start a new major version with: VERSION=4.0 scripts/build.sh "..."
+if [ -n "${VERSION:-}" ]; then VER="v$VERSION"; NEW="lions-den-v${VERSION/./-}"; fi
 sed -i "s/$CUR/$NEW/" app/sw.js; echo "version: $CUR -> $NEW"
 
 # 4. commit and push
