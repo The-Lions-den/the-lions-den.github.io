@@ -105,6 +105,9 @@ def parse_draw(lines, teams):
             dm = DATE_RE.search(up)
             rd = re.sub(r'\s+', ' ', rm.group(1)).title().replace('Semi-Final', 'Semi Final')
             rd = re.sub(r'^R\s*(\d+)$', r'Round \1', rd)
+            rd = re.sub(r'(?i)^(?:round|r)\s*(\d+)$', r'Round \1', rd.strip())
+            rd = re.sub(r'(?i)quarter\s*-?\s*final', 'Quarter Final', rd)
+            rd = re.sub(r'(?i)semi\s*-?\s*final', 'Semi Final', rd)
             cur = {'round': rd, 'date': season_date(dm.group(1), MONTHS[dm.group(2).upper()[:3]]) if dm else None, 'rows': [], 'byes': []}
             secs.append(cur)
             venue_x = next((x for x, w in ln if w.upper().startswith('VENUE')), None)
