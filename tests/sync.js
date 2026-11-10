@@ -212,7 +212,7 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   V.go('home');{const t=V.d.getElementById('view').textContent;ok(/Cup draw · Front Pin Cup · Semi Finals/.test(t)&&/Lions v Reptiles · .* · Home · Venue TBC/.test(t),'viewer sees Lions draw card: '+(t.match(/Cup draw[^M]*/)||[''])[0]);
     ok(!V.has('[data-act="draws"]')&&!/No Lions fixture update/.test(t)&&!/fixture list updated/.test(t),'viewer: no View picture, no non-Lions picture alert, no PDF alert');}
   V.click('[data-act="vdseen"]');ok(!/Cup draw ·/.test(V.d.getElementById('view').textContent),'viewer: Mark as seen hides the card');
-  V.go('home');ok(/pins this year so far/.test(V.d.getElementById('view').textContent),'Home tagline shows pins this year');
+  V.go('home');ok(/pins since September 2023/.test(V.d.getElementById('view').textContent),'Home tagline shows pins this year');
   V.go('averages');{const t=V.d.getElementById('view').textContent;ok(/Team stats/.test(t)&&/Total pins hit/.test(t)&&/Average team score/.test(t)&&/Total team spares/.test(t)&&/Player averages/.test(t)&&!/\/hand/.test(t),'Statistics page: team stats + player table, Hand header');}
   // v3.1: lock card/log hidden from viewers; 50+; seasons; print sheet; close season
   V.go('score','L8');{const t=V.d.getElementById('view').textContent;ok(!/Match locked/.test(t)&&!/Changes after locking/.test(t)&&/Set 1/.test(t),'viewer: finished match shows scores but no lock card or change log');}
@@ -234,16 +234,24 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    const l=V.H.sheetData('2023-24',true);ok(l.matches.length===22&&l.totals.cups===0&&l.players[0].spares==null,'League only drops the 6 cup matches');}
   V.go('averages');V.click('[data-act="season"][data-s="2023-24"]');{const t=V.d.getElementById('view').textContent;ok(/League \+ Cups/.test(t)&&/Cup/.test(V.d.querySelector('table.avg:not(.stat) thead').textContent)&&/44\.75/.test(t),'2023/24 Statistics with Cup column');}
   V.click('[data-act="cups"][data-cv="league"]');{const t=V.d.getElementById('view').textContent;ok(!/Cup/.test(V.d.querySelector('table.avg:not(.stat) thead').textContent)&&/League matches only/.test(t)&&!V.H.cupsOn(),'League only: Cup column hidden');}
-  V.go('home');ok(/pins this year so far/.test(V.d.getElementById('view').textContent),'Home unaffected by the switch');
+  V.go('home');ok(/pins since September 2023/.test(V.d.getElementById('view').textContent),'Home unaffected by the switch');
   V.go('averages');V.click('[data-act="cups"][data-cv="all"]');V.click('[data-act="season"][data-s="2026-27"]');ok(V.H.cupsOn(),'switch back to League + Cups');
   A.go('team','L10');{const sw=A.d.querySelector('.avsw[data-id="p5"]');ok(sw&&/Out/.test(sw.textContent)&&!A.has('[data-av="maybe"]'),'availability: one switch per player, Out by default, no ?');
    sw.click();await wait(20);ok(A.H.S().sel.L10.avail.p5==='in'&&/In/.test(A.d.querySelector('.avsw[data-id="p5"]').textContent),'tap: In');
    A.d.querySelector('.avsw[data-id="p5"]').click();await wait(20);ok(!A.H.S().sel.L10.avail.p5&&/\d+ in/.test(A.d.querySelector('.chips').textContent)&&!/maybe/.test(A.d.querySelector('.chips').textContent),'tap again: back to Out; chips show in/out only');}
+  // v3.3: 2024/25 + all-time pins
+  {const s=V.H.sheetData('2024-25'),t=s.totals;ok(t.for===9426&&s.matches.length===20&&s.players.length===22&&t.points==null&&t.noRes&&s.matches[0].ls===33,'2024/25 built in: 9,426, 20 matches, 22 players, no results, L/S 33 in match 1');
+   ok(s.players.find(r=>r.pid==='p11').games===17&&s.players.find(r=>r.pid==='p11').avg.toFixed(2)==='41.35'&&s.players.find(r=>r.pid==='p23').games===12,'2024/25 corrections: A Evans 17 games 41.35, N Collyer 12 games');
+   const at=V.H.allTimePins();ok(at.since==='September 2023'&&at.pins>=39922,'all-time pins since September 2023: '+at.pins);}
+  V.go('home');{const tg=V.d.querySelector('.tagline');ok(tg&&/We’ve hit [\d,]+ pins since September 2023!/.test(tg.textContent)&&tg.dataset.tab==='averages','Home tagline: '+(tg&&tg.textContent));}
+  V.go('averages');V.click('[data-act="season"][data-s="2024-25"]');ok(!/NaN|undefined|null/.test(V.d.getElementById('view').textContent),'2024/25 Statistics: no NaN/undefined/null');
+  V.go('fixtures');ok(/incl\. L\/S 33/.test(V.d.getElementById('view').textContent)&&!/NaN|undefined|null/.test(V.d.getElementById('view').textContent),'2024/25 fixtures list with dates and L/S note');
+  V.go('averages');V.click('[data-act="season"][data-s="2026-27"]');
   ok(/Close season 2026\/27/.test((A.go('backup'),A.d.getElementById('view').textContent))&&!C.H.needFor({act:'closeseasonok'})!=='admin','Close season on Backup page for admins');
   A.click('[data-act="closeseason"]');A.set('csName','2026/28');A.click('[data-act="closeseasonok"]');ok(A.H.curSeason()==='2026-27','wrong confirmation text: season not closed');
   A.set('csName','2026/27');A.click('[data-act="closeseasonok"]');await wait(300);
   ok(A.H.curSeason()==='2027-28'&&B.docs.seasons&&B.docs.seasons.data['2026-27']&&B.docs.seasons.data['2026-27'].sheet.matches.length>0,'season closed: 2027/28 started, 2026/27 summary shared');
-  await V.H.pull(true);await wait(150);ok(V.H.curSeason()==='2027-28'&&V.H.seasonList().join()==='2027-28,2026-27,2025-26,2023-24','viewer phone gets the new season: '+V.H.seasonList().join());
+  await V.H.pull(true);await wait(150);ok(V.H.curSeason()==='2027-28'&&V.H.seasonList().join()==='2027-28,2026-27,2025-26,2024-25,2023-24','viewer phone gets the new season: '+V.H.seasonList().join());
   V.go('averages');ok(/No completed League or Cup matches yet/.test(V.d.getElementById('view').textContent),'new season starts empty');
   ok(A.H.isFrozenFx(A.H.S().fixtures.find(f=>f.id==='L8')),'2026/27 fixtures frozen');
   A.go('score','L8');ok(!A.has('[data-act="unlockm"]')&&/scores are final/.test(A.d.getElementById('view').textContent),'closed season: no Unlock, scores final');
