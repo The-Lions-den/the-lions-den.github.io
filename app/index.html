@@ -412,21 +412,22 @@ function renderNav(){var tabs=[['home','Home'],['team','Team'],['score','Scores'
   document.getElementById('nav').innerHTML=tabs.map(function(t){return '<button data-tab="'+t[0]+'" class="'+(S.ui.tab===t[0]||(t[0]==='more'&&['squad','rules','averages','backup','settings','league','account','subs'].indexOf(S.ui.tab)>-1)?'on':'')+'">'+ICONS[t[0]]+t[1]+'</button>';}).join('');}
 function renderTop(){
   document.getElementById('top').innerHTML='<svg viewBox="0 0 '+LOGO_W+' 1000" class="logo" role="img" aria-label="Lion’s logo"><path fill="'+GOLD+'" fill-rule="evenodd" d="'+LOGO_D+'"/></svg><div class="grow"><div class="h1">The Lions Den</div><div class="sub">'+esc(S.rules.general.home+' · '+S.rules.general.league)+'</div></div>'+(function(){var st=syncState();return '<button class="sync '+st.c+'" data-tab="account"><i></i>'+esc(st.t)+'</button>';})();}
+function venTxt(f){return f.venue?' · '+f.venue:(f.status==='scheduled'&&f.date>=today()?' · Venue TBC':'');}
 function fxSelect(){var f=curFx(),l=sortedFx().filter(function(x){return x.status!=='vacant'&&x.status!=='bye';});
   return '<div class="card fxsel"><label for="fxSel" class="small muted">Fixture</label><select id="fxSel">'+(f?'':'<option value="">Choose a fixture</option>')+l.map(function(x){var m=S.matches[x.id],dn=m&&allDone(m);return '<option value="'+x.id+'"'+(f&&f.id===x.id?' selected':'')+'>'+esc(fdate(x.date)+' · '+fxTitle(x)+(dn?' ✓':x.status!=='scheduled'?' ('+x.status+')':''))+'</option>';}).join('')+'</select>'+
-    (f?'<div class="small muted" style="margin-top:6px">'+esc(fxComp(f)+' · '+(f.home?'Home':'Away')+(f.venue?' · '+f.venue:''))+'</div>':'')+'</div>';}
+    (f?'<div class="small muted" style="margin-top:6px">'+esc(fxComp(f)+' · '+(f.home?'Home':'Away')+venTxt(f))+'</div>':'')+'</div>';}
 function fxRow(f,act){var m=S.matches[f.id],r=m&&allDone(m)?result(m):null,tag='',draw=f.status==='scheduled'&&!f.opp&&compType(f)!=='league'&&!m&&f.date>=today();
   if(f.status==='vacant')tag='<span class="chip">Vacant</span>';else if(f.status==='cancelled')tag='<span class="chip">Cancelled</span>';else if(f.status==='knockedout')tag='<span class="chip">Out</span>';else if(f.status==='bye')tag='<span class="chip">Bye</span>';
   else if(r)tag='<span class="chip '+(r.winner==='L'?'g':'')+'">'+(r.winner==='L'?'Won':r.winner==='O'?'Lost':r.winner==='D'?'Drawn':'Tied')+' '+(f.home?r.A+'–'+r.B:r.B+'–'+r.A)+'</span>';
   else if(m)tag='<span class="chip o">In play</span>';
   if(draw)tag='<span class="chip o">Draw needed</span>';
-  return '<div class="li"><button class="grow" style="text-align:left" data-act="'+(act||'pickfx')+'" data-id="'+f.id+'"><div class="name">'+(f.status==='vacant'?'Vacant date':esc(fxTitle(f)))+'</div><div class="small muted">'+esc(fdate(f.date)+' · '+fxComp(f)+(f.venue?' · '+f.venue:''))+'</div></button>'+tag+'</div>';}
+  return '<div class="li"><button class="grow" style="text-align:left" data-act="'+(act||'pickfx')+'" data-id="'+f.id+'"><div class="name">'+(f.status==='vacant'?'Vacant date':esc(fxTitle(f)))+'</div><div class="small muted">'+esc(fdate(f.date)+' · '+fxComp(f)+venTxt(f))+'</div></button>'+tag+'</div>';}
 
 var TOP_MIN=3;
 function vHome(){var f=nextFx(),h=feedAlerts(),rq=requestCount();if(rq)h='<div class="feedalert"><div><b>'+rq+' scorer request'+(rq>1?'s':'')+'</b><div class="small">Approve or decline in Squad</div></div><button class="btn gold sm" data-tab="squad">View</button></div>'+h;
   h+='<div class="sec">Next match</div>';
   if(f){var m=S.matches[f.id],sel=selFor(f.id),ins=Object.keys(sel.avail).filter(function(k){return sel.avail[k]==='in';}).length,picked=sel.lineup.filter(Boolean).length;
-    h+='<div class="card now"><div class="small muted">'+esc(fxComp(f))+'</div><div class="who">'+esc(fxTitle(f))+'</div><div class="small muted">'+esc(fdate(f.date,true)+' · '+(f.home?'Home, Lions throw first':'Away, Lions chase')+(f.venue?' · '+f.venue:''))+'</div>'+
+    h+='<div class="card now"><div class="small muted">'+esc(fxComp(f))+'</div><div class="who">'+esc(fxTitle(f))+'</div><div class="small muted">'+esc(fdate(f.date,true)+' · '+(f.home?'Home, Lions throw first':'Away, Lions chase')+venTxt(f))+'</div>'+
       '<div class="chips"><span class="chip">'+ins+' available</span><span class="chip">'+picked+'/12 picked</span>'+(m?'<span class="chip o">Scoring started</span>':'')+'</div>'+
       '<div class="btns"><button class="btn ghost" data-tab="team" data-fx="'+f.id+'">Availability &amp; team</button><button class="btn gold" data-tab="score" data-fx="'+f.id+'">Score</button></div>'+
       '<button class="btn ghost" data-act="editfx" data-id="'+f.id+'">Edit fixture</button></div>';}
@@ -765,7 +766,7 @@ function parseTable(rows){if(!rows||!rows.length)return null;var low=function(c)
     var after=function(from,to,name){for(var q=from+1;q<(to<0?hr.length:to);q++)if(low(hr[q])===name)return q;return -1;};
     var H={pts:after(hix,aix,'points'),pins:after(hix,aix,'team'),name:after(hix,aix,'name'),score:after(hix,aix,'score')},A={pts:after(aix,-1,'points'),pins:after(aix,-1,'team'),name:after(aix,-1,'name'),score:after(aix,-1,'score')};
     var g=function(rw,q){return q>=0?String(rw[q]||'').trim():'';},list=[];
-    for(var q=ri+2;q<rows.length;q++){var rw=rows[q]||[],h=g(rw,hix),a=g(rw,aix);if(!h&&!a)break;if(/vacant/i.test(h)||/vacant/i.test(a))continue;
+    for(var q=ri+2;q<rows.length;q++){var rw=rows[q]||[],h=g(rw,hix),a=g(rw,aix);if(!h&&!a)break;if(/no week number|#n\/a/i.test(h+' '+a))continue;if(/vacant/i.test(h)||/vacant/i.test(a)){var tm=/vacant/i.test(h)?a:h;if(tm&&!/vacant/i.test(tm))list.push({vac:true,team:tm});continue;}
       list.push({h:h,a:a,hp:g(rw,H.pts),ap:g(rw,A.pts),hpins:g(rw,H.pins),apins:g(rw,A.pins),hn:g(rw,H.name),an:g(rw,A.name),hs:g(rw,H.score),as:g(rw,A.score)});}
     blocks[kind]={date:m[2].trim(),rows:list};});});
   return {title:title,asOf:asOf,head:lab,cols:cols,extra:extra,tc:tc,pos:pos,pts:pts,chg:chg,body:body,results:blocks.results||null,fixtures:blocks.fixtures||null};}
@@ -782,7 +783,9 @@ function leagueTbl(){var F=S.feed;return F&&F.table?parseTable(F.table.rows):nul
 function ordN(n){n=+n;var x=(n%100>10&&n%100<14)?'th':({1:'st',2:'nd',3:'rd'}[n%10]||'th');return n+x;}
 function lionsPos(){var t=leagueTbl();if(!t)return null;for(var i=0;i<t.body.length;i++)if(feedLions(t.body[i][t.tc])){var r=t.body[i];return {pos:t.pos>=0&&/^\d+$/.test(r[t.pos])?+r[t.pos]:i+1,pts:t.pts>=0?r[t.pts]:null,of:t.body.length};}return null;}
 function feedNews(){var F=S.feed,seen=S.feedSeen||{draws:{}},n={draws:[],fix:false};if(!F)return n;
-  (F.cups||[]).forEach(function(c){var nw=(c.images||[]).filter(function(im){return !seen.draws[im.file]&&!(im.read&&isAdmin());});if(nw.length)n.draws.push(c);});
+  if(!seen.v26){seen.draws=seen.draws||{};(F.cups||[]).forEach(function(c){(c.images||[]).forEach(function(im){if(seen.draws[im.file])seen.draws[imKey(im)]=1;});});seen.v26=1;S.feedSeen=seen;}
+  (F.cups||[]).forEach(function(c){(c.images||[]).forEach(function(im){var from=(F.draws||[]).filter(function(d){return d.file===im.file&&drawComp(d);}),pend=from.filter(function(d){return !drawDone(d)&&!((seen.dr||{})[drawKey(d)]);});
+    if(isAdmin()?(pend.length||(!from.length&&!imSeen(im))):!imSeen(im))n.draws.push({cup:c,im:im,pend:pend});});});
   if(F.fixtures&&seen.pdf&&F.fixtures.hash!==seen.pdf)n.fix=true;return n;}
 function feedAgo(iso){if(!iso)return '';var d=new Date(iso),m=Math.round((Date.now()-d)/60000);if(m<2)return 'just now';if(m<60)return m+' min ago';if(m<36*60)return Math.round(m/60)+' h ago';return fdate(d.toISOString().slice(0,10),true);}
 function feedFetch(force){var now=Date.now();if(!force&&T.feedTry&&now-T.feedTry<FEED_EVERY)return;
@@ -794,29 +797,36 @@ function feedFetch(force){var now=Date.now();if(!force&&T.feedTry&&now-T.feedTry
     if(!S.feedSeen.pdf&&d.fixtures)S.feedSeen.pdf=d.fixtures.hash;
     T.feedErr=null;save();render();if(force)toast('League data updated');
   }).catch(function(e){T.feedErr=String(e&&e.message||e);if(force){toast('Couldn’t reach the league feed');render();}});}
-function drawKey(d){return [d.cup,d.round,d.date||'',d.bye?'bye':d.opp+'|'+(d.home?'H':'A')].join('|');}
+function drawKey(d){return [d.cup,d.round,d.date||'',d.bye?'bye':d.opp+'|'+(d.home?'H':'A')+'|'+(d.venue||'')].join('|');}
 function drawComp(d){var id=d.cup==='cs'?'gd':d.cup;return S.comps.filter(function(c){return c.id===id;})[0]||null;}
 function normRound(r){return String(r||'').toLowerCase().replace(/[^a-z0-9]/g,'');}
 function drawFx(d){var c=drawComp(d);if(!c)return null;return S.fixtures.filter(function(f){return f.comp===c.id&&(d.date&&f.date===d.date||normRound(f.round).indexOf(normRound(d.round))>-1);})[0]||null;}
-function drawDone(d){var f=drawFx(d);if(!f)return false;if(['played','knockedout','cancelled'].indexOf(f.status)>-1)return true;return d.bye?f.status==='bye':(f.opp===d.opp&&!!f.home===!!d.home);}
+function drawDone(d){var f=drawFx(d);if(!f)return false;if(['played','knockedout','cancelled'].indexOf(f.status)>-1)return true;return d.bye?f.status==='bye':(f.opp===d.opp&&!!f.home===!!d.home&&(!d.venue||f.venue===d.venue));}
+function venueOnly(d){var f=drawFx(d);return !!(f&&!d.bye&&f.opp===d.opp&&!!f.home===!!d.home&&d.venue&&f.venue!==d.venue);}
+function imKey(im){var m=/etag=([^&]+)/.exec(im.url||'');return im.file+'|'+(m?m[1]:'');}
+function imSeen(im){var sd=(S.feedSeen&&S.feedSeen.draws)||{};return !!sd[imKey(im)];}
 function pendingDraws(){if(!isAdmin()||!S.feed)return [];var seen=(S.feedSeen&&S.feedSeen.dr)||{};return (S.feed.draws||[]).filter(function(d){return drawComp(d)&&!seen[drawKey(d)]&&!drawDone(d);});}
-function drawText(d){return d.bye?'Lions have a bye':(d.home?'Lions v '+d.opp:d.opp+' v Lions')+(d.venue?' at '+d.venue:'');}
+function drawText(d){if(d.bye)return d.round+(d.date?' · '+fdate(d.date):'')+' · Lions have a bye';return d.round+(d.date?' · '+fdate(d.date):'')+' · '+(d.home?'Lions v '+d.opp:d.opp+' v Lions')+' · '+(venueOnly(d)?'venue now '+d.venue:(d.venue||'Venue TBC'));}
 function applyDraw(d){var c=drawComp(d),f=drawFx(d);
   if(!f){f={id:'C'+Date.now().toString(36),date:d.date||today(),comp:c.id,round:d.round,opp:'',home:true,venue:'',status:'scheduled'};S.fixtures.push(f);}
   if(d.bye){f.status='bye';}else{f.opp=d.opp;f.home=!!d.home;if(d.venue)f.venue=d.venue;f.status='scheduled';}
   if(d.date)f.date=d.date;S.feedSeen=S.feedSeen||{draws:{}};S.feedSeen.dr=S.feedSeen.dr||{};S.feedSeen.dr[drawKey(d)]=1;return f;}
 function drawByKey(k){return (S.feed&&S.feed.draws||[]).filter(function(d){return drawKey(d)===k;})[0];}
-function feedAlerts(){var n=feedNews(),h='',pd=pendingDraws();
-  pd.forEach(function(d){var c=drawComp(d);h+='<div class="feedalert" style="display:block"><div><b>Cup draw: '+esc(c.name)+' · '+esc(d.round)+'</b><div class="small">'+(d.date?esc(fdate(d.date))+' · ':'')+esc(drawText(d))+'</div></div><div class="btns" style="grid-template-columns:1fr 1fr 1fr;margin-top:8px"><button class="btn gold sm" data-act="drawapply" data-dk="'+esc(drawKey(d))+'">'+(d.bye?'Mark bye':(drawFx(d)?'Fill in':'Add fixture'))+'</button><button class="btn ghost sm" data-act="drawedit" data-dk="'+esc(drawKey(d))+'">Edit first</button><button class="btn ghost sm" data-act="drawignore" data-dk="'+esc(drawKey(d))+'">Ignore</button></div></div>';});
-  if(!n.draws.length&&!n.fix&&!h)return '';
-  n.draws.forEach(function(c){h+='<div class="feedalert"><div><b>New cup draw posted</b><div class="small">'+esc(c.name)+'</div></div><button class="btn gold sm" data-act="draws" data-k="'+esc(c.key)+'">View</button></div>';});
+function feedAlerts(){var n=feedNews(),h='',adm=isAdmin();
+  n.draws.forEach(function(x){var c=x.cup;h+='<div class="feedalert" style="display:block"><div><b>New cup draw update</b> <span class="small">· '+esc(c.name)+'</span></div>';
+    if(x.pend.length)x.pend.forEach(function(d){var k=esc(drawKey(d));h+='<div class="small" style="margin-top:4px">Lions fixture found: '+esc(drawText(d))+'</div>'+
+      (adm?'<div class="btns" style="grid-template-columns:1fr 1fr 1fr;margin-top:8px"><button class="btn gold sm" data-act="drawapply" data-dk="'+k+'">'+(d.bye?'Mark bye':venueOnly(d)?'Add venue':(drawFx(d)?'Add':'Add fixture'))+'</button><button class="btn ghost sm" data-act="drawedit" data-dk="'+k+'">Edit first</button><button class="btn ghost sm" data-act="drawignore" data-dk="'+k+'">Ignore</button></div>':'');});
+    if(x.pend.length&&!adm)h+='<div class="btns" style="grid-template-columns:1fr 1fr;margin-top:8px"><button class="btn gold sm" data-act="draws" data-k="'+esc(c.key)+'">View picture</button><button class="btn ghost sm" data-act="imseen" data-ik="'+esc(imKey(x.im))+'">Mark as seen</button></div>';
+    else h+='<div class="small" style="margin-top:4px">No Lions fixture update found, please check</div><div class="btns" style="grid-template-columns:1fr 1fr;margin-top:8px"><button class="btn gold sm" data-act="draws" data-k="'+esc(c.key)+'">View picture</button><button class="btn ghost sm" data-act="imseen" data-ik="'+esc(imKey(x.im))+'">Mark as seen</button></div>';
+    h+='</div>';});
   if(n.fix)h+='<div class="feedalert"><div><b>League fixture list updated</b><div class="small">Check for changed dates or venues</div></div><button class="btn gold sm" data-act="fixchg">View</button></div>';
-  return '<div class="card" style="padding-top:2px">'+h+'</div>';}
+  return h?'<div class="card" style="padding-top:2px">'+h+'</div>':'';}
 function vLeague(){var F=S.feed,t=leagueTbl(),h='';
   if(!t){h+='<div class="card"><h2>League table</h2><div class="small muted">'+(F?'The league feed loaded, but no table could be found in it.':'Not loaded yet.')+'</div><div class="note">The table comes from the league website, collected every few hours by the Lions GitHub job. It loads automatically when the phone is online.'+(T.feedErr?' Last try: '+esc(T.feedErr)+'.':'')+'</div><button class="btn gold" data-act="feedrefresh">Try now</button></div>';}
   else{h+='<div class="card"><h2>'+esc(t.title||'League table')+'</h2>'+(t.asOf?'<div class="small muted" style="margin:-4px 0 6px">As of '+esc(sheetDate(t.asOf))+'</div>':'')+ltHTML(t,false)+
       '<div class="note">From the league website, checked '+esc(feedAgo(F.at))+(F.stale?' (league site unreachable, showing the last copy)':'')+'.</div><button class="btn gold" data-act="leagueimg">League table image</button><button class="btn ghost" data-act="feedrefresh">Refresh now</button></div>';
-    var game=function(x,res){var us=feedLions(x.h)||feedLions(x.a),nm=function(n){return feedLions(n)?'<b class="gold">'+esc(n)+'</b>':esc(n);};
+    var game=function(x,res){var us=x.vac?false:(feedLions(x.h)||feedLions(x.a)),nm=function(n){return feedLions(n)?'<b class="gold">'+esc(n)+'</b>':esc(n);};
+      if(x.vac)return '<div class="lres'+(feedLions(x.team)?' us':'')+'"><div class="lt2">'+nm(x.team)+' <span class="muted">– no match (Vacant date)</span></div></div>';
       if(!res)return '<div class="lres'+(us?' us':'')+'"><div class="lt2">'+nm(x.h)+' <span class="muted">v</span> '+nm(x.a)+'</div></div>';
       return '<div class="lres'+(us?' us':'')+'"><div class="lt2"><span>'+nm(x.h)+'</span><span class="sc">'+esc(x.hpins)+' – '+esc(x.apins)+'</span><span style="text-align:right">'+nm(x.a)+'</span></div>'+
         '<div class="small muted lt2"><span>'+esc(x.hp)+' pts</span><span></span><span style="text-align:right">'+esc(x.ap)+' pts</span></div>'+
@@ -978,6 +988,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'signin':case 'signup':case 'signout':case 'forgot':case 'claim':case 'newpw':authAct(d.act,d);break;
     case 'acctmode':T.acct=d.m;render();break;
     case 'drawapply':case 'drawedit':var dw=drawByKey(d.dk);if(!dw){toast('That draw has gone from the league site');break;}var dfx=applyDraw(dw);save();render();if(d.act==='drawedit')fxModal(dfx.id);else toast(dw.bye?'Marked as a bye':'Fixture updated');break;
+    case 'imseen':S.feedSeen=S.feedSeen||{draws:{}};S.feedSeen.draws=S.feedSeen.draws||{};S.feedSeen.draws[d.ik]=1;save();render();break;
     case 'drawignore':S.feedSeen=S.feedSeen||{draws:{}};S.feedSeen.dr=S.feedSeen.dr||{};S.feedSeen.dr[d.dk]=1;save();render();break;
     case 'lockm':m.lock={at:Date.now(),by:meTag().name};if(m.everLocked)logChange(m,'Locked again');m.unlockedAt=null;T.sel=null;save();render();toast('Match locked');break;
     case 'unlockm':m.lock=null;m.unlockedAt=Date.now();m.everLocked=true;logChange(m,'Unlocked');T.sel=null;save();render();toast('Unlocked: changes are recorded');break;
@@ -1018,7 +1029,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'avgimg':avgImg();break;
     case 'shareimg':shareImg();break;
     case 'draws':drawsModal(d.k);break;
-    case 'drawseen':var cu=(S.feed.cups||[]).find(function(x){return x.key===d.k;});S.feedSeen=S.feedSeen||{draws:{}};if(cu)cu.images.forEach(function(im){S.feedSeen.draws[im.file]=1;});save();closeModal();render();break;
+    case 'drawseen':var cu=(S.feed.cups||[]).find(function(x){return x.key===d.k;});S.feedSeen=S.feedSeen||{draws:{}};if(cu)cu.images.forEach(function(im){S.feedSeen.draws[im.file]=1;S.feedSeen.draws[imKey(im)]=1;});save();closeModal();render();break;
     case 'fixchg':fixChgModal();break;
     case 'fixseen':S.feedSeen.pdf=S.feed.fixtures.hash;save();closeModal();render();break;
     case 'feedrefresh':toast('Checking the league website…');feedFetch(true);break;
@@ -1242,7 +1253,7 @@ function subsText(){var t=subsTable(),out='Lions subs (from '+fdate(subsFrom())+
   t.forEach(function(r){out+='\n'+fullName(player(r.pid))+': '+(r.owe?'owes £'+r.owe:'paid up')+' ('+r.paid+' of '+r.n+' nights paid)';});return out;}
 
 /* who can do what: every button is checked here, and the database checks again */
-var VIEW_ACTS={close:1,choosefx:1,pickfx:1,allsets:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,fxf:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
+var VIEW_ACTS={close:1,choosefx:1,pickfx:1,allsets:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,imseen:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,fxf:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
 var SCORE_ACTS={spare:1,nospare:1,vc:1,undo:1,cancelsel:1,skip:1,other:1,otherok:1};
 var EDIT_ACTS={suggest:1,clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,lockm:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1,leaguecard:1,sendleague:1,copyleague:1};
 var ADMIN_HIDE=['teamsheet','resimg','report','copyres','addfx','comps','bulkadd','editrule','addrule','savegeneral','importpaste','seedforce','subtick'];
