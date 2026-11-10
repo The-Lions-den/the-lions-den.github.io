@@ -15,7 +15,9 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   ok(A.H.myRole()==='viewer','Andy starts as a viewer before signing in');
   A.go('fixtures');ok(!A.has('[data-act="addfx"]')&&!A.has('[data-act="comps"]'),'Fixture admin buttons not shown to viewers');
   ok(/League/.test(A.d.querySelector('.fxf').textContent)&&!/League Div 2/.test(A.d.querySelector('.fxf').textContent)&&!/Competition/.test(A.d.querySelector('#main, body').textContent.split('Upcoming')[0]),'short chip names, no filter labels');
-  A.go('home');ok(!A.has('[data-act="editfx"]'),'viewer: no Edit fixture on home');ok(!/Availability &/.test(A.d.body.textContent)||true,'');
+  A.go('home');ok(!A.has('[data-act="editfx"]'),'viewer: no Edit fixture on home');
+  A.go('more');ok(/About the app/.test(A.d.getElementById('view').textContent),'About the app on More for viewers');
+  A.go('about');{const t=A.d.getElementById('view').textContent;ok(/What’s in it/.test(t)&&!/Scorers can/.test(t)&&!/Admins also can/.test(t)&&!/subs/i.test(t)&&!/Sign-up alerts/.test(t),'viewer About page: team list only, no admin news');}ok(!/Availability &/.test(A.d.body.textContent)||true,'');
   { const t=[...A.d.querySelectorAll('[data-tab="team"][data-fx]')].map(x=>x.textContent);ok(t.length===0||t.includes('Team'),'viewer next-match button reads Team: '+t.join('|')); }A.go('team','L9');ok(!A.has('[data-act="suggest"]'),'viewer Team tab has no Suggest');
   // sign up as Andy (pre-set admin)
   A.go('account');A.click('[data-act="acctmode"][data-m="new"]');A.set('suPid','p10');A.set('suEmail','andy@lions.test');A.set('suPw','secret1');A.click('[data-act="signup"]');
@@ -26,6 +28,7 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   ok(A.H.dirtyKeys().length===0,'nothing left to send');
   A.go('fixtures');ok(A.has('.smbtns [data-act="addfx"]')&&A.has('.smbtns [data-act="comps"]'),'admin: small Add fixture / Competition setup at the bottom');
   A.go('home');ok(A.has('[data-act="editfx"]'),'admin: Edit fixture on home');
+  A.go('about');{const t=A.d.getElementById('view').textContent;ok(/What’s new/.test(t)&&/Scorers can/.test(t)&&/Admins also can/.test(t)&&/subs/.test(t),'admin About page shows all sections');}
   ok(/Live/.test(A.d.querySelector('.sync').textContent),'status chip: '+A.d.querySelector('.sync').textContent);
   // Andy picks a team for L9 and switches Chris Cooke on as a scorer
   A.go('team','L9');['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10','p11','p12','p13'].forEach(id=>A.click(`[data-av="in"][data-id="${id}"]`));A.click('[data-act="suggest"]');A.click('[data-act="close"]');await wait(100);
@@ -107,9 +110,9 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   A.go('fixtures');ok(/Competition setup/.test(A.d.getElementById('view').textContent),'Fixtures tab works from the bottom bar');
   // v2.5: More page by role, past Team tab, cup draws, date box, no subs export
   const moreItems=P=>{P.go('more');return [...P.d.querySelectorAll('#view .list .name')].map(x=>x.textContent).join(',');};
-  ok(moreItems(V)==='League table,Averages,Squad,Admin/scorer sign-in','viewer More: '+moreItems(V));
-  ok(moreItems(C)==='Signed in,League table,Averages,Squad,Game rules','scorer More: '+moreItems(C));
-  ok(moreItems(A)==='Signed in,League table,Averages,Squad,Game rules,Subs,Settings,Backup & data','admin More: '+moreItems(A));
+  ok(moreItems(V)==='League table,Averages,Squad,About the app,Admin/scorer sign-in','viewer More: '+moreItems(V));
+  ok(moreItems(C)==='Signed in,League table,Averages,Squad,Game rules,About the app','scorer More: '+moreItems(C));
+  ok(moreItems(A)==='Signed in,League table,Averages,Squad,Game rules,Subs,Settings,Backup & data,About the app','admin More: '+moreItems(A));
   V.go('settings');ok(V.H.S().ui.tab==='more','viewer sent back from Settings to More');
   A.go('team','L8');ok(!A.has('[data-av]')&&/Team as played/.test(A.d.getElementById('view').textContent)&&A.has('[data-act="subtick"]')&&A.has('[data-act="teamsheet"]'),'past match Team tab: team as played, subs and team sheet, no availability');
   A.go('team','L10');ok(A.has('[data-av]'),'upcoming match Team tab still has availability');

@@ -10,6 +10,8 @@
 <meta name="theme-color" content="#0B1A38">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="any">
 <title>The Lions Den</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@500;700&display=swap">
 <style>
@@ -56,7 +58,8 @@ input,select,textarea{font:inherit}
 .smbtns{display:flex;gap:8px;margin:14px 0 6px}.smbtns .btn.sm{flex:1;margin:0;min-height:36px;height:36px;font-size:13px;justify-content:center;padding:0 10px}
 .k.cur{outline:3px solid var(--gold);outline-offset:-3px;background:rgba(244,196,48,.18)}
 .chg{margin-top:6px;font-size:17px}
-.tri{font-size:.7em;margin-right:1px;vertical-align:1px}.chg b{color:var(--gold);font-size:22px}
+.tri{font-size:.7em;margin-right:1px;vertical-align:1px}
+.about>div{padding:9px 0;line-height:1.35}.aico{display:inline-block;width:26px}.chg b{color:var(--gold);font-size:22px}
 .lockc{border:1px solid var(--line)}
 .field input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;box-sizing:border-box;text-align:left}
 .chip{display:inline-block;padding:3px 9px;border-radius:12px;background:var(--row);font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
@@ -412,7 +415,7 @@ function suggest(fid){
 /* ---------------- views ---------------- */
 var ICONS={fixtures:'<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M7.5 14h2M11 14h2M14.5 14h2M7.5 17.5h2M11 17.5h2"/></svg>',home:'<svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',team:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.6c2.6.1 4.6 1.9 5.3 5.4"/></svg>',score:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16M15 4v16"/></svg>',results:'<svg viewBox="0 0 24 24"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 13v4M8 20h8"/></svg>',more:'<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>'};
 function renderNav(){var tabs=[['home','Home'],['team','Team'],['score','Scores'],['fixtures','Fixtures'],['more','More']];
-  document.getElementById('nav').innerHTML=tabs.map(function(t){return '<button data-tab="'+t[0]+'" class="'+(S.ui.tab===t[0]||(t[0]==='more'&&['squad','rules','averages','backup','settings','league','account','subs'].indexOf(S.ui.tab)>-1)?'on':'')+'">'+ICONS[t[0]]+t[1]+'</button>';}).join('');}
+  document.getElementById('nav').innerHTML=tabs.map(function(t){return '<button data-tab="'+t[0]+'" class="'+(S.ui.tab===t[0]||(t[0]==='more'&&['squad','rules','averages','backup','settings','league','account','subs','about'].indexOf(S.ui.tab)>-1)?'on':'')+'">'+ICONS[t[0]]+t[1]+'</button>';}).join('');}
 function renderTop(){
   document.getElementById('top').innerHTML='<svg viewBox="0 0 '+LOGO_W+' 1000" class="logo" role="img" aria-label="Lion’s logo"><path fill="'+GOLD+'" fill-rule="evenodd" d="'+LOGO_D+'"/></svg><div class="grow"><div class="h1">The Lions Den</div><div class="sub">'+esc(S.rules.general.home+' · '+S.rules.general.league)+'</div></div>'+(function(){var st=syncState();return '<button class="sync '+st.c+'" data-tab="account"><i></i>'+esc(st.t)+'</button>';})();}
 function venTxt(f){return f.venue?' · '+f.venue:(f.status==='scheduled'&&f.date>=today()?' · Venue TBC':'');}
@@ -563,8 +566,53 @@ function vMore(){var r=myRole(),items=SY.session?[['account','Signed in',roleLab
   ['league','League table','Division 2 table and cup draws from the league website'],['averages','Averages','Season averages table and image'],['squad','Squad',isAdmin()?'Add, rename or deactivate players':'The Lions squad']]);
   if(r!=='viewer')items.push(['rules','Game rules',isAdmin()?'Scoring, ties, spare range, averages':'Scoring rules for league and cups']);
   if(r==='admin')items=items.concat([['subs','Subs','Who has paid, who owes'],['settings','Settings','Names or nicknames on each output'],['backup','Backup & data','Save or restore everything']]);
+  items.push(['about','About the app','What it does and what\u2019s new']);
   if(!SY.session)items.push(['account','Admin/scorer sign-in','For admins and scorers only']);
   return '<div class="card list">'+items.map(function(x){return '<div><button class="grow" style="text-align:left" data-tab="'+x[0]+'"><div class="name">'+x[1]+'</div><div class="small muted">'+x[2]+'</div></button><span class="muted">›</span></div>';}).join('')+'</div>';}
+
+/* ---------------- About the app (edit the wording here) ---------------- */
+/* roles: 'all' = everyone, 'scorer' = scorers and admins, 'admin' = admins only */
+var ABOUT={
+  intro:'Our own Lions app: live scores, fixtures, the league table and everyone’s averages, all in one place. Add it to your phone like an app, or visit it as a website on any computer.',
+  install:'On your phone, open the-lions-den.github.io and tap Share → Add to Home Screen (iPhone) or ⋮ → Add to Home screen (Android). No sign-in needed to view.',
+  news:[ /* newest first: [version, date, role, text] */
+    ['v2.9','10 Nov 2026','all','New About the app page (this one) with a What’s new list for future updates.'],
+    ['v2.9','10 Nov 2026','all','Lions head icon on the browser tab.'],
+    ['v2.8','10 Nov 2026','all','League table shows ▲▼ arrows for places moved since last week.'],
+    ['v2.8','10 Nov 2026','admin','Sign-up alerts now name the person and the role they’re asking for.']
+  ],
+  sections:[
+    ['all','What’s in it',[
+      ['🏠','Home','next match, upcoming fixtures, top 5 averages and the league table'],
+      ['👥','Team','who’s playing on the night, and the team as played for past matches'],
+      ['🎳','Scores','follow the match live, hand by hand, from anywhere'],
+      ['📅','Fixtures','every league and cup fixture, filter by competition'],
+      ['📊','League table','updated automatically from the league website, with ▲▼ position changes, last week’s results and cup draws'],
+      ['📈','Averages','everyone’s season stats']]],
+    ['scorer','Scorers can',[
+      ['🎳','','Score the match live on one phone – everyone else watches in real time'],
+      ['🔁','','Take over scoring from another phone if needed'],
+      ['👥','','Change the line-up on the night and add opposition names'],
+      ['✍️','','Get both captains to sign on the phone and send the league result card'],
+      ['🔒','','Lock the match when done (it locks itself at 6am the next day)']]],
+    ['admin','Admins also can',[
+      ['✅','','Set availability and pick the team (with a suggested line-up)'],
+      ['📅','','Add/edit fixtures – new cup draws are read from the league site and offered to add'],
+      ['🖼️','','Share the team sheet, results image and match report to WhatsApp'],
+      ['💷','','Tick off subs on the night'],
+      ['🔓','','Unlock a match to correct a score – every change is logged'],
+      ['⚙️','','Approve sign-ups, set roles, nicknames and game rules']]]
+  ],
+  outro:'It updates itself – just open it to get the latest. Everything syncs between phones and computers, and works offline at away pubs. Up the Lions! 🦁'
+};
+function aboutSees(role){var r=myRole();return role==='all'||(role==='scorer'&&r!=='viewer')||(role==='admin'&&r==='admin');}
+function isInstalled(){try{return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}catch(e){return false;}}
+function vAbout(){var news=ABOUT.news.filter(function(n){return aboutSees(n[2]);}).slice(0,8);
+  var h='<div class="card"><h2>The Lions Den</h2><div>'+esc(ABOUT.intro)+'</div>'+(isInstalled()?'':'<div class="small muted" style="margin-top:8px">'+esc(ABOUT.install)+'</div>')+'</div>';
+  if(news.length)h+='<div class="sec">What’s new</div><div class="card list about">'+news.map(function(n){return '<div><div><b>'+esc(n[0])+'</b> <span class="small muted">'+esc(n[1])+'</span><div>'+esc(n[3])+'</div></div></div>';}).join('')+'</div>';
+  ABOUT.sections.filter(function(x){return aboutSees(x[0]);}).forEach(function(x){
+    h+='<div class="sec">'+esc(x[1])+'</div><div class="card list about">'+x[2].map(function(i){return '<div><div><span class="aico">'+i[0]+'</span>'+(i[1]?'<b>'+esc(i[1])+'</b> – ':'')+esc(i[2])+'</div></div>';}).join('')+'</div>';});
+  return h+'<div class="card small muted">'+esc(ABOUT.outro)+'</div>';}
 function tabAllowed(t){var r=myRole();if(['subs','settings','backup'].indexOf(t)>-1)return r==='admin';if(t==='rules')return r!=='viewer';return true;}
 
 function vAverages(){var a=averages();if(!a.length)return '<div class="card">No completed League or Cup matches yet.</div>';
@@ -604,7 +652,7 @@ function vBackup(){return '<div class="card"><h2>Backup</h2><div class="small mu
   '<div class="card"><h2>Start again</h2><div class="small muted">Clears this phone’s copy and reloads the shared data.</div><button class="btn danger" data-act="reset" style="margin-top:0">Reset to starting data</button></div>';}
 
 function render(){if(S.ui.tab==='results')S.ui.tab='score';if(!tabAllowed(S.ui.tab))S.ui.tab='more';document.body.className='r-'+myRole();renderTop();renderNav();var v=document.getElementById('view'),t=S.ui.tab;
-  v.innerHTML=(['team','score'].indexOf(t)>-1?fxSelect():'')+(t==='home'?vHome():t==='team'?vTeam():t==='score'?vScore():t==='results'?vResults():t==='more'?vMore():t==='averages'?vAverages():t==='league'?vLeague():t==='fixtures'?vFixtures():t==='squad'?vSquad():t==='rules'?vRules():t==='backup'?vBackup():t==='settings'?vSettings():t==='account'?vAccount():t==='subs'?vSubs():vHome());}
+  v.innerHTML=(['team','score'].indexOf(t)>-1?fxSelect():'')+(t==='home'?vHome():t==='team'?vTeam():t==='score'?vScore():t==='results'?vResults():t==='more'?vMore():t==='averages'?vAverages():t==='league'?vLeague():t==='fixtures'?vFixtures():t==='squad'?vSquad():t==='rules'?vRules():t==='backup'?vBackup():t==='settings'?vSettings():t==='account'?vAccount():t==='subs'?vSubs():t==='about'?vAbout():vHome());}
 
 /* ---------------- modals ---------------- */
 function chooseFxModal(){var l=sortedFx().filter(function(f){return f.status!=='vacant'&&f.status!=='bye';});var t=today(),idx=l.findIndex(function(f){return f.date>=t;});
