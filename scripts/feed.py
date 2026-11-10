@@ -8,7 +8,7 @@ Reads the Central Skittle League website and writes feed.json for the app:
 Run by the GitHub job every few hours. Usage: feed.py OUTPUT.json [PREVIOUS.json]
 Each season: check the addresses in CONFIG still match the league website.
 """
-import csv, hashlib, html, io, json, os, re, sys, urllib.parse, urllib.request
+import csv, hashlib, html, io, json, os, re, sys, urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timezone
 
 # ---------------- CONFIG ----------------
@@ -26,7 +26,23 @@ FIXTURES_PAGE = '/428938704/429541040'   # Division 2 fixture lists page
 FIXTURES_PDF = '/onewebmedia/LIONS.pdf'  # the Lions fixtures PDF
 # ----------------------------------------
 
-UA = 'LionsDen/2.0 (skittles team app; checks every few hours)'
+UA = 'LionsDen/2.0 (skittles team app; checks every 6 hours, only downloads what changed)'
+
+def grab_cond(url, etag=None, lastmod=None):
+    """Download only if changed. Returns ('new', body, etag, lastmod), ('same', None, ...) or ('fail', None, ...)."""
+    h = {'User-Agent': UA}
+    if etag: h['If-None-Match'] = etag
+    if lastmod: h['If-Modified-Since'] = lastmod
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=h), timeout=25) as r:
+            return 'new', r.read(), r.headers.get('ETag'), r.headers.get('Last-Modified')
+    except urllib.error.HTTPError as e:
+        if e.code == 304:
+            return 'same', None, etag, lastmod
+        print('  could not read', url, '-', e)
+    except Exception as e:
+        print('  could not read', url, '-', e)
+    return 'fail', None, None, None
 
 def grab(url):
     try:
@@ -221,6 +237,14 @@ def table_positions(rows):
 
 def main(out_path, prev_path=None):
     out = {'ok': True, 'at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S+00:00'), 'errors': []}
+    prev = {}
+    if prev_path and os.path.exists(prev_path):
+        try:
+            prev = json.load(open(prev_path, encoding='utf-8'))
+        except Exception:
+            prev = {}
+    prev_cups = {c.get('key'): c for c in prev.get('cups', [])}
+    prev_draws = prev.get('draws', [])
 
     # ---- league table ----
     sheet = TABLE_SHEET_FALLBACK
@@ -258,6 +282,9 @@ def main(out_path, prev_path=None):
                 found[f] = url
         else:
             out['errors'].append('Could not read ' + name)
+            # league site unreachable: keep the pictures we knew about last time
+            for im in (prev_cups.get(key) or {}).get('images', []):
+                found[im['file']] = im['url']
         for f in found:
             count[f] = count.get(f, 0) + 1
         imgs[key] = found
@@ -270,9 +297,19 @@ def main(out_path, prev_path=None):
     for row in (out.get('table') or {}).get('rows', []):
         if len(row) > 2 and row[0].strip().isdigit() and row[1].strip() and 'vacant' not in row[1].lower():
             teams.append(row[1].strip())
-    draws = []
+    draws, reused, readnow = [], 0, 0
     for c in out['cups']:
+        old_imgs = {i['file']: i for i in (prev_cups.get(c['key']) or {}).get('images', [])}
         for im in c['images']:
+            old = old_imgs.get(im['file'])
+            if old and old.get('url') == im['url'] and 'read' in old:
+                # same picture as last time (the address carries its version): reuse what we read before
+                im['read'] = old['read']
+                if 'rounds' in old: im['rounds'] = old['rounds']
+                draws += [d for d in prev_draws if d.get('cup') == c['key'] and d.get('file') == im['file']]
+                reused += 1
+                continue
+            readnow += 1
             img = grab(im['url'])
             lines = ocr_words(img) if img else None
             if lines is None:
@@ -283,22 +320,23 @@ def main(out_path, prev_path=None):
             im['rounds'] = [s['round'] + (' ' + s['date'] if s['date'] else '') for s in secs]
             draws += lions_draws(c['key'], im['file'], secs)
     out['draws'] = draws
+    print('draw pictures: %d read now, %d unchanged (reused)' % (readnow, reused))
     print('cup draws read:', [(d['cup'], d['round'], d['date'], 'bye' if d['bye'] else d['opp']) for d in draws])
 
     # ---- fixtures PDF fingerprint ----
-    pdf = grab(SITE + FIXTURES_PDF)
-    if pdf:
-        out['fixtures'] = {'url': SITE + FIXTURES_PDF, 'page': SITE + FIXTURES_PAGE, 'hash': hashlib.md5(pdf).hexdigest(), 'bytes': len(pdf)}
+    pf = prev.get('fixtures') or {}
+    st, pdf, et, lm = grab_cond(SITE + FIXTURES_PDF, pf.get('etag'), pf.get('lastmod'))
+    if st == 'new' and pdf:
+        out['fixtures'] = {'url': SITE + FIXTURES_PDF, 'page': SITE + FIXTURES_PAGE, 'hash': hashlib.md5(pdf).hexdigest(), 'bytes': len(pdf), 'etag': et, 'lastmod': lm}
+    elif pf.get('hash'):
+        out['fixtures'] = pf   # unchanged (or site down): keep last time's fingerprint
+        print('fixtures PDF:', 'unchanged' if st == 'same' else 'not reachable, kept last check')
+        if st == 'fail':
+            out['errors'].append('Could not read the fixtures PDF')
     else:
         out['errors'].append('Could not read the fixtures PDF')
 
     # ---- our own position changes (+/-) since the last "As of" table ----
-    prev = {}
-    if prev_path and os.path.exists(prev_path):
-        try:
-            prev = json.load(open(prev_path, encoding='utf-8'))
-        except Exception:
-            prev = {}
     cur = table_positions((out.get('table') or {}).get('rows', []))
     if cur:
         pc = prev.get('posCur')

@@ -1,5 +1,5 @@
 # Publishes the Lions Den app to https://the-lions-den.github.io
-# Runs when a new version is pushed, and every 3 hours to refresh the league table, cup draws and fixtures check.
+# Runs when a new version is pushed, and every 6 hours to refresh the league table, cup draws and fixtures check.
 name: Publish the Lions Den
 
 on:
@@ -7,7 +7,7 @@ on:
     branches: [main]
     paths-ignore: ['backups/**', 'README.md']
   schedule:
-    - cron: '17 */3 * * *'
+    - cron: '17 */6 * * *'
   workflow_dispatch:
 
 permissions:

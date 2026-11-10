@@ -148,7 +148,7 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   // a request from someone not switched on
   const R=phone('Craig');await wait(80);R.go('account');R.click('[data-act="acctmode"][data-m="new"]');R.set('suPid','p5');R.set('suEmail','craig@lions.test');R.set('suPw','craig55');R.click('[data-act="signup"]');await wait(200);
   ok(R.H.myRole()==='viewer'&&/Waiting/.test(R.d.getElementById('view').textContent),'Craig waiting for approval');
-  A.go('home');await wait(30);ok(/1 scorer request/.test(A.d.getElementById('view').textContent),'Andy sees 1 scorer request on Home');
+  A.go('home');await wait(30);{const t=A.d.getElementById('view').textContent;ok(/New (scorer|admin) request · \S/.test(t),'Andy sees a named sign-in request on Home: '+(t.match(/New [a-z]+ request[^A]*/)||[''])[0].slice(0,60));}
   A.go('squad');ok(/Requested/.test(A.d.getElementById('view').textContent),'Requested badge in Squad');
   [...A.d.querySelectorAll('[data-act="editplayer"]')].find(b=>b.dataset.id==='p5').click();await wait(50);ok(/craig@lions.test/.test(A.d.getElementById('rqEmail').textContent),'Craig request shows email');A.click('[data-act="approve"]');await wait(150);
   ok(R.H.myRole()==='scorer','Craig approved: now a scorer on his phone');
