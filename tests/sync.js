@@ -1,7 +1,7 @@
 const {JSDOM}=require('jsdom');const fs=require('fs');const {Backend,client}=require('./mocksb');
 const html=fs.readFileSync(process.env.APP_HTML||require('path').join(__dirname,'../app/index.html'),'utf8');const B=Backend();B.bootstrap=['p10']; // Andy linked before approvals were required
 const wait=ms=>new Promise(r=>setTimeout(r,(ms||60)+350));
-let fails=0;const ok=(c,msg)=>{console.log((c?'PASS ':'FAIL ')+msg);if(!c)fails++;};
+const snap=(P,n)=>{if(process.env.SNAP)fs.writeFileSync(process.env.SNAP+'/'+n+'.html','<!DOCTYPE html>'+P.d.documentElement.outerHTML.replace(/<script[\s\S]*?<\/script>/g,''));};let fails=0;const ok=(c,msg)=>{console.log((c?'PASS ':'FAIL ')+msg);if(!c)fails++;};
 function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',url:'https://the-lions-den.github.io/',pretendToBeVisual:true,
   beforeParse(w){w.print=()=>{};w.supabase={createClient:()=>(w.__c=client(B,w.localStorage))};w.scrollTo=()=>{};w.fetch=()=>Promise.reject(new Error('no net'));if(store)Object.keys(store).forEach(k=>w.localStorage.setItem(k,store[k]));}});
   const w=dom.window,d=w.document;const P={name,w,d,H:w.__hub,
@@ -81,6 +81,15 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   C.go('score','L9');await wait(20);ok(!C.has('.pad')&&/Scoring by Andy Nancollis/.test(C.d.getElementById('view').textContent),'Chris now watching: Scoring by Andy Nancollis');
   A.click('[data-v="4"]');A.click('[data-act="undo"]');A.click('[data-v="3"]');await wait(120);
   ok(filled(C.H.S().matches.L9)===9&&filled(V.H.S().matches.L9)===9,'undo and entries after handover shared');
+  // v3.5: Stop scoring. Same person on another device (Andy's scorer tag from a different device)
+  A.H.S().matches.L9.scorer.dev='other-device';A.go('score','L9');await wait(20);
+  {const t=A.d.getElementById('view').textContent;ok(/Scoring by you \(on another device\)/.test(t)&&A.has('[data-act="stopscore"]')&&!/Take over/.test(t)&&/Score on this device/.test(t)&&!A.has('.pad'),'same person on another device: Stop scoring + Score on this device, no Take over');}
+  snap(A,'mine');C.go('score','L9');ok(/Take over/.test(C.d.getElementById('view').textContent),'another editor still sees Take over');
+  A.click('[data-act="stopscore"]');await wait(150);ok(!A.H.S().matches.L9.scorer,'Stop scoring clears the scorer');
+  C.go('score','L9');await wait(20);{const t=C.d.getElementById('view').textContent;ok(!C.H.S().matches.L9.scorer&&/Nobody is scoring/.test(t)&&!C.has('.pad')&&/Start scoring/.test(t),'other phones: Nobody is scoring, Start scoring, no keypad');}
+  V.go('score','L9');await wait(20);ok(/Nobody is scoring/.test(V.d.getElementById('view').textContent)&&!V.has('[data-act="takeover"]'),'viewer: Nobody is scoring, no button');
+  A.go('score','L9');ok(!A.has('.pad'),'no keypad anywhere until someone starts');A.click('[data-act="takeover"]');await wait(120);ok(A.has('.pad')&&A.has('.now [data-act="stopscore"]'),'Start scoring gives the keypad, with Stop scoring on the card');
+  snap(C,'nobody');A.click('.now [data-act="stopscore"]');snap(A,'stopconf');ok(/Stop scoring\?/.test(A.modal()),'scoring phone asks before stopping');A.click('[data-act="close"]');ok(A.H.S().matches.L9.scorer&&A.has('.pad'),'Cancel keeps scoring');
   // results sharing: admins only; league card: scorers and admins
   V.go('results','L8');ok((V.d.getElementById('view').textContent.match(/Set \d/gi)||[]).length>=4&&!V.has('#view [data-cell]'),'viewer Results shows all 4 set tables, read-only');ok(!V.has('[data-act="resimg"]')&&!V.has('[data-act="leaguecard"]')&&V.has('.board,.card'),'viewer Results: no share, no league card');
   C.go('results','L8');ok(!C.has('[data-act="resimg"]')&&!C.has('[data-act="report"]')&&C.has('[data-act="leaguecard"]')&&C.has('[data-act="sign"]'),'scorer Results: league card only');
@@ -212,7 +221,7 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   V.go('home');{const t=V.d.getElementById('view').textContent;ok(/Cup draw · Front Pin Cup · Semi Finals/.test(t)&&/Lions v Reptiles · .* · Home · Venue TBC/.test(t),'viewer sees Lions draw card: '+(t.match(/Cup draw[^M]*/)||[''])[0]);
     ok(!V.has('[data-act="draws"]')&&!/No Lions fixture update/.test(t)&&!/fixture list updated/.test(t),'viewer: no View picture, no non-Lions picture alert, no PDF alert');}
   V.click('[data-act="vdseen"]');ok(!/Cup draw ·/.test(V.d.getElementById('view').textContent),'viewer: Mark as seen hides the card');
-  V.go('home');ok(/pins since September 2023/.test(V.d.getElementById('view').textContent),'Home tagline shows pins this year');
+  V.go('home');ok(/pins since September 2022/.test(V.d.getElementById('view').textContent),'Home tagline shows pins this year');
   V.go('averages');{const t=V.d.getElementById('view').textContent;ok(/Team stats/.test(t)&&/Total pins hit/.test(t)&&/Average team score/.test(t)&&/Total team spares/.test(t)&&/Player averages/.test(t)&&!/\/hand/.test(t),'Statistics page: team stats + player table, Hand header');}
   // v3.1: lock card/log hidden from viewers; 50+; seasons; print sheet; close season
   V.go('score','L8');{const t=V.d.getElementById('view').textContent;ok(!/Match locked/.test(t)&&!/Changes after locking/.test(t)&&/Set 1/.test(t),'viewer: finished match shows scores but no lock card or change log');}
@@ -234,7 +243,7 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    const l=V.H.sheetData('2023-24',true);ok(l.matches.length===22&&l.totals.cups===0&&l.players[0].spares==null,'League only drops the 6 cup matches');}
   V.go('averages');V.click('[data-act="season"][data-s="2023-24"]');{const t=V.d.getElementById('view').textContent;ok(/League \+ Cups/.test(t)&&/Cup/.test(V.d.querySelector('table.avg:not(.stat) thead').textContent)&&/44\.75/.test(t),'2023/24 Statistics with Cup column');}
   V.click('[data-act="cups"][data-cv="league"]');{const t=V.d.getElementById('view').textContent;ok(!/Cup/.test(V.d.querySelector('table.avg:not(.stat) thead').textContent)&&/League matches only/.test(t)&&!V.H.cupsOn(),'League only: Cup column hidden');}
-  V.go('home');ok(/pins since September 2023/.test(V.d.getElementById('view').textContent),'Home unaffected by the switch');
+  V.go('home');ok(/pins since September 2022/.test(V.d.getElementById('view').textContent),'Home unaffected by the switch');
   V.go('averages');V.click('[data-act="cups"][data-cv="all"]');V.click('[data-act="season"][data-s="2026-27"]');ok(V.H.cupsOn(),'switch back to League + Cups');
   A.go('team','L10');{const sw=A.d.querySelector('.avsw[data-id="p5"]');ok(sw&&/Out/.test(sw.textContent)&&!A.has('[data-av="maybe"]'),'availability: one switch per player, Out by default, no ?');
    sw.click();await wait(20);ok(A.H.S().sel.L10.avail.p5==='in'&&/In/.test(A.d.querySelector('.avsw[data-id="p5"]').textContent),'tap: In');
@@ -242,10 +251,17 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   // v3.3: 2024/25 + all-time pins
   {const s=V.H.sheetData('2024-25'),t=s.totals;ok(t.for===9426&&s.matches.length===20&&s.players.length===22&&t.points==null&&t.noRes&&s.matches[0].ls===33,'2024/25 built in: 9,426, 20 matches, 22 players, no results, L/S 33 in match 1');
    ok(s.players.find(r=>r.pid==='p11').games===17&&s.players.find(r=>r.pid==='p11').avg.toFixed(2)==='41.35'&&s.players.find(r=>r.pid==='p23').games===12,'2024/25 corrections: A Evans 17 games 41.35, N Collyer 12 games');
-   const at=V.H.allTimePins();ok(at.since==='September 2023'&&at.pins>=39922,'all-time pins since September 2023: '+at.pins);}
-  V.go('home');{const tg=V.d.querySelector('.tagline');ok(tg&&/We’ve hit [\d,]+ pins since September 2023!/.test(tg.textContent)&&tg.dataset.tab==='averages','Home tagline: '+(tg&&tg.textContent));}
+   const at=V.H.allTimePins();ok(at.since==='September 2022'&&at.pins>=39922+11847,'all-time pins since September 2022: '+at.pins);}
+  V.go('home');{const tg=V.d.querySelector('.tagline');ok(tg&&/We’ve hit [\d,]+ pins since September 2022!/.test(tg.textContent)&&tg.dataset.tab==='averages','Home tagline: '+(tg&&tg.textContent));}
   V.go('averages');V.click('[data-act="season"][data-s="2024-25"]');ok(!/NaN|undefined|null/.test(V.d.getElementById('view').textContent),'2024/25 Statistics: no NaN/undefined/null');
   V.go('fixtures');ok(/incl\. L\/S 33/.test(V.d.getElementById('view').textContent)&&!/NaN|undefined|null/.test(V.d.getElementById('view').textContent),'2024/25 fixtures list with dates and L/S note');
+  // v3.5: 2022/23
+  {const s=V.H.sheetData('2022-23'),t=s.totals,pl=s.players,ps=pl.reduce((a,r)=>a+r.pins,0);ok(s.matches.length===27&&t.cups===5&&t.for===11847&&ps===11792&&pl.length===24&&t.noRes,'2022/23 built in: 27 matches (5 cups), team 11,847, players 11,792, 24 players, no results');
+   ok(s.matches[4].ls===31&&s.matches[13].ls===24&&s.matches[0].date==='2022-09-09'&&s.matches[26].home,'2022/23 L/S 31 and 24, dates, Double 6 home');
+   const sheet={p24:[23,40.43],p11:[21,40.24],p3:[19,38.47],p13:[22,38.27],p16:[22,37.45],p17:[14,37.21],p20:[21,36.76],p10:[20,37.40],p8:[21,36.00],p15:[19,36.42],p5:[26,35.35],p21:[9,34.33],p14:[3,33.00],p7:[19,32.79]},bad=Object.keys(sheet).filter(k=>{const r=pl.find(x=>x.pid===k);return !r||r.games!==sheet[k][0]||r.avg.toFixed(2)!==sheet[k][1].toFixed(2);});
+   ok(!bad.length&&pl.find(r=>r.pid==='John Haynes').avg.toFixed(2)==='35.36'&&pl.find(r=>r.pid==='Chris Winter').games===10,'2022/23 games and averages match the sheet'+(bad.length?': '+bad:''));
+   ok(V.H.sheetData('2022-23',true).matches.length===22,'2022/23 League only: 22 matches');}
+  V.go('averages');V.click('[data-act="season"][data-s="2022-23"]');{snap(V,'s2223');if(process.env.SNAP){V.click('[data-act="printsheet"]');snap(V,'p2223');V.click('[data-act="closeprint"]');}const t=V.d.getElementById('view').textContent;ok(!/NaN|undefined|null/.test(t)&&/C Winter|Chris Winter|C\. Winter/.test(t)&&V.d.querySelector('tr.band'),'2022/23 Statistics: ex-players by name, 3-match line, no NaN');}
   V.go('averages');V.click('[data-act="season"][data-s="2026-27"]');
   // v3.4: live set layout, sticky labels, fixed hand columns, ▲▼ columns
   {const H=A.H,S=H.S(),m=S.matches.L8,save=JSON.stringify(m);for(let p=6;p<12;p++)for(let k=0;k<6;k++){if(p>6||k>=3){m.L[p][k]=null;m.O[p][k]=null;}}m.lock=null;
@@ -254,13 +270,36 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    const btn=()=>d.querySelector('[data-act="allsets"]').textContent;ok(btn()==='Show all sets','button: Show all sets');A.click('[data-act="allsets"]');ok(btn()==='Hide other sets'&&d.querySelectorAll('.liveset').length===4,'button: Hide other sets, all 4 sets shown');
    ok([...d.querySelectorAll('.liveset')].some(c=>c.querySelector('tr.tbar.win')&&/\+2 pts/.test(c.textContent)),'finished set: winner bar highlighted with +2 pts');A.click('[data-act="allsets"]');
    Object.assign(m,JSON.parse(save));A.go('score','L8');ok(d.querySelector('.setc')&&!d.querySelector('.liveset'),'finished match keeps the Set column');}
-  V.go('averages');{const ly=[...V.d.querySelectorAll('.card')].find(c=>/This time last year/.test(c.textContent));ok(ly&&ly.querySelectorAll('td.ud').length>=4&&!/▲|▼/.test([...ly.querySelectorAll('td.t')].map(x=>x.textContent).join('')),'▲▼ in their own column (This time last year)');}
+  // v3.5: last year folded into the main tables; 3-match bands
+  V.go('averages');snap(V,'stats');{const d=V.d,t=d.getElementById('view').textContent,pt=[...d.querySelectorAll('table.avg:not(.stat)')][0],th=[...pt.querySelectorAll('thead th')].map(x=>x.textContent);
+   ok(!/This time last year/.test(t),'no separate This time last year card');
+   ok(th.slice(0,6).join('|')==='Player|Gm|Pins|Avg|±|LY','player table: ± and LY after Avg: '+th.join('|'));
+   const cc=[...pt.querySelectorAll('tbody tr')].find(r=>/C Cooke|Chris Cooke|C\. Cooke/.test(r.textContent));console.log('   Cooke row: '+(cc&&[...cc.children].map(x=>x.textContent).join(' | ')));
+   ok(cc&&Math.abs(+cc.children[3].textContent-(+cc.children[5].textContent)-(+cc.children[4].textContent.replace(/[▲▼]/,'')))<0.011&&/▲/.test(cc.children[4].textContent)===(+cc.children[3].textContent>+cc.children[5].textContent),'C Cooke: ± = Avg − LY');
+   const st=d.querySelector('table.avg.stat'),sh=[...st.querySelectorAll('thead th')].map(x=>x.textContent),sr=[...st.querySelectorAll('tbody tr')].map(r=>r.children[0].textContent);
+   ok(sh.join('|')==='|Overall|±|Last yr|Home|Away|Cup'&&sr.slice(0,2).join()==='Points,Wins','team stats: Overall · ± · Last yr · Home · Away · Cup, Points and Wins rows: '+sh.join('|')+' / '+sr.join());
+   ok(st.querySelectorAll('td.ud').length>=4&&!/▲|▼/.test([...st.querySelectorAll('td.t')].map(x=>x.textContent).join('')),'▲▼ in their own column');
+   const band=pt.querySelector('tr.band');ok(band&&/Fewer than 3 matches/.test(band.textContent),'dashed line: Fewer than 3 matches');
+   const low=[...pt.querySelectorAll('tr.low')];ok(low.length>0&&low.every(r=>+r.children[1].textContent<3&&/^– /.test(r.children[0].textContent))&&[...pt.querySelectorAll('tbody tr:not(.low):not(.band)')].every(r=>+r.children[1].textContent>=3),'below the line: fewer than 3 games, unnumbered; above: 3+');
+   const nums=[...pt.querySelectorAll('tbody tr:not(.low):not(.band)')].map(r=>parseInt(r.children[0].textContent));ok(nums.every((n,i)=>n===i+1),'main band numbered with no gaps');
+   V.click('[data-act="season"][data-s="2024-25"]');{const p2=V.d.querySelector('table.avg:not(.stat)');ok(![...p2.querySelectorAll('thead th')].some(x=>x.textContent==='LY')&&!V.d.querySelector('table.avg.stat thead').textContent.includes('Last yr'),'past season: no LY / Last yr columns');}
+   V.click('[data-act="season"][data-s="2026-27"]');}
+  // v3.5: cup tags in the fixture dropdown, Chairman's Shield
+  A.go('team','L9');{const o=[...A.d.querySelectorAll('#fxSel option')].map(x=>x.textContent),lg=[...A.d.querySelectorAll('#fxSel option')].filter(x=>/^L/.test(x.value)).map(x=>x.textContent);ok([' FP🏆',' KO🏆',' GDT🏆',' GD🏆'].every(s=>o.some(x=>x.includes(s)))&&lg.length>5&&!lg.some(x=>/🏆/.test(x)),'dropdown: cup tags FP/KO/GDT/GD, league untagged: '+o.find(x=>/FP🏆/.test(x)));}
+  {const S=A.H.S();ok(S.comps.some(c=>c.id==='cs'&&c.type==='cup'),'Chairman’s Shield competition added');
+   A.go('fixtures');A.click('[data-act="editfx"][data-id="C10"]');A.set('fStat','knockedout');A.click('[data-act="savefx"]');await wait(150);
+   const g=id=>S.fixtures.find(f=>f.id===id);ok(g('C13').comp==='cs'&&g('C13').round==='R2'&&g('C14').comp==='cs'&&g('C14').round==='Semi Finals'&&g('C15').comp==='cs'&&g('C15').round==='Finals','GD R1 knocked out: later GD dates become Chairman’s Shield R2 / Semi Finals / Finals');
+   A.go('team','C13');ok([...A.d.querySelectorAll('#fxSel option')].some(x=>/ CS🏆/.test(x.textContent)),'CS🏆 in the dropdown');
+   ok(B.docs.fixtures.data.find(f=>f.id==='C13').comp==='cs','switch shared');
+   const dr={cup:'cs',round:'R2',date:g('C13').date,opp:'Belvedere',home:true,venue:'Golden Lion'};ok(A.H.drawFx(dr).id==='C13','a CS draw lands on the CS slot');
+   g('C13').comp='gd';g('C13').round='R2 & Chairman’s Shield R2';const f2=A.H.applyDraw(dr);ok(f2.id==='C13'&&f2.comp==='cs'&&f2.round==='R2'&&f2.opp==='Belvedere','a CS draw on a GD slot turns it into the CS fixture');}
   ok(/Close season 2026\/27/.test((A.go('backup'),A.d.getElementById('view').textContent))&&!C.H.needFor({act:'closeseasonok'})!=='admin','Close season on Backup page for admins');
   A.click('[data-act="closeseason"]');A.set('csName','2026/28');A.click('[data-act="closeseasonok"]');ok(A.H.curSeason()==='2026-27','wrong confirmation text: season not closed');
   A.set('csName','2026/27');A.click('[data-act="closeseasonok"]');await wait(300);
   ok(A.H.curSeason()==='2027-28'&&B.docs.seasons&&B.docs.seasons.data['2026-27']&&B.docs.seasons.data['2026-27'].sheet.matches.length>0,'season closed: 2027/28 started, 2026/27 summary shared');
-  await V.H.pull(true);await wait(150);ok(V.H.curSeason()==='2027-28'&&V.H.seasonList().join()==='2027-28,2026-27,2025-26,2024-25,2023-24','viewer phone gets the new season: '+V.H.seasonList().join());
+  await V.H.pull(true);await wait(150);ok(V.H.curSeason()==='2027-28'&&V.H.seasonList().join()==='2027-28,2026-27,2025-26,2024-25,2023-24,2022-23','viewer phone gets the new season: '+V.H.seasonList().join());
   V.go('averages');ok(/No completed League or Cup matches yet/.test(V.d.getElementById('view').textContent),'new season starts empty');
+  {const b=V.H.bands([{games:1},{games:5}],'2027-28');ok(!b.on&&b.main.length===2&&!b.low.length,'start of season (under 3 team matches): no line, everyone ranked');}
   ok(A.H.isFrozenFx(A.H.S().fixtures.find(f=>f.id==='L8')),'2026/27 fixtures frozen');
   A.go('score','L8');ok(!A.has('[data-act="unlockm"]')&&/scores are final/.test(A.d.getElementById('view').textContent),'closed season: no Unlock, scores final');
   A.go('home');ok(!/Gatecrashers/.test((A.d.querySelector('.card.now')||{textContent:''}).textContent),'closed season fixtures not offered as the next match');
