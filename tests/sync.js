@@ -293,6 +293,22 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    ok(B.docs.fixtures.data.find(f=>f.id==='C13').comp==='cs','switch shared');
    const dr={cup:'cs',round:'R2',date:g('C13').date,opp:'Belvedere',home:true,venue:'Golden Lion'};ok(A.H.drawFx(dr).id==='C13','a CS draw lands on the CS slot');
    g('C13').comp='gd';g('C13').round='R2 & Chairman’s Shield R2';const f2=A.H.applyDraw(dr);ok(f2.id==='C13'&&f2.comp==='cs'&&f2.round==='R2'&&f2.opp==='Belvedere','a CS draw on a GD slot turns it into the CS fixture');}
+  // v3.6: In play / Scoring started only with scores; calendar weeks; centred ±; green ▲ leads
+  A.go('score','L11');A.click('[data-act="start"]');await wait(150);
+  {const S=A.H.S();S.ui.fxf={c:'all',s:'all'};A.go('fixtures');const row=()=>A.d.querySelector('#view [data-id="L11"]').closest('.li');ok(A.H.S().matches.L11&&!/In play/.test(row().textContent),'started but empty: no In play chip');
+   V.go('score','L11');await wait(20);ok(/Not started yet/.test(V.d.getElementById('view').textContent),'viewer: empty match reads Not started yet');
+   A.go('score','L11');ok(A.has('.pad'),'scorer still has the keypad on the empty match');A.click('[data-v="7"]');await wait(150);A.go('fixtures');ok(/In play/.test(row().textContent),'after one hand: In play');
+   V.go('score','L11');await wait(20);ok(!/Not started yet/.test(V.d.getElementById('view').textContent),'viewer sees the live match after one hand');
+   A.go('fixtures');const v=A.d.getElementById('view'),nm=[...v.querySelectorAll('.nomatch')];ok(nm.length>3&&nm.every(x=>/^No match/.test(x.textContent)&&/Fri \d+ /.test(x.textContent)),'calendar: No match weeks with their Friday ('+nm.length+')');
+   const tl=id=>(v.querySelector('[data-id="'+id+'"] .name')||{}).textContent;ok(tl('L4')==='Lions vs Vacant Date'&&tl('C1')==='Bye, no match'&&tl('C10')==='Knocked out, no match','titles: '+tl('L4')+' / '+tl('C1')+' / '+tl('C10'));
+   snap(A,'fx');
+   A.click('[data-act="fxf"][data-fk="s"][data-fv="played"]');ok(!A.has('#view .nomatch'),'Played: no No match rows');
+   A.click('[data-act="fxf"][data-fk="s"][data-fv="up"]');ok(A.has('#view .nomatch'),'Upcoming: No match rows');
+   A.click('[data-act="fxf"][data-fk="c"][data-fv="league"]');ok(!A.has('#view .nomatch'),'single competition: no No match rows');S.ui.fxf={c:'all',s:'up'};}
+  V.go('averages');{const th=V.d.querySelector('table.avg th.ud');ok(th&&V.w.getComputedStyle(th).textAlign==='center','± header centred');}
+  A.go('score','L8');snap(A,'l8');{const c=A.d.querySelector('#view .card:not(.board) table');const tb=c.closest('.card'),st=[...tb.querySelectorAll('.setc')].map(x=>parseInt(x.textContent)),lt=[...tb.querySelectorAll('tr.up td.lt')].map(x=>x.textContent);
+   ok(st.length===2&&lt.length===2&&lt.includes('/')&&lt.some(x=>x==='▲'+Math.abs(st[0]-st[1])),'Lead Tot: ▲'+Math.abs(st[0]-st[1])+' and / ('+lt.join(' | ')+')');
+   ok([...tb.querySelectorAll('tr.up td.hc .lead')].length>0&&[...tb.querySelectorAll('tr.up td.hc')].every(x=>x.textContent===''||x.textContent==='/'||/^▲\d+$/.test(x.textContent)),'Lead hand cells: ▲n or /');}
   ok(/Close season 2026\/27/.test((A.go('backup'),A.d.getElementById('view').textContent))&&!C.H.needFor({act:'closeseasonok'})!=='admin','Close season on Backup page for admins');
   A.click('[data-act="closeseason"]');A.set('csName','2026/28');A.click('[data-act="closeseasonok"]');ok(A.H.curSeason()==='2026-27','wrong confirmation text: season not closed');
   A.set('csName','2026/27');A.click('[data-act="closeseasonok"]');await wait(300);

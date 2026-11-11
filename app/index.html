@@ -77,7 +77,7 @@ tr.tbar .tbn{font-weight:700;font-size:15px}
 tr.tbar .tbv{font-family:Oswald,sans-serif;font-size:22px;font-weight:700}
 tr.tbar .tbv small{font-family:inherit;font-size:13px;font-weight:700;margin-left:8px;opacity:.9}
 tr.tbar.win .tb{background:var(--gold);border-color:var(--gold);color:var(--navy)}
-td.ud,th.ud{padding-left:1px!important;padding-right:4px!important;text-align:left!important;font-size:12px;white-space:nowrap;min-width:3.2em}
+td.ud,th.ud{padding-left:3px!important;padding-right:3px!important;text-align:center!important;font-size:12px;white-space:nowrap;min-width:3.2em}
 .plink{background:none;border:0;color:inherit;font:inherit;text-align:left;padding:0;min-height:0;text-decoration:underline;text-decoration-color:rgba(246,182,48,.5);text-underline-offset:3px}
 .seasons{margin-bottom:6px}
 #printv{display:none}
@@ -171,7 +171,7 @@ tr.dn td,tr.up td{height:28px;font-size:13px;border-top:1px dashed var(--line)}
 td.lbl{font-size:11.5px;color:var(--muted);font-weight:600;font-style:italic;text-align:left;padding-left:4px}
 td.sf{font-size:13px;color:var(--muted);background:rgba(255,255,255,.03)}
 td.bym{color:var(--gold);font-weight:700}
-td.upv{color:var(--gold);font-weight:700}
+td.upv{color:var(--gold);font-weight:700}.lead{color:var(--green);font-size:12px;font-weight:700;white-space:nowrap;letter-spacing:-.2px}.lead i{font-style:normal;font-size:8px;margin-right:1px;vertical-align:1px}.nomatch .name{color:var(--muted);font-weight:600}
 td.sl{color:#5C74A6}
 td{padding:0;height:40px;text-align:center;border-top:1px solid var(--line);font-size:15px}
 td.n{text-align:left;padding-left:4px;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -343,6 +343,8 @@ function firstSort(a,b){return fullName(a).localeCompare(fullName(b));}
 function outName(id,out){if(id==='LS')return 'L/S';var p=player(id);if(!p)return '—';var on=S.rules.general.nickOn||{};return out&&on[out]&&p.nick?p.nick:p.name;}
 function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],DAY=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function addDays(s,n){var d=new Date(s+'T12:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function friOf(s){var d=new Date(s+'T12:00:00');return addDays(s,(5-d.getDay()+7)%7);} // the Friday of a Sat–Fri week
 function fdate(s,long){if(!s)return '';var d=new Date(s+'T12:00:00');var t=DAY[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()];return long?t+' '+d.getFullYear():t;}
 function fxTitle(f){var o=f.opp||'TBC';return f.home?'Lions v '+o:o+' v Lions';}
 function fxComp(f){var c=compById(f.comp);return (c?c.name:'')+(f.round?' · '+f.round:'');}
@@ -377,10 +379,12 @@ function setTot(m,t,s){var a=0;for(var k=0;k<m.rules.per;k++)a+=pTot(m,t,s*m.rul
 function matchTot(m,t){var a=0;for(var s=0;s<m.rules.sets;s++)a+=setTot(m,t,s);return a;}
 function setFilled(m,t,s){var n=0;for(var k=0;k<m.rules.per;k++)for(var h=0;h<m.rules.hands;h++)if(m[t][s*m.rules.per+k][h])n++;return n;}
 function setDone(m,s){var full=m.rules.per*m.rules.hands;return setFilled(m,'L',s)===full&&setFilled(m,'O',s)===full;}
+function hasHands(m){return !!m&&['L','O'].some(function(t){return (m[t]||[]).some(function(r){return (r||[]).some(Boolean);});});}
 function allDone(m){for(var s=0;s<m.rules.sets;s++)if(!setDone(m,s))return false;return true;}
 function slotLocked(m,p){return m.L[p].some(function(c){return !!c;});}
 function downVal(m,t,s,h){var a=0;for(var k=0;k<m.rules.per;k++){var c=m[t][s*m.rules.per+k][h];if(!c)return null;a+=c.v;}return a;}
 function upVal(m,t,s,h){if(!handDone(m,s,h))return null;var d=0;for(var x=0;x<=h;x++)d+=handLead(m,s,x);var mine=t==='L'?d:-d;return mine>0?String(mine):'/';}
+function leadHTML(n){return '<span class="lead"><i>▲</i>'+n+'</span>';}
 function soFar(m,t,p){var a=0;for(var h=0;h<5;h++){var c=m[t][p][h];if(!c)return null;a+=c.v;}return a;}
 function setPts(m,t,s){if(m.rules.result!=='sets'||!setDone(m,s))return null;var a=setTot(m,'L',s),b=setTot(m,'O',s),mine=t==='L'?a:b,th=t==='L'?b:a;return mine>th?m.rules.setWin:mine===th?m.rules.setTie:0;}
 function setWonOrTied(m,t,s){if(!setDone(m,s))return false;var a=setTot(m,'L',s),b=setTot(m,'O',s),mine=t==='L'?a:b,th=t==='L'?b:a;return mine>=th;}
@@ -669,9 +673,9 @@ function fxSelect(){var f=curFx(),cs=curSeason(),l=sortedFx().filter(function(x)
 function fxRow(f,act){var m=S.matches[f.id],r=m&&allDone(m)?result(m):null,tag='',draw=f.status==='scheduled'&&!f.opp&&compType(f)!=='league'&&!m&&f.date>=today();
   if(f.status==='vacant')tag='<span class="chip">Vacant</span>';else if(f.status==='cancelled')tag='<span class="chip">Cancelled</span>';else if(f.status==='knockedout')tag='<span class="chip">Out</span>';else if(f.status==='bye')tag='<span class="chip">Bye</span>';
   else if(r)tag='<span class="chip '+(r.winner==='L'?'g':'')+'">'+(r.winner==='L'?'Won':r.winner==='O'?'Lost':r.winner==='D'?'Drawn':'Tied')+' '+(f.home?r.A+'–'+r.B:r.B+'–'+r.A)+'</span>';
-  else if(m)tag='<span class="chip o">In play</span>';
+  else if(hasHands(m))tag='<span class="chip o">In play</span>';
   if(draw)tag='<span class="chip o">Draw needed</span>';
-  return '<div class="li"><button class="grow" style="text-align:left" data-act="'+(act||'pickfx')+'" data-id="'+f.id+'"><div class="name">'+(f.status==='vacant'?'Vacant date':esc(fxTitle(f)))+'</div><div class="small muted">'+esc(fdate(f.date)+' · '+fxComp(f)+venTxt(f))+'</div></button>'+tag+'</div>';}
+  return '<div class="li"><button class="grow" style="text-align:left" data-act="'+(act||'pickfx')+'" data-id="'+f.id+'"><div class="name">'+(f.status==='vacant'?'Lions vs Vacant Date':f.status==='bye'?'Bye, no match':f.status==='knockedout'?'Knocked out, no match':esc(fxTitle(f)))+'</div><div class="small muted">'+esc(fdate(f.date)+' · '+fxComp(f)+venTxt(f))+'</div></button>'+tag+'</div>';}
 
 var TOP_MIN=3;
 function vHome(){var f=nextFx(),h=clashAlert()+feedAlerts(),rq=requestCount(),at=allTimePins(),tp=at.pins;if(rq)h='<div class="feedalert"><div><b>'+esc(requestTitle().t)+'</b><div class="small">'+(requestTitle().sub?esc(requestTitle().sub)+' \u00b7 ':'')+'Approve or decline in Squad</div></div><button class="btn gold sm" data-tab="squad">View</button></div>'+h;
@@ -679,7 +683,7 @@ function vHome(){var f=nextFx(),h=clashAlert()+feedAlerts(),rq=requestCount(),at
   h+='<div class="sec">Next match</div>';
   if(f){var m=S.matches[f.id],sel=selFor(f.id),ins=Object.keys(sel.avail).filter(function(k){return sel.avail[k]==='in';}).length,picked=sel.lineup.filter(Boolean).length;
     h+='<div class="card now"><div class="small muted">'+esc(fxComp(f))+'</div><div class="who">'+esc(fxTitle(f))+'</div><div class="small muted">'+esc(fdate(f.date,true)+' · '+(f.home?'Home, Lions throw first':'Away, Lions chase')+venTxt(f))+'</div>'+
-      '<div class="chips"><span class="chip">'+ins+' available</span><span class="chip">'+picked+'/12 picked</span>'+(m?'<span class="chip o">Scoring started</span>':'')+'</div>'+
+      '<div class="chips"><span class="chip">'+ins+' available</span><span class="chip">'+picked+'/12 picked</span>'+(hasHands(m)?'<span class="chip o">Scoring started</span>':'')+'</div>'+
       '<div class="btns"><button class="btn ghost" data-tab="team" data-fx="'+f.id+'">'+(canEdit()?'Availability &amp; team':'Team')+'</button><button class="btn gold" data-tab="score" data-fx="'+f.id+'">Score</button></div>'+
       (isAdmin()?'<button class="btn ghost" data-act="editfx" data-id="'+f.id+'">Edit fixture</button>':'')+'</div>';}
   else h+='<div class="card muted">No more fixtures scheduled.</div>';
@@ -745,9 +749,10 @@ function setTable(m,s,o){o=o||{};var live=!!o.live;
         if(sf&&h===4){var so=soFar(m,t,p);rows+='<td class="sf">'+(so==null?'':so)+'</td>';}}
       rows+='<td class="t">'+pTot(m,t,p)+'</td>'+(!live&&k===0?'<td class="setc'+(setWonOrTied(m,t,s)?'':' out')+'" rowspan="'+(per+2)+'">'+setTot(m,t,s)+(setPts(m,t,s)?'<small>+'+setPts(m,t,s)+' pts</small>':'')+'</td>':'')+'</tr>';}
     var dr='<tr class="dn"><td class="lbl">Down total</td>',ur='<tr class="up"><td class="lbl">Lead</td>';
-    for(var h2=0;h2<r.hands;h2++){var dv=downVal(m,t,s,h2),uv=upVal(m,t,s,h2);dr+='<td class="hc">'+(dv==null?'':dv)+'</td>';ur+='<td class="hc '+(uv&&uv!=='/'?'upv':'sl')+'">'+(uv==null?'':uv)+'</td>';
+    for(var h2=0;h2<r.hands;h2++){var dv=downVal(m,t,s,h2),uv=upVal(m,t,s,h2);dr+='<td class="hc">'+(dv==null?'':dv)+'</td>';ur+='<td class="hc '+(uv&&uv!=='/'?'upv':'sl')+'">'+(uv==null?'':uv==='/'?uv:leadHTML(uv))+'</td>';
       if(sf&&h2===4){dr+='<td class="sf"></td>';ur+='<td class="sf"></td>';}}
-    rows+=dr+(live?'<td class="t st">'+setTot(m,t,s)+'</td>':'<td></td>')+'</tr>'+ur+'<td></td></tr>';});
+    var la=setTot(m,t,s),lb=setTot(m,t==='L'?'O':'L',s),any=['L','O'].some(function(tt){for(var k2=0;k2<per;k2++)if(m[tt][s*per+k2].some(Boolean))return true;return false;});
+    rows+=dr+(live?'<td class="t st">'+setTot(m,t,s)+'</td>':'<td></td>')+'</tr>'+ur+'<td class="t lt '+(any&&la>lb?'upv':'sl')+'">'+(!any?'':la>lb?leadHTML(la-lb):'/')+'</td></tr>';});
   var a=setTot(m,'L',s),b=setTot(m,'O',s),st=done?(a>b?'Lions win':b>a?esc(oppTeam(m))+' win':'Tied'):'In play';
   var hd='';for(var hh=1;hh<=r.hands;hh++){hd+='<th class="hc">'+hh+'</th>';if(sf&&hh===5)hd+='<th class="x">So<br>far</th>';}
   return '<div class="card'+(live?' liveset':'')+'"><div class="between" style="margin-bottom:8px"><h2 style="margin:0">Set '+(s+1)+(s===r.sets-1?' · Anchor':'')+'</h2><span class="small muted">'+st+'</span></div><div class="tscroll"><table><thead><tr><th class="n">'+(live?'Player':esc(H==='L'?'Lions':oppTeam(m))+' first')+'</th>'+hd+'<th class="tt">Tot</th>'+(live?'':'<th class="sh">Set</th>')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'+
@@ -762,7 +767,7 @@ function boardHTML(m){var R=result(m),pins=m.rules.result==='pins';
    bar+'</div></div>';}
 function vScore(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';
   var m=S.matches[f.id];
-  if(!m&&!canEdit())return '<div class="card"><h2>Not started yet</h2><div class="small muted">The scores appear here live, hand by hand, once the scorer starts.</div></div>';
+  if((!m||!hasHands(m))&&!canEdit())return '<div class="card"><h2>Not started yet</h2><div class="small muted">The scores appear here live, hand by hand, once the scorer starts.</div></div>';
   if(!m){var sel=selFor(f.id),n=sel.lineup.filter(Boolean).length,r=rulesFor(f);
     return '<div class="card"><h2>Ready to score?</h2><div class="small muted">'+esc(fxComp(f))+' · '+esc(r.label)+' rules: '+(r.result==='sets'?r.setWin+' per set, '+r.matchWin+' for the match':'total pins decide')+'. Spare keypad '+r.spareMin+'–'+r.spareMax+'.</div>'+
       (n<12?'<div class="warn">Only '+n+' of 12 Lions slots are filled. Empty slots can be filled during the match.</div>':'')+
@@ -905,9 +910,13 @@ function vFixtures(){var q=S.ui.fxf||{c:'all',s:'up'},used={},sid=viewSeason();i
   var chip=function(k,v,l){return '<button class="'+(q[k]===v?'on':'')+'" data-act="fxf" data-fk="'+k+'" data-fv="'+esc(v)+'">'+esc(l)+'</button>';};
   var h='<div class="card fxfc">'+seasonChips()+'<div class="reqs fxf">'+chip('c','all','All')+S.comps.filter(function(c){return !c.archived&&used[c.id];}).map(function(c){return chip('c',c.id,SHORT[c.id]||c.name);}).join('')+'</div>'+
     '<div class="reqs fxf">'+chip('s','up','Upcoming')+chip('s','played','Played')+chip('s','all','All')+'</div></div>';
-  var groups={},list=fxFilter();if(!list.length)h+='<div class="card muted">No fixtures match.</div>';
-  list.forEach(function(f){var k=f.date.slice(0,7);(groups[k]=groups[k]||[]).push(f);});
-  Object.keys(groups).forEach(function(k){var d=new Date(k+'-15T12:00:00');h+='<div class="sec">'+MON[d.getMonth()]+' '+d.getFullYear()+'</div><div class="card list">'+groups[k].map(function(f){return fxRow(f,'editfx');}).join('')+'</div>';});
+  var groups={},list=fxFilter(),rk=function(f){return ['bye','knockedout','vacant'].indexOf(f.status)>-1?1:0;},items=list.map(function(f){return {d:f.date,w:friOf(f.date),r:rk(f),f:f};});
+  if(q.c==='all'&&q.s!=='played'){var sf=seasonFixtures(sid).map(function(f){return f.date;}).sort(),has={};items.forEach(function(x){has[x.w]=1;});
+    if(sf.length){var w=friOf(sf[0]),last=friOf(sf[sf.length-1]),t0=friOf(today());if(q.s==='up'&&w<t0)w=t0;for(;w<=last;w=addDays(w,7))if(!has[w])items.push({d:w,w:w,r:2,gap:true});}}
+  items.sort(function(a,b){return a.w<b.w?-1:a.w>b.w?1:(a.r-b.r)||(a.d<b.d?-1:a.d>b.d?1:0);});
+  if(!items.length)h+='<div class="card muted">No fixtures match.</div>';
+  items.forEach(function(x){var k=x.d.slice(0,7);(groups[k]=groups[k]||[]).push(x);});
+  Object.keys(groups).sort().forEach(function(k){var d=new Date(k+'-15T12:00:00');h+='<div class="sec">'+MON[d.getMonth()]+' '+d.getFullYear()+'</div><div class="card list">'+groups[k].map(function(x){return x.gap?'<div class="li nomatch"><div class="grow"><div class="name">No match</div><div class="small muted">'+esc(fdate(x.w))+'</div></div></div>':fxRow(x.f,'editfx');}).join('')+'</div>';});
   if(isAdmin()&&sid===curSeason())h+='<div class="smbtns"><button class="btn ghost sm" data-act="addfx">Add fixture</button><button class="btn ghost sm" data-act="comps">Competition setup</button></div>';
   return h;}
 function pastFixtures(sid){var sh=sheetData(sid),sm=seasonSummary(sid);
