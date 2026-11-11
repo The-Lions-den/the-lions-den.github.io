@@ -64,6 +64,20 @@ input,select,textarea{font:inherit}
 .tagline{margin:4px 0 10px;padding:12px 14px;border-radius:14px;background:linear-gradient(90deg,rgba(246,182,48,.18),rgba(246,182,48,.04));color:var(--gold);font:600 18px Oswald,sans-serif;letter-spacing:.3px;text-align:center}.tagline b{font-size:22px}
 button.tagline{display:block;width:100%}
 /* tables that cope with large phone text: scroll sideways, name column stays put */
+.tscroll td.lbl{white-space:nowrap}
+.tscroll td.hc,.tscroll th.hc{min-width:2em;width:2em;box-sizing:border-box}
+.liveset .tscroll th.n,.liveset .tscroll td.n{max-width:6em;overflow:hidden}
+.liveset .tscroll td.n .nm{max-width:6em;overflow:hidden;text-overflow:ellipsis}
+.tscroll td.hc .c{min-width:100%}
+td.t.st{font-weight:700;color:var(--gold);font-size:15px}
+tr.tbar td{padding:0;border-top:0;background:none}
+tr.tbar.sep td{padding-top:10px}
+tr.tbar .tb{position:sticky;left:0;display:flex;justify-content:space-between;align-items:center;gap:10px;box-sizing:border-box;width:min(100%,calc(100vw - 48px));padding:6px 10px;margin:2px 0 4px;border-radius:8px;background:var(--row);border:1px solid var(--line)}
+tr.tbar .tbn{font-weight:700;font-size:15px}
+tr.tbar .tbv{font-family:Oswald,sans-serif;font-size:22px;font-weight:700}
+tr.tbar .tbv small{font-family:inherit;font-size:13px;font-weight:700;margin-left:8px;opacity:.9}
+tr.tbar.win .tb{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+td.ud,th.ud{padding-left:1px!important;padding-right:4px!important;text-align:left!important;font-size:12px;white-space:nowrap;min-width:3.2em}
 .plink{background:none;border:0;color:inherit;font:inherit;text-align:left;padding:0;min-height:0;text-decoration:underline;text-decoration-color:rgba(246,182,48,.5);text-underline-offset:3px}
 .seasons{margin-bottom:6px}
 #printv{display:none}
@@ -99,7 +113,7 @@ table.ps tr.ft td.b:last-child{font-size:8pt}
 .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px;background:linear-gradient(to right,var(--panel) 30%,rgba(0,0,0,0)) left/40px 100% no-repeat local,linear-gradient(to left,var(--panel) 30%,rgba(0,0,0,0)) right/40px 100% no-repeat local,radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.45),rgba(0,0,0,0)) right/12px 100% no-repeat scroll}
 .tscroll table{table-layout:auto;width:100%;min-width:max-content}
 .tscroll th,.tscroll td{white-space:nowrap;padding-left:5px;padding-right:5px}
-.tscroll th.n,.tscroll td.n{position:sticky;left:0;z-index:1;background:var(--panel);width:auto;max-width:none;overflow:visible}
+.tscroll th.n,.tscroll td.n,.tscroll td.lbl{position:sticky;left:0;z-index:1;background:var(--panel);width:auto;max-width:none;overflow:visible}
 .tscroll table.lt td.n{background:#152C57}.tscroll table.lt tr.us td.n{background:var(--gold)}
 table.stat td.n{font-weight:600}
 .tscroll table.lt{table-layout:auto}.tscroll table.lt .n{overflow:visible;text-overflow:clip}.t5r .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.aico{display:inline-block;width:26px}.chg b{color:var(--gold);font-size:22px}
@@ -557,18 +571,19 @@ function closePrint(){document.body.classList.remove('printing');var el=document
 
 /* ---- comparisons across seasons (league matches only, so every season compares like for like) ---- */
 function allSheets(){return seasonList().map(function(id){return SV(id);}).filter(function(sh){return sh.matches.length;});}
-function upDown(now,was,dp){if(now==null||was==null)return '';var d=now-was;if(Math.abs(d)<(dp?0.005:0.5))return ' <span class="muted small">=</span>';
-  return ' <span class="small" style="color:var(--'+(d>0?'green':'red')+')">'+(d>0?'▲':'▼')+Math.abs(d).toFixed(dp||0)+'</span>';}
+var UD0='</td><td class="ud">'; // v3.4: the ▲▼ indicator closes the number's cell and fills its own column
+function upDown(now,was,dp){if(now==null||was==null)return UD0;var d=now-was;if(Math.abs(d)<(dp?0.005:0.5))return UD0+'<span class="muted">=</span>';
+  return UD0+'<span style="color:var(--'+(d>0?'green':'red')+')">'+(d>0?'▲':'▼')+Math.abs(d).toFixed(dp||0)+'</span>';}
 function playerHistory(pid){var rows=allSheets().map(function(sh){var r=sh.players.filter(function(x){return x.pid===pid;})[0];return r?{season:sh.season,r:r}:null;}).filter(Boolean);
   var cu=cupsOn(),h='<h4>'+esc(fullName(player(pid)||{name:pid}))+'</h4><div class="small muted">Season by season \u00b7 '+(cu?'league and cup':'league matches only')+'</div>';
   if(!rows.length)return h+'<div class="card muted" style="margin-top:8px">No matches recorded yet.</div><button class="btn ghost" data-act="close">Close</button>';
-  h+='<div class="tscroll" style="margin-top:8px"><table class="avg"><thead><tr><th class="n">Season</th><th>Gm</th><th>Pins</th><th>Avg</th><th>Home</th><th>Away</th>'+(cu?'<th>Cup</th>':'')+'<th>Spr</th><th>50+</th><th>Best</th></tr></thead><tbody>';
+  h+='<div class="tscroll" style="margin-top:8px"><table class="avg"><thead><tr><th class="n">Season</th><th>Gm</th><th class="ud"></th><th>Pins</th><th>Avg</th><th class="ud"></th><th>Home</th><th>Away</th>'+(cu?'<th>Cup</th>':'')+'<th>Spr</th><th>50+</th><th class="ud"></th><th>Best</th></tr></thead><tbody>';
   rows.forEach(function(x,i){var o=rows[i+1]&&rows[i+1].r,r=x.r;h+='<tr><td class="n">'+esc(seasonLabel(x.season))+'</td><td>'+r.games+upDown(r.games,o&&o.games)+'</td><td>'+r.pins+'</td><td class="t">'+f2(r.avg)+upDown(r.avg,o&&o.avg,2)+'</td><td>'+haTxt(r.hg,r.hp)+'</td><td>'+haTxt(r.ag,r.ap)+'</td>'+(cu?'<td>'+haTxt(r.cg,r.cp)+'</td>':'')+'<td>'+(r.spares==null?'\u2013':r.spares)+'</td><td>'+r.f50+upDown(r.f50,o&&o.f50)+'</td><td>'+r.high+'</td></tr>';});
   return h+'</tbody></table></div><div class="note">\u25B2\u25BC = change from the season before. Home / Away = league matches; Cup = cup matches. 2025/26 has league matches only.</div><button class="btn ghost" data-act="close">Close</button>';}
 function teamHistoryHTML(){var L=allSheets(),cu=cupsOn();if(!L.length)return '';
-  var h='<div class="card"><h2>Season by season</h2><div class="tscroll"><table class="avg"><thead><tr><th class="n">Season</th><th>Pos</th><th>P</th><th>W</th><th>D</th><th>L</th><th>Pts</th>'+(cu?'<th>Cup W\u2013L</th>':'')+'<th>Pins</th><th>Avg H</th><th>Avg A</th><th>Spr</th></tr></thead><tbody>';
+  var h='<div class="card"><h2>Season by season</h2><div class="tscroll"><table class="avg"><thead><tr><th class="n">Season</th><th>Pos</th><th>P</th><th>W</th><th>D</th><th>L</th><th>Pts</th>'+(cu?'<th>Cup W\u2013L</th>':'')+'<th>Pins</th><th>Avg H</th><th class="ud"></th><th>Avg A</th><th class="ud"></th><th>Spr</th></tr></thead><tbody>';
   L.forEach(function(sh,i){var t=sh.totals,o=L[i+1]&&L[i+1].totals,sm=seasonSummary(sh.season),pos=sh.season===curSeason()?lionsPos():sm&&sm.pos;
-    h+='<tr><td class="n">'+esc(seasonLabel(sh.season))+(sh.season===curSeason()&&closedSeasons().indexOf(sh.season)<0?' <span class="small muted">so far</span>':'')+'</td><td>'+(pos&&pos.pos?ordN(pos.pos):'–')+'</td><td>'+t.played+'</td><td>'+(t.noRes?'\u2013':t.w)+'</td><td>'+(t.noRes?'\u2013':t.d)+'</td><td>'+(t.noRes?'\u2013':t.l)+'</td><td class="t">'+(t.points==null?'\u2013':t.points)+'</td>'+(cu?'<td>'+(t.cups?t.cw+'\u2013'+t.cl:'\u2013')+'</td>':'')+'<td>'+n0(t.for)+'</td><td>'+(t.avgHome==null?'–':t.avgHome.toFixed(1)+upDown(t.avgHome,o&&o.avgHome,1))+'</td><td>'+(t.avgAway==null?'–':t.avgAway.toFixed(1)+upDown(t.avgAway,o&&o.avgAway,1))+'</td><td>'+(t.spares==null?'–':t.spares)+'</td></tr>';});
+    h+='<tr><td class="n">'+esc(seasonLabel(sh.season))+(sh.season===curSeason()&&closedSeasons().indexOf(sh.season)<0?' <span class="small muted">so far</span>':'')+'</td><td>'+(pos&&pos.pos?ordN(pos.pos):'–')+'</td><td>'+t.played+'</td><td>'+(t.noRes?'\u2013':t.w)+'</td><td>'+(t.noRes?'\u2013':t.d)+'</td><td>'+(t.noRes?'\u2013':t.l)+'</td><td class="t">'+(t.points==null?'\u2013':t.points)+'</td>'+(cu?'<td>'+(t.cups?t.cw+'\u2013'+t.cl:'\u2013')+'</td>':'')+'<td>'+n0(t.for)+'</td><td>'+(t.avgHome==null?'–'+UD0:t.avgHome.toFixed(1)+upDown(t.avgHome,o&&o.avgHome,1))+'</td><td>'+(t.avgAway==null?'–'+UD0:t.avgAway.toFixed(1)+upDown(t.avgAway,o&&o.avgAway,1))+'</td><td>'+(t.spares==null?'–':t.spares)+'</td></tr>';});
   return h+'</tbody></table></div><div class="note">P W D L Pts = league. Pins = '+(cu?'league and cup matches':'league matches')+'. Pos = league position (this season: the latest table; earlier seasons: the final table when the season was closed in the app). Avg H / Avg A = average team score at home / away (league), with \u25B2\u25BC against the season before.'+(cu?' 2025/26 has league matches only.':'')+'</div></div>';}
 function recordsHTML(){var L=allSheets();if(!L.length)return '';var best=function(list,key){var mx=-1e9,w=[];list.forEach(function(x){if(x[key]>mx){mx=x[key];w=[x];}else if(x[key]===mx)w.push(x);});return {v:mx,w:w};};
   var ind=[],f50=[],team=[],win=[];L.forEach(function(sh){sh.players.forEach(function(r){r.scores.forEach(function(v,i){if(v!=null)ind.push({v:v,t:r.name+' v '+sh.matches[i].opp+' · '+seasonLabel(sh.season)});});if(r.f50)f50.push({v:r.f50,t:r.name+' · '+seasonLabel(sh.season)});});
@@ -580,10 +595,10 @@ function lastYearHTML(){var id=curSeason(),now=SV(id),was=SV(prevSeasonId(id));v
     var pp={};sh.players.forEach(function(r){var g=0,s=0;idx.forEach(function(i){if(r.scores[i]!=null){g++;s+=r.scores[i];}});if(g)pp[r.pid]={g:g,avg:s/g};});
     return {n:pl.length,pts:pl.some(function(x){return !x.cup&&x.pts==null;})?null:pts,pins:pins,avg:pl.length?pins/pl.length:0,w:pl.filter(function(x){return x.res==='W';}).length,pp:pp};};
   var a=cut(now),b=cut(was);var h='<div class="card"><h2>This time last year</h2><div class="small muted">After '+n+(cupsOn()?' league and cup':' league')+' match'+(n>1?'es':'')+': '+esc(seasonLabel(id))+' v '+esc(seasonLabel(was.season))+'</div>'+
-    '<div class="tscroll"><table class="avg stat" style="margin-top:6px"><thead><tr><th class="n"></th><th>'+esc(seasonLabel(id))+'</th><th>'+esc(seasonLabel(was.season))+'</th></tr></thead><tbody>'+
-    '<tr><td class="n">Points</td><td class="t">'+(a.pts==null?'\u2013':a.pts+upDown(a.pts,b.pts))+'</td><td>'+(b.pts==null?'\u2013':b.pts)+'</td></tr><tr><td class="n">Wins</td><td class="t">'+a.w+'</td><td>'+(was.totals.noRes?'\u2013':b.w)+'</td></tr><tr><td class="n">Average team score</td><td class="t">'+a.avg.toFixed(1)+upDown(a.avg,b.avg,1)+'</td><td>'+b.avg.toFixed(1)+'</td></tr><tr><td class="n">Total pins</td><td class="t">'+n0(a.pins)+'</td><td>'+n0(b.pins)+'</td></tr></tbody></table></div>';
+    '<div class="tscroll"><table class="avg stat" style="margin-top:6px"><thead><tr><th class="n"></th><th>'+esc(seasonLabel(id))+'</th><th class="ud"></th><th>'+esc(seasonLabel(was.season))+'</th></tr></thead><tbody>'+
+    '<tr><td class="n">Points</td><td class="t">'+(a.pts==null?'\u2013'+UD0:a.pts+upDown(a.pts,b.pts))+'</td><td>'+(b.pts==null?'\u2013':b.pts)+'</td></tr><tr><td class="n">Wins</td><td class="t">'+a.w+UD0+'</td><td>'+(was.totals.noRes?'\u2013':b.w)+'</td></tr><tr><td class="n">Average team score</td><td class="t">'+a.avg.toFixed(1)+upDown(a.avg,b.avg,1)+'</td><td>'+b.avg.toFixed(1)+'</td></tr><tr><td class="n">Total pins</td><td class="t">'+n0(a.pins)+UD0+'</td><td>'+n0(b.pins)+'</td></tr></tbody></table></div>';
   var both=Object.keys(a.pp).filter(function(k){return b.pp[k];}).sort(function(x,y){return a.pp[y].avg-a.pp[x].avg;});
-  if(both.length)h+='<div class="tscroll"><table class="avg" style="margin-top:10px"><thead><tr><th class="n">Player</th><th>Avg now</th><th>Gm</th><th>Last year</th><th>Gm</th></tr></thead><tbody>'+both.map(function(k){return '<tr><td class="n">'+esc(pnm(k))+'</td><td class="t">'+f2(a.pp[k].avg)+upDown(a.pp[k].avg,b.pp[k].avg,2)+'</td><td>'+a.pp[k].g+'</td><td>'+f2(b.pp[k].avg)+'</td><td>'+b.pp[k].g+'</td></tr>';}).join('')+'</tbody></table></div>';
+  if(both.length)h+='<div class="tscroll"><table class="avg" style="margin-top:10px"><thead><tr><th class="n">Player</th><th>Avg now</th><th class="ud"></th><th>Gm</th><th>Last year</th><th>Gm</th></tr></thead><tbody>'+both.map(function(k){return '<tr><td class="n">'+esc(pnm(k))+'</td><td class="t">'+f2(a.pp[k].avg)+upDown(a.pp[k].avg,b.pp[k].avg,2)+'</td><td>'+a.pp[k].g+'</td><td>'+f2(b.pp[k].avg)+'</td><td>'+b.pp[k].g+'</td></tr>';}).join('')+'</tbody></table></div>';
   return h+'<div class="note">Same number of matches played in each season ('+(cupsOn()?'league and cup':'league only')+'); points are league points; players who played in both.</div></div>';}
 
 /* ---- close the season (admins, once a year) ---- */
@@ -710,22 +725,25 @@ function vTeamView(f){var sel=selFor(f.id),m=S.matches[f.id],line=m?m.lineup:sel
   var res=(sel.reserves||[]).filter(Boolean);
   if(res.length)h+='<div class="sec" style="margin-top:14px">Reserves</div><div class="list">'+res.map(function(id){return '<div><span class="grow name">'+esc(outName(id,'teamsheet'))+'</span></div>';}).join('')+'</div>';
   return h+'</div>';}
-function setTable(m,s){
-  var tg=target(m),H=homeT(m),A=awayT(m),r=m.rules,rows='',per=r.per,sf=r.hands>5;
-  var blanks=function(){var x='';for(var h=0;h<r.hands;h++){x+='<td></td>';if(sf&&h===4)x+='<td class="sf"></td>';}return x;};
+function setTable(m,s,o){o=o||{};var live=!!o.live;
+  var tg=target(m),H=homeT(m),A=awayT(m),r=m.rules,rows='',per=r.per,sf=r.hands>5,done=setDone(m,s),pinsOnly=r.result==='pins';
+  var nCol=1+r.hands+(sf?1:0)+1+(live?0:1);
   [H,A].forEach(function(t,ti){
-    for(var k=0;k<per;k++){var p=s*per+k,lk=t==='L'&&slotLocked(m,p);
-      rows+='<tr'+(ti===1&&k===0?' class="sep"':'')+'><td class="n"><button class="nm'+(t==='L'?' l':'')+'" data-name="'+t+','+p+'">'+esc(slotName(m,t,p,'live'))+'</button></td>';
-      for(var h=0;h<r.hands;h++){var isSel=tg&&tg.t===t&&tg.p===p&&tg.h===h;rows+='<td><button class="c'+(isSel?' sel':'')+'" data-cell="'+t+','+p+','+h+'" aria-label="'+esc(slotName(m,t,p))+' hand '+(h+1)+'">'+cellHTML(m[t][p][h])+'</button></td>';
+    if(live){var won=done&&setWonOrTied(m,t,s),sp=setPts(m,t,s),tie=done&&setTot(m,'L',s)===setTot(m,'O',s);
+      rows+='<tr class="tbar'+(won?' win':'')+(ti===1?' sep':'')+'"><td colspan="'+nCol+'"><div class="tb"><span class="tbn">'+(t==='L'?'Lions':esc(oppTeam(m)))+'</span><span class="tbv">'+setTot(m,t,s)+
+        (done&&!pinsOnly?'<small>'+(sp?'+'+sp+' pt'+(sp===1?'':'s'):'0 pts')+'</small>':done&&won&&!tie?'<small>won</small>':'')+'</span></div></td></tr>';}
+    for(var k=0;k<per;k++){var p=s*per+k;
+      rows+='<tr'+(!live&&ti===1&&k===0?' class="sep"':'')+'><td class="n"><button class="nm'+(t==='L'?' l':'')+'" data-name="'+t+','+p+'">'+esc(slotName(m,t,p,'live'))+'</button></td>';
+      for(var h=0;h<r.hands;h++){var isSel=tg&&tg.t===t&&tg.p===p&&tg.h===h;rows+='<td class="hc"><button class="c'+(isSel?' sel':'')+'" data-cell="'+t+','+p+','+h+'" aria-label="'+esc(slotName(m,t,p))+' hand '+(h+1)+'">'+cellHTML(m[t][p][h])+'</button></td>';
         if(sf&&h===4){var so=soFar(m,t,p);rows+='<td class="sf">'+(so==null?'':so)+'</td>';}}
-      rows+='<td class="t">'+pTot(m,t,p)+'</td>'+(k===0?'<td class="setc'+(setWonOrTied(m,t,s)?'':' out')+'" rowspan="'+(per+2)+'">'+setTot(m,t,s)+(setPts(m,t,s)?'<small>+'+setPts(m,t,s)+' pts</small>':'')+'</td>':'')+'</tr>';}
+      rows+='<td class="t">'+pTot(m,t,p)+'</td>'+(!live&&k===0?'<td class="setc'+(setWonOrTied(m,t,s)?'':' out')+'" rowspan="'+(per+2)+'">'+setTot(m,t,s)+(setPts(m,t,s)?'<small>+'+setPts(m,t,s)+' pts</small>':'')+'</td>':'')+'</tr>';}
     var dr='<tr class="dn"><td class="lbl">Down total</td>',ur='<tr class="up"><td class="lbl">Lead</td>';
-    for(var h2=0;h2<r.hands;h2++){var dv=downVal(m,t,s,h2),uv=upVal(m,t,s,h2);dr+='<td>'+(dv==null?'':dv)+'</td>';ur+='<td class="'+(uv&&uv!=='/'?'upv':'sl')+'">'+(uv==null?'':uv)+'</td>';
+    for(var h2=0;h2<r.hands;h2++){var dv=downVal(m,t,s,h2),uv=upVal(m,t,s,h2);dr+='<td class="hc">'+(dv==null?'':dv)+'</td>';ur+='<td class="hc '+(uv&&uv!=='/'?'upv':'sl')+'">'+(uv==null?'':uv)+'</td>';
       if(sf&&h2===4){dr+='<td class="sf"></td>';ur+='<td class="sf"></td>';}}
-    rows+=dr+'<td></td></tr>'+ur+'<td></td></tr>';});
-  var a=setTot(m,'L',s),b=setTot(m,'O',s),st=setDone(m,s)?(a>b?'Lions win':b>a?esc(oppTeam(m))+' win':'Tied'):'In play';
-  var hd='';for(var hh=1;hh<=r.hands;hh++){hd+='<th>'+hh+'</th>';if(sf&&hh===5)hd+='<th class="x">So<br>far</th>';}
-  return '<div class="card"><div class="between" style="margin-bottom:8px"><h2 style="margin:0">Set '+(s+1)+(s===r.sets-1?' · Anchor':'')+'</h2><span class="small muted">'+st+'</span></div><div class="tscroll"><table><thead><tr><th class="n">'+esc(H==='L'?'Lions':oppTeam(m))+' first</th>'+hd+'<th class="tt">Tot</th><th class="sh">Set</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    rows+=dr+(live?'<td class="t st">'+setTot(m,t,s)+'</td>':'<td></td>')+'</tr>'+ur+'<td></td></tr>';});
+  var a=setTot(m,'L',s),b=setTot(m,'O',s),st=done?(a>b?'Lions win':b>a?esc(oppTeam(m))+' win':'Tied'):'In play';
+  var hd='';for(var hh=1;hh<=r.hands;hh++){hd+='<th class="hc">'+hh+'</th>';if(sf&&hh===5)hd+='<th class="x">So<br>far</th>';}
+  return '<div class="card'+(live?' liveset':'')+'"><div class="between" style="margin-bottom:8px"><h2 style="margin:0">Set '+(s+1)+(s===r.sets-1?' · Anchor':'')+'</h2><span class="small muted">'+st+'</span></div><div class="tscroll"><table><thead><tr><th class="n">'+(live?'Player':esc(H==='L'?'Lions':oppTeam(m))+' first')+'</th>'+hd+'<th class="tt">Tot</th>'+(live?'':'<th class="sh">Set</th>')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'+
    '<div style="padding-top:10px;text-align:center"><button class="btn ghost sm" data-act="oppnames" data-set="'+s+'">Edit opp names</button></div></div>';
 }
 function boardHTML(m){var R=result(m),pins=m.rules.result==='pins';
@@ -745,7 +763,8 @@ function vScore(){var f=curFx();if(!f)return '<div class="card">Choose a fixture
   var tg=target(m),R=result(m),h=boardHTML(m),r=m.rules;
   if(!tg)return h+finishedHTML(f,m);
   var s0=Math.floor(tg.p/r.per),cur=m[tg.t][tg.p][tg.h],locked=tg.t==='L';
-  if(!canScore(m)){h+=watchCard(m,tg,s0)+setTable(m,s0)+'<button class="btn ghost" data-act="allsets">Show all sets</button>';if(T.allsets){for(var s3=0;s3<r.sets;s3++)if(s3!==s0)h+=setTable(m,s3);}return h;}
+  var LV={live:true},asb='<button class="btn ghost" data-act="allsets">'+(T.allsets?'Hide other sets':'Show all sets')+'</button>';
+  if(!canScore(m)){h+=watchCard(m,tg,s0)+setTable(m,s0,LV)+asb;if(T.allsets){for(var s3=0;s3<r.sets;s3++)if(s3!==s0)h+=setTable(m,s3,LV);}return h;}
   h+='<div class="card now"><div class="small muted">Set <b class="gold">'+(s0+1)+'</b> · Hand <b class="gold">'+(tg.h+1)+'</b> · '+(tg.t==='L'?'Lions':esc(oppTeam(m)))+' #'+(tg.p+1)+(tg.p===mP(m)-1?' · <b class="gold">Anchor</b>':'')+'</div><div class="who">'+esc(slotName(m,tg.t,tg.p,'live'))+'</div>'+
     (T.sel?'<div class="chg">Changing hand '+(tg.h+1)+': <b>'+(cur?esc(cellText(cur)):'–')+'</b> → ?</div><div class="small muted"><button class="gold" style="text-decoration:underline;min-height:40px" data-act="cancelsel">Cancel, back to next turn</button></div>':'')+
     '<div class="hint">'+esc(chaseHint(m,tg))+'</div>';
@@ -753,9 +772,9 @@ function vScore(){var f=curFx();if(!f)return '<div class="card">Choose a fixture
     for(var i=r.spareMin;i<=r.spareMax;i++)h+='<button class="k sp'+(T.sel&&cur&&cur.sp&&cur.v===i?' cur':'')+'" data-sp="'+i+'">'+i+'</button>';h+='</div>';}
   else{var cu=T.sel&&cur?cur:null,plain=cu&&!cu.sp&&!cu.vc;h+='<div class="pad">';for(var j=0;j<=9;j++)h+='<button class="k'+(plain&&cu.v===j?' cur':'')+'" data-v="'+j+'">'+j+'</button>';
     h+='<button class="k fn gold'+(cu&&cu.sp?' cur':'')+'" data-act="spare">Spare</button><button class="k fn'+(cu&&cu.vc?' cur':'')+'" data-act="vc">V/C</button><button class="k fn'+(plain&&cu.v>9?' cur':'')+'" data-act="other">Other</button><button class="k fn" data-act="undo">Undo</button><button class="k fn" data-act="skip">Next ›</button></div>';}
-  h+='</div>'+setTable(m,s0);
-  h+='<button class="btn ghost" data-act="allsets">Show all sets</button>';
-  if(T.allsets){for(var s2=0;s2<r.sets;s2++)if(s2!==s0)h+=setTable(m,s2);}
+  h+='</div>'+setTable(m,s0,LV);
+  h+=asb;
+  if(T.allsets){for(var s2=0;s2<r.sets;s2++)if(s2!==s0)h+=setTable(m,s2,LV);}
   return h;}
 
 function roTable(m,st){return setTable(m,st).replace(/ data-(cell|name)="[^"]*"/g,'').replace(/<div style="padding-top:10px;text-align:center"><button class="btn ghost sm" data-act="oppnames"[^>]*>[^<]*<\/button><\/div>/,'');}
@@ -799,6 +818,7 @@ var ABOUT={
   intro:'Our own Lions app: live scores, fixtures, the league table and everyone’s averages, all in one place. Add it to your phone like an app, or visit it as a website on any computer.',
   install:'On your phone, open the-lions-den.github.io and tap Share → Add to Home Screen (iPhone) or ⋮ → Add to Home screen (Android). No sign-in needed to view.',
   news:[ /* newest first: [version, date, role, text] */
+    ['v3.4','11 Nov 2026','scorer','Live scoring: bigger tap boxes, a header bar for each team with the set total, no Set column, and labels that stay put when the table scrolls.'],
     ['v3.3','10 Nov 2026','all','2024/25 season added, so Statistics now goes back to 2023/24. Home shows all the pins we\u2019ve hit since our first records (September 2023).'],
     ['v3.2','10 Nov 2026','all','2023/24 season added (league and cup). Statistics: a League + Cups / League only switch, and a Cup average column next to Home and Away.'],
     ['v3.2','10 Nov 2026','admin','Availability is now a simple In/Out switch for each player (everyone starts Out).'],

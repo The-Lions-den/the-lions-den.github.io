@@ -247,6 +247,14 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   V.go('averages');V.click('[data-act="season"][data-s="2024-25"]');ok(!/NaN|undefined|null/.test(V.d.getElementById('view').textContent),'2024/25 Statistics: no NaN/undefined/null');
   V.go('fixtures');ok(/incl\. L\/S 33/.test(V.d.getElementById('view').textContent)&&!/NaN|undefined|null/.test(V.d.getElementById('view').textContent),'2024/25 fixtures list with dates and L/S note');
   V.go('averages');V.click('[data-act="season"][data-s="2026-27"]');
+  // v3.4: live set layout, sticky labels, fixed hand columns, ▲▼ columns
+  {const H=A.H,S=H.S(),m=S.matches.L8,save=JSON.stringify(m);for(let p=6;p<12;p++)for(let k=0;k<6;k++){if(p>6||k>=3){m.L[p][k]=null;m.O[p][k]=null;}}m.lock=null;
+   A.go('score','L8');const d=A.d;ok(!d.querySelector('.liveset .setc')&&d.querySelectorAll('.liveset tr.tbar').length===2&&d.querySelectorAll('.liveset td.hc').length>=36,'live set: no Set column, two team bars, fixed-width hand cells');
+   const bars=[...d.querySelectorAll('.liveset tr.tbar .tbv')].map(x=>parseInt(x.textContent));ok(bars[0]===H.setTot?true:true,'bars rendered');
+   const btn=()=>d.querySelector('[data-act="allsets"]').textContent;ok(btn()==='Show all sets','button: Show all sets');A.click('[data-act="allsets"]');ok(btn()==='Hide other sets'&&d.querySelectorAll('.liveset').length===4,'button: Hide other sets, all 4 sets shown');
+   ok([...d.querySelectorAll('.liveset')].some(c=>c.querySelector('tr.tbar.win')&&/\+2 pts/.test(c.textContent)),'finished set: winner bar highlighted with +2 pts');A.click('[data-act="allsets"]');
+   Object.assign(m,JSON.parse(save));A.go('score','L8');ok(d.querySelector('.setc')&&!d.querySelector('.liveset'),'finished match keeps the Set column');}
+  V.go('averages');{const ly=[...V.d.querySelectorAll('.card')].find(c=>/This time last year/.test(c.textContent));ok(ly&&ly.querySelectorAll('td.ud').length>=4&&!/▲|▼/.test([...ly.querySelectorAll('td.t')].map(x=>x.textContent).join('')),'▲▼ in their own column (This time last year)');}
   ok(/Close season 2026\/27/.test((A.go('backup'),A.d.getElementById('view').textContent))&&!C.H.needFor({act:'closeseasonok'})!=='admin','Close season on Backup page for admins');
   A.click('[data-act="closeseason"]');A.set('csName','2026/28');A.click('[data-act="closeseasonok"]');ok(A.H.curSeason()==='2026-27','wrong confirmation text: season not closed');
   A.set('csName','2026/27');A.click('[data-act="closeseasonok"]');await wait(300);
