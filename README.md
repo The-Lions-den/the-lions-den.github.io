@@ -1,6 +1,6 @@
 # The Lions Den
 
-The Lions skittles team app (Golden Lion, Weston-super-Mare): https://the-lions-den.github.io
+The Lions skittles team app (Golden Lion, Weston-super-Mare): https://the-lions-den.com (old address https://the-lions-den.github.io forwards to it)
 
 ## What's here
 - `app/`: the app itself (one page that works offline). Published to GitHub Pages by the job below.

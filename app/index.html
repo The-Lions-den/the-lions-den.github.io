@@ -828,7 +828,7 @@ function vMore(){var r=myRole(),items=SY.session?[['account','Signed in',roleLab
 /* roles: 'all' = everyone, 'scorer' = scorers and admins, 'admin' = admins only */
 var ABOUT={
   intro:'Our own Lions app: live scores, fixtures, the league table and everyone’s averages, all in one place. Add it to your phone like an app, or visit it as a website on any computer.',
-  install:'On your phone, open the-lions-den.github.io and tap Share → Add to Home Screen (iPhone) or ⋮ → Add to Home screen (Android). No sign-in needed to view.',
+  install:'On your phone, open the-lions-den.com and tap Share → Add to Home Screen (iPhone) or ⋮ → Add to Home screen (Android). No sign-in needed to view.',
   news:[ /* newest first: [version, date, role, text] */
     ['v3.4','11 Nov 2026','scorer','Live scoring: bigger tap boxes, a header bar for each team with the set total, no Set column, and labels that stay put when the table scrolls.'],
     ['v3.3','10 Nov 2026','all','2024/25 season added, so Statistics now goes back to 2023/24. Home shows all the pins we\u2019ve hit since our first records (September 2023).'],
@@ -916,7 +916,7 @@ function vFixtures(){var q=S.ui.fxf||{c:'all',s:'up'},used={},sid=viewSeason();i
   items.sort(function(a,b){return a.w<b.w?-1:a.w>b.w?1:(a.r-b.r)||(a.d<b.d?-1:a.d>b.d?1:0);});
   if(!items.length)h+='<div class="card muted">No fixtures match.</div>';
   items.forEach(function(x){var k=x.d.slice(0,7);(groups[k]=groups[k]||[]).push(x);});
-  Object.keys(groups).sort().forEach(function(k){var d=new Date(k+'-15T12:00:00');h+='<div class="sec">'+MON[d.getMonth()]+' '+d.getFullYear()+'</div><div class="card list">'+groups[k].map(function(x){return x.gap?'<div class="li nomatch"><div class="grow"><div class="name">No match</div><div class="small muted">'+esc(fdate(x.w))+'</div></div></div>':fxRow(x.f,'editfx');}).join('')+'</div>';});
+  Object.keys(groups).sort().forEach(function(k){var d=new Date(k+'-15T12:00:00');h+='<div class="sec">'+MON[d.getMonth()]+' '+d.getFullYear()+'</div><div class="card list">'+groups[k].map(function(x){return x.gap?'<div class="li nomatch"><button class="grow" style="text-align:left;cursor:default" tabindex="-1"><div class="name">No match</div><div class="small muted">'+esc(fdate(x.w))+'</div></button></div>':fxRow(x.f,'editfx');}).join('')+'</div>';});
   if(isAdmin()&&sid===curSeason())h+='<div class="smbtns"><button class="btn ghost sm" data-act="addfx">Add fixture</button><button class="btn ghost sm" data-act="comps">Competition setup</button></div>';
   return h;}
 function pastFixtures(sid){var sh=sheetData(sid),sm=seasonSummary(sid);

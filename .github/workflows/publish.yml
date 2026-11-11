@@ -1,4 +1,4 @@
-# Publishes the Lions Den app to https://the-lions-den.github.io
+# Publishes the Lions Den app to https://the-lions-den.com (custom domain; the old the-lions-den.github.io address forwards to it)
 # Runs when a new version is pushed, and every 6 hours to refresh the league table, cup draws and fixtures check.
 name: Publish the Lions Den
 
@@ -38,7 +38,7 @@ jobs:
         run: |
           mkdir -p _site
           cp -r app/. _site/
-          curl -fsS https://the-lions-den.github.io/feed.json -o prev-feed.json || true
+          curl -fsSL https://the-lions-den.com/feed.json -o prev-feed.json || curl -fsSL https://the-lions-den.github.io/feed.json -o prev-feed.json || true
           python3 scripts/feed.py _site/feed.json prev-feed.json
 
       - name: Keep the shared data awake

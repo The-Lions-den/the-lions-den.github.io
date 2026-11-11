@@ -301,7 +301,7 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    V.go('score','L11');await wait(20);ok(!/Not started yet/.test(V.d.getElementById('view').textContent),'viewer sees the live match after one hand');
    A.go('fixtures');const v=A.d.getElementById('view'),nm=[...v.querySelectorAll('.nomatch')];ok(nm.length>3&&nm.every(x=>/^No match/.test(x.textContent)&&/Fri \d+ /.test(x.textContent)),'calendar: No match weeks with their Friday ('+nm.length+')');
    const tl=id=>(v.querySelector('[data-id="'+id+'"] .name')||{}).textContent;ok(tl('L4')==='Lions vs Vacant Date'&&tl('C1')==='Bye, no match'&&tl('C10')==='Knocked out, no match','titles: '+tl('L4')+' / '+tl('C1')+' / '+tl('C10'));
-   snap(A,'fx');
+   snap(A,'fx');ok(nm.every(x=>x.querySelector('button.grow .name')&&!x.querySelector('[data-act]')),'No match rows built like fixture rows (button.grow), not tappable');
    A.click('[data-act="fxf"][data-fk="s"][data-fv="played"]');ok(!A.has('#view .nomatch'),'Played: no No match rows');
    A.click('[data-act="fxf"][data-fk="s"][data-fv="up"]');ok(A.has('#view .nomatch'),'Upcoming: No match rows');
    A.click('[data-act="fxf"][data-fk="c"][data-fv="league"]');ok(!A.has('#view .nomatch'),'single competition: no No match rows');S.ui.fxf={c:'all',s:'up'};}
