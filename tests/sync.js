@@ -318,6 +318,28 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    L.go('score','L12');await wait(30);{const t=L.d.getElementById('view').textContent;ok(/Ready to score\?/.test(t)&&/Opened by you on another device, no scores yet/.test(t)&&L.has('[data-act="start"]'),'another device: Ready to score, opened by …');}
    L.click('[data-act="start"]');await wait(200);ok(L.has('.pad')&&JSON.stringify(L.H.S().matches.L12.lineup)===JSON.stringify(S.sel.L12.lineup),'Start scoring there: keypad with the new team');
    L.click('[data-v="7"]');await wait(300);A.go('team','L12');ok(/Scoring has started/.test(A.d.getElementById('view').textContent)&&!A.has('[data-act="suggest"]'),'after one hand the Team page locks again');}
+  // v3.9: tactics for Suggest team, player preferences, admin-only Suggest, early v late
+  {const S=A.H.S(),fid='L14',sel=S.sel[fid]||(S.sel[fid]={avail:{},req:{},lineup:Array(12).fill(null),reserves:[]});S.players.filter(p=>p.active).forEach(p=>sel.avail[p.id]='in');
+   const am=A.H.avgMap(),sc=id=>am[id]?am[id].avgHand:0,run=(tc)=>{sel.tactic=tc;sel.req={};const w=A.H.suggest(fid);return {L:sel.lineup.slice(),w};},setIds=(L,s)=>L.slice((s-1)*3,s*3),rank=L=>L.filter(Boolean).slice().sort((a,b)=>sc(b)-sc(a)),sum=(L,s)=>setIds(L,s).reduce((a,id)=>a+sc(id),0);
+   let r=run(undefined);const rk=rank(r.L);ok(A.H.tacticOf({}).t==='strong'&&setIds(r.L,4).every(id=>rk.slice(0,3).includes(id))&&/^Strong finish/.test(r.w[0]),'Strong finish (default): best 3 in set 4');
+   const ss=[1,2,3].map(s=>sum(r.L,s));ok(Math.max(...ss)-Math.min(...ss)<=1.5,'Strong finish: sets 1–3 roughly equal ('+ss.map(x=>(x*6).toFixed(0)).join(' / ')+' pins)');
+   ok(r.L.every((id,i)=>i%3!==2||!r.L[i-1]||sc(id)>=sc(r.L[i-1])),'strongest throws last in each set');
+   r=run({t:'early',set:1});ok(setIds(r.L,4).every(id=>rk.slice(0,3).includes(id))&&setIds(r.L,1).every(id=>rk.slice(3,6).includes(id)),'Early points: next best 3 in set 1');
+   r=run({t:'early',set:2});ok(setIds(r.L,2).every(id=>rk.slice(3,6).includes(id)),'Early points: set 2 option');
+   r=run({t:'underdog',set:2});ok(setIds(r.L,2).every(id=>rk.slice(0,3).includes(id))&&setIds(r.L,4).every(id=>rk.slice(9,12).includes(id))&&/^Underdog/.test(r.w[0]),'Underdog: best 3 in set 2, weakest 3 in set 4');
+   r=run({t:'balanced'});ok([11,8,5,2].every((si,i)=>r.L[si]===rk[i]),'Balanced: best last in set 4, 2nd in set 3, 3rd in set 2, 4th in set 1 (old order)');
+   sel.tactic=undefined;sel.req={[rk[0]]:1};A.H.suggest(fid);ok(setIds(sel.lineup,1).includes(rk[0]),'set request still wins over the tactic');sel.req={};
+   const pl=id=>S.players.find(p=>p.id===id);run(undefined);const s3=setIds(sel.lineup,3)[0];pl(s3).pref={set:'1',pos:'any'};r=run(undefined);ok(setIds(r.L,1).includes(s3),'set preference honoured within the same group (set 3 → set 1)');delete pl(s3).pref;
+   pl(rk[0]).pref={set:'early',pos:'any'};r=run(undefined);ok(setIds(r.L,1).concat(setIds(r.L,2)).includes(rk[0])||r.w.some(x=>/prefers the early sets \(1–2\), but Strong finish puts him in set 4/.test(x)),'preference that doesn’t fit the tactic is reported: '+(r.w.find(x=>/prefers/.test(x))||'moved'));delete pl(rk[0]).pref;
+   r=run(undefined);const s4=setIds(r.L,4);pl(s4[2]).pref={set:'any',pos:'lead'};r=run(undefined);ok(r.L[9]===s4[2],'position preference: lead off');delete pl(s4[2]).pref;
+   A.go('team',fid);ok(A.has('[data-act="tactic"][data-t="early"]'),'admin sees Tactics');A.click('[data-act="tactic"][data-t="early"]');await wait(50);ok(sel.tactic.t==='early'&&sel.tactic.set===1&&A.has('[data-act="tacset"][data-s="2"]'),'Early points chip, set 1 default, set 2 offered');
+   A.click('[data-act="tacset"][data-s="2"]');ok(A.H.tacticOf(sel).set===2,'set 2 chosen');A.click('[data-act="suggest"]');await wait(50);snap(A,'sugg');A.click('[data-act="close"]');snap(A,'tact');A.click('[data-act="tactic"][data-t="strong"]');
+   R.go('team',fid);await wait(30);ok(!R.has('[data-act="tactic"]'),'scorer: no Tactics');if(R.has('[data-act="suggest"]')){R.click('[data-act="suggest"]');ok(/Only admins/.test(R.toast()),'scorer: Suggest team is admins only');}else ok(true,'scorer: no Suggest button');
+   A.go('squad');[...A.d.querySelectorAll('[data-act="editplayer"]')].find(b=>b.dataset.id==='p7').click();snap(A,'ep');ok(A.has('#epPSet')&&A.has('#epPPos'),'Edit player has line-up preferences');A.set('epPSet','early');A.set('epPPos','anchor');A.click('[data-act="saveedit"]');await wait(80);ok(pl('p7').pref.set==='early'&&pl('p7').pref.pos==='anchor','preferences saved');
+   [...A.d.querySelectorAll('[data-act="editplayer"]')].find(b=>b.dataset.id==='p7').click();A.set('epPSet','any');A.set('epPPos','any');A.click('[data-act="saveedit"]');ok(!pl('p7').pref,'Any/Any clears them');
+   const el=A.H.earlyLate('p11');ok(el.e.g+el.l.g>0,'early/late counted from app-scored matches ('+el.e.g+' early, '+el.l.g+' late)');
+   A.go('averages');A.click('[data-act="phist"][data-id="p11"]');ok(/Early v late sets: shown once he has 5 matches in each/.test(A.modal())||/Early sets \(1–2\):/.test(A.modal()),'player history: early v late line');A.click('[data-act="close"]');
+   sel.tactic=undefined;}
   ok(/Close season 2026\/27/.test((A.go('backup'),A.d.getElementById('view').textContent))&&!C.H.needFor({act:'closeseasonok'})!=='admin','Close season on Backup page for admins');
   A.click('[data-act="closeseason"]');A.set('csName','2026/28');A.click('[data-act="closeseasonok"]');ok(A.H.curSeason()==='2026-27','wrong confirmation text: season not closed');
   A.set('csName','2026/27');A.click('[data-act="closeseasonok"]');await wait(300);

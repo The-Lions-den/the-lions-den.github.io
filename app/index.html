@@ -587,12 +587,19 @@ function allSheets(){return seasonList().map(function(id){return SV(id);}).filte
 var UD0='</td><td class="ud">'; // v3.4: the ▲▼ indicator closes the number's cell and fills its own column
 function upDown(now,was,dp){if(now==null||was==null)return UD0;var d=now-was;if(Math.abs(d)<(dp?0.005:0.5))return UD0+'<span class="muted">=</span>';
   return UD0+'<span style="color:var(--'+(d>0?'green':'red')+')">'+(d>0?'▲':'▼')+Math.abs(d).toFixed(dp||0)+'</span>';}
+var EL_MIN=5;
+function earlyLate(pid){var e={g:0,p:0},l={g:0,p:0};Object.keys(S.matches).forEach(function(fid){var m=S.matches[fid],f=fxById(fid);if(!m||!f||f.comp==='fp'||!allDone(m)||!m.lineup)return;
+    m.lineup.forEach(function(id,i){if(id!==pid||!m.L[i]||m.L[i].some(function(c){return !c;}))return;var b=Math.floor(i/(m.rules.per||3))<2?e:l;b.g++;b.p+=pTot(m,'L',i);});});return {e:e,l:l};}
+function earlyLateHTML(pid){var x=earlyLate(pid);if(!x.e.g&&!x.l.g)return '';var a=function(b){return b.g?f2(b.p/b.g)+' ('+b.g+')':'\u2013';};
+  if(x.e.g>=EL_MIN&&x.l.g>=EL_MIN)return '<div class="small" style="margin-top:8px"><b>Early sets (1\u20132):</b> '+a(x.e)+' \u00b7 <b>Late sets (3\u20134):</b> '+a(x.l)+'</div><div class="note">Average score per match in matches scored in the app (league and cup), number of matches in brackets.</div>';
+  return '<div class="note" style="margin-top:8px">Early v late sets: shown once he has '+EL_MIN+' matches in each (so far '+x.e.g+' early, '+x.l.g+' late, from matches scored in the app).</div>';}
 function playerHistory(pid){var rows=allSheets().map(function(sh){var r=sh.players.filter(function(x){return x.pid===pid;})[0];return r?{season:sh.season,r:r}:null;}).filter(Boolean);
   var cu=cupsOn(),h='<h4>'+esc(fullName(player(pid)||{name:pid}))+'</h4><div class="small muted">Season by season \u00b7 '+(cu?'league and cup':'league matches only')+'</div>';
   if(!rows.length)return h+'<div class="card muted" style="margin-top:8px">No matches recorded yet.</div><button class="btn ghost" data-act="close">Close</button>';
   h+='<div class="tscroll" style="margin-top:8px"><table class="avg"><thead><tr><th class="n">Season</th><th>Gm</th><th class="ud"></th><th>Pins</th><th>Avg</th><th class="ud"></th><th>Home</th><th>Away</th>'+(cu?'<th>Cup</th>':'')+'<th>Spr</th><th>50+</th><th class="ud"></th><th>Best</th></tr></thead><tbody>';
   rows.forEach(function(x,i){var o=rows[i+1]&&rows[i+1].r,r=x.r;h+='<tr><td class="n">'+esc(seasonLabel(x.season))+'</td><td>'+r.games+upDown(r.games,o&&o.games)+'</td><td>'+r.pins+'</td><td class="t">'+f2(r.avg)+upDown(r.avg,o&&o.avg,2)+'</td><td>'+haTxt(r.hg,r.hp)+'</td><td>'+haTxt(r.ag,r.ap)+'</td>'+(cu?'<td>'+haTxt(r.cg,r.cp)+'</td>':'')+'<td>'+(r.spares==null?'\u2013':r.spares)+'</td><td>'+r.f50+upDown(r.f50,o&&o.f50)+'</td><td>'+r.high+'</td></tr>';});
-  return h+'</tbody></table></div><div class="note">\u25B2\u25BC = change from the season before. Home / Away = league matches; Cup = cup matches. 2025/26 has league matches only.</div><button class="btn ghost" data-act="close">Close</button>';}
+  h+='</tbody></table></div>'+earlyLateHTML(pid);
+  return h+'<div class="note">\u25B2\u25BC = change from the season before. Home / Away = league matches; Cup = cup matches. 2025/26 has league matches only.</div><button class="btn ghost" data-act="close">Close</button>';}
 function teamHistoryHTML(){var L=allSheets(),cu=cupsOn();if(!L.length)return '';
   var h='<div class="card"><h2>Season by season</h2><div class="tscroll"><table class="avg"><thead><tr><th class="n">Season</th><th>Pos</th><th>P</th><th>W</th><th>D</th><th>L</th><th>Pts</th>'+(cu?'<th>Cup W\u2013L</th>':'')+'<th>Pins</th><th>Avg H</th><th class="ud"></th><th>Avg A</th><th class="ud"></th><th>Spr</th></tr></thead><tbody>';
   L.forEach(function(sh,i){var t=sh.totals,o=L[i+1]&&L[i+1].totals,sm=seasonSummary(sh.season),pos=sh.season===curSeason()?lionsPos():sm&&sm.pos;
@@ -635,6 +642,22 @@ function rotationInfo(fid){
   return {lastRes:lastRes,absent:absent,thr:thr,returning:function(id){return prev.length>=thr&&absent[id]>=thr;}};
 }
 function isCupFx(f){return rulesFor(f).result==='pins';}
+var TACTIC_TXT={strong:{n:'Strong finish',d:function(){return 'best 3 in set 4, the others spread evenly over sets 1–3';}},
+  early:{n:'Early points',d:function(c){return 'best 3 in set 4, next best 3 in set '+c.set+', the others spread evenly';}},
+  underdog:{n:'Underdog',d:function(c){return 'best 3 in set '+c.set+', weakest 3 in set 4, the others spread evenly';}},
+  balanced:{n:'Balanced',d:function(){return 'one strong player to finish each set (best last in set 4, then sets 3, 2, 1)';}}};
+var PREF_SET_TXT={any:'any set',early:'the early sets (1–2)',late:'the late sets (3–4)','1':'set 1','2':'set 2','3':'set 3','4':'set 4'},PREF_POS_TXT={any:'any position',lead:'to lead off',middle:'the middle spot',anchor:'to throw last'};
+function tacticOf(sel){var c=sel&&sel.tactic||{},t=TACTIC_TXT[c.t]?c.t:'strong',def={early:1,underdog:3}[t]||0,s=+c.set;if(t==='early'&&[1,2].indexOf(s)<0)s=def;if(t==='underdog'&&[1,2,3].indexOf(s)<0)s=def;return {t:t,set:s};}
+function prefOf(p){var r=p&&p.pref||{};return {set:PREF_SET_TXT[r.set]?r.set:'any',pos:PREF_POS_TXT[r.pos]?r.pos:'any'};}
+function prefSetOK(ps,s){return ps==='any'||!s||(ps==='early'?s<=2:ps==='late'?s>=3:+ps===s);}
+function cap1(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function tacticHTML(sel){if(!isAdmin())return '';var c=tacticOf(sel),b=function(act,k,v,l,on){return '<button class="'+(on?'on':'')+'" data-act="'+act+'" data-'+k+'="'+v+'">'+l+'</button>';};
+  var h='<div class="adm" style="margin-bottom:8px"><div class="small muted" style="margin-bottom:4px">Tactics</div><div class="reqs">'+['strong','early','underdog','balanced'].map(function(k){return b('tactic','t',k,TACTIC_TXT[k].n,c.t===k);}).join('')+'</div>';
+  if(c.t==='early'||c.t==='underdog')h+='<div class="reqs"><span class="small muted" style="align-self:center;margin-right:4px">'+(c.t==='early'?'Next best 3 in':'Best 3 in')+'</span>'+(c.t==='early'?[1,2]:[1,2,3]).map(function(s){return b('tacset','s',s,'Set '+s,c.set===s);}).join('')+'</div>';
+  return h+'<div class="note" style="margin-top:2px">'+esc(cap1(TACTIC_TXT[c.t].d(c)))+'. Player preferences are followed where they fit.</div></div>';}
+function prefFields(pl){var pp=prefOf(pl),o=function(map,cur){return Object.keys(map).map(function(k){return '<option value="'+k+'"'+(k===cur?' selected':'')+'>'+esc(PREF_LBL[k])+'</option>';}).join('');};
+  return '<div class="sec" style="margin-top:10px">Line-up preferences</div><div class="field"><label>Prefers</label><select id="epPSet">'+o(PREF_SET_TXT,pp.set)+'</select></div><div class="field"><label>Position in the set</label><select id="epPPos">'+o(PREF_POS_TXT,pp.pos)+'</select></div><div class="note">Used by Suggest team where the tactic allows.</div>';}
+var PREF_LBL={any:'Any',early:'Early sets (1–2)',late:'Late sets (3–4)','1':'Set 1','2':'Set 2','3':'Set 3','4':'Set 4',lead:'Lead off (1st)',middle:'Middle (2nd)',anchor:'Anchor (last)'};
 function suggest(fid){
   var f=fxById(fid),sel=selFor(fid),am=avgMap(),act=S.players.filter(function(p){return p.active;}),cup=isCupFx(f),R=rotationInfo(fid),warn=[];
   var score=function(p){return am[p.id]?am[p.id].avgHand:0;};
@@ -648,10 +671,33 @@ function suggest(fid){
   [1,2,3,4].forEach(function(s){var req=chosen.filter(function(p){return sel.req[p.id]===s;}).sort(function(a,b){return score(b)-score(a);});
     if(req.length>3)warn.push(req.length+' picked players asked for set '+s+'; only 3 fit.');
     req.slice(0,3).forEach(function(p,i){line[(s-1)*3+i]=p.id;used[p.id]=1;});});
-  var orderSlots=[11,8,5,2,10,7,4,1,9,6,3,0],rest=chosen.filter(function(p){return !used[p.id];}).sort(function(a,b){return score(b)-score(a);});
-  orderSlots.forEach(function(si){if(line[si])return;var p=rest.shift();if(p){line[si]=p.id;used[p.id]=1;}});
-  rest.forEach(function(p){reserves.unshift(p);});
-  for(var s=0;s<4;s++){var ids=line.slice(s*3,s*3+3).filter(Boolean);ids.sort(function(a,b){return score(player(a))-score(player(b));});var pad=3-ids.length;for(var k=0;k<3;k++)line[s*3+k]=k<pad?null:ids[k-pad];}
+  var TC=tacticOf(sel),tac=TC.t,rest=chosen.filter(function(p){return !used[p.id];}).sort(function(a,b){return score(b)-score(a);});
+  var free=function(s){return line.slice((s-1)*3,s*3).filter(function(x){return !x;}).length;},put=function(s,p){for(var k=0;k<3;k++)if(!line[(s-1)*3+k]){line[(s-1)*3+k]=p.id;used[p.id]=1;return true;}return false;};
+  var setSum=function(s){return line.slice((s-1)*3,s*3).filter(Boolean).reduce(function(a,id){return a+score(player(id));},0);},tierOf={};
+  if(tac==='balanced'){[11,8,5,2,10,7,4,1,9,6,3,0].forEach(function(si){if(line[si])return;var p=rest.shift();if(p){line[si]=p.id;used[p.id]=1;}});[1,2,3,4].forEach(function(s){tierOf[s]='s'+s;});}
+  else{var top=tac==='underdog'?TC.set:4,others=[1,2,3,4].filter(function(s){return s!==top;});tierOf[top]='top';
+    while(free(top)&&rest.length)put(top,rest.shift());
+    if(tac==='early'){while(free(TC.set)&&rest.length)put(TC.set,rest.shift());tierOf[TC.set]='early';others=others.filter(function(s){return s!==TC.set;});}
+    if(tac==='underdog'){while(free(4)&&rest.length)put(4,rest.pop());tierOf[4]='weak';others=others.filter(function(s){return s!==4;});}
+    others.forEach(function(s){tierOf[s]='rest';});
+    rest.slice().forEach(function(p){var c=others.filter(function(s){return free(s)>0;});if(!c.length)return;c.sort(function(a,b){return (setSum(a)-setSum(b))||(b-a);});put(c[0],p);rest.splice(rest.indexOf(p),1);});}
+  rest.forEach(function(p){if(!used[p.id])reserves.unshift(p);});
+  /* v3.9: set preferences (soft): swap with someone in a preferred set, same tactic group or within half a pin a hand */
+  var fixedP=function(id){return !!sel.req[id];},setOf=function(id){var i=line.indexOf(id);return i<0?0:Math.floor(i/3)+1;};
+  line.filter(Boolean).forEach(function(id){var pp=prefOf(player(id)),s0=setOf(id);if(prefSetOK(pp.set,s0)||fixedP(id))return;
+    var sw=line.filter(function(o){if(!o||o===id||fixedP(o))return false;var s1=setOf(o);if(!prefSetOK(pp.set,s1))return false;if(!prefSetOK(prefOf(player(o)).set,s0)&&prefOf(player(o)).set!=='any')return false;return tierOf[s1]===tierOf[s0]||Math.abs(score(player(o))-score(player(id)))<=0.5;}).sort(function(a,b){return Math.abs(score(player(a))-score(player(id)))-Math.abs(score(player(b))-score(player(id)));})[0];
+    if(sw){var ia=line.indexOf(id),ib=line.indexOf(sw);line[ia]=sw;line[ib]=id;}
+    else warn.push(player(id).name+' prefers '+PREF_SET_TXT[pp.set]+', but '+TACTIC_TXT[tac].n+' puts him in set '+s0+'.');});
+  /* within a set: strongest last, then position preferences */
+  for(var s=0;s<4;s++){var ids=line.slice(s*3,s*3+3).filter(Boolean);ids.sort(function(a,b){return score(player(a))-score(player(b));});var pad=3-ids.length,arr=[];for(var k=0;k<3;k++)arr[k]=k<pad?null:ids[k-pad];
+    var W={anchor:[],lead:[],middle:[]},res=[],asg={};ids.forEach(function(id){var ps=prefOf(player(id)).pos;if(W[ps])W[ps].push(id);});for(var k2=0;k2<pad;k2++)res[k2]=null;
+    var tg={anchor:2,lead:pad,middle:pad===0?1:-1};
+    ['anchor','lead','middle'].forEach(function(pos){var w=W[pos].sort(function(a,b){return score(player(b))-score(player(a));});if(!w.length)return;var tgt=tg[pos];
+      if(tgt<0){w.forEach(function(id){warn.push(player(id).name+' prefers '+PREF_POS_TXT[pos]+', but set '+(s+1)+' has fewer than 3 players.');});return;}
+      w.forEach(function(id,j){if(j===0&&res[tgt]===undefined){res[tgt]=id;asg[id]=1;}else warn.push(player(id).name+' prefers '+PREF_POS_TXT[pos]+', but set '+(s+1)+' already has '+player(res[tgt]).name+' there.');});});
+    var left=ids.filter(function(id){return !asg[id];});for(k2=0;k2<3;k2++)if(res[k2]===undefined)res[k2]=left.shift()||null;arr=res;
+    for(k=0;k<3;k++)line[s*3+k]=arr[k];}
+  warn.unshift(TACTIC_TXT[tac].n+': '+TACTIC_TXT[tac].d(TC)+'.');
   if(cup)warn.push('Cup match: strongest available players picked.');
   else{var rot=chosen.filter(function(p){return R.lastRes[p.id];});if(rot.length)warn.push('Reserve last week, so picked this week: '+rot.map(function(p){return p.name;}).join(', ')+'.');
     var back=reserves.filter(function(p){return R.returning(p.id)&&sel.avail[p.id]==='in';});if(back.length)warn.push('Back after '+R.thr+'+ weeks away, so reserve this week: '+back.map(function(p){return p.name;}).join(', ')+'.');}
@@ -712,7 +758,7 @@ function vTeam(){var f=curFx();if(!f)return '<div class="card">Choose a fixture 
     h+='<div style="display:block"><div class="between"><div class="grow"><div class="name">'+esc(fullName(p))+'</div><div class="small muted">'+(av?'Avg '+av.avgGame.toFixed(1)+' · '+av.games+' game'+(av.games>1?'s':''):'No scores yet')+tags+'</div></div><button class="avsw'+(a==='in'?' on':'')+'" data-av="'+(a==='in'?'out':'in')+'" data-id="'+p.id+'" aria-pressed="'+(a==='in')+'" aria-label="'+esc(fullName(p))+': '+(a==='in'?'In':'Out')+'"><span class="k"></span><span class="t">'+(a==='in'?'In':'Out')+'</span></button></div>'+
       (a==='in'?'<div class="reqs"><span class="small muted" style="align-self:center;margin-right:4px">Set</span>'+[0,1,2,3,4].map(function(s){return '<button class="'+(r===s?'on':'')+'" data-req="'+s+'" data-id="'+p.id+'">'+(s?s:'Any')+'</button>';}).join('')+'</div>':'')+'</div>';});
   h+='</div></div>';
-  h+='<div class="sec">2. Team</div><div class="card">'+(started?'<div class="warn">Scoring has started. Change players on the Score tab, where locked slots are protected.</div>':'<button class="btn gold" data-act="suggest" style="margin-top:0">Suggest team</button><div class="note">'+(isCupFx(f)?'Cup match: picks the strongest available by season average.':'League: last week\u2019s reserves are picked first, players back after '+(S.rules.general.awayWeeks||3)+'+ weeks away start as reserves, then the strongest by season average.')+' Set requests are honoured; the strongest throws 12th (anchor), then 9th, 6th and 3rd. Extra available players become reserves.</div>');
+  h+='<div class="sec">2. Team</div><div class="card">'+(started?'<div class="warn">Scoring has started. Change players on the Score tab, where locked slots are protected.</div>':tacticHTML(sel)+'<button class="btn gold adm" data-act="suggest" style="margin-top:0">Suggest team</button><div class="note adm">'+(isCupFx(f)?'Cup match: picks the strongest available by season average.':'League: last week\u2019s reserves are picked first, players back after '+(S.rules.general.awayWeeks||3)+'+ weeks away start as reserves, then the strongest by season average.')+' The tactic then places them in sets; set requests are honoured and the strongest throws last in each set. Extra available players become reserves.</div>');
   h+='<div class="slots" style="margin-top:10px">';
   for(var s=0;s<4;s++){h+='<div class="set"><div class="lbl">Set '+(s+1)+(s===3?' · anchor set':'')+'</div>';
     for(var k=0;k<3;k++){var i=s*3+k,pid=sel.lineup[i],rq=pid&&sel.req[pid];
@@ -1384,6 +1430,8 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'savesubs':var fe=parseInt(fval('sbFee'),10);S.rules.general.subFee=fe>0?fe:5;S.rules.general.subsFrom=fval('sbFrom')||subsFrom();save();render();toast('Subs settings saved');break;
     case 'choosefx':chooseFxModal();break;
     case 'pickfx':S.ui.fx=d.id;T.sel=null;T.pick=null;closeModal();if(S.ui.tab==='fixtures'){}save();render();toast('Fixture selected');break;
+    case 'tactic':var stc=selFor(f.id);stc.tactic={t:d.t,set:tacticOf({tactic:{t:d.t}}).set};save();render();break;
+    case 'tacset':var sts=selFor(f.id);sts.tactic={t:tacticOf(sts).t,set:+d.s};save();render();break;
     case 'suggest':var w=suggest(f.id);emptySync(f.id);save();render();if(w.length)modal('<h4>Team suggested</h4>'+w.map(function(x){return '<div class="warn">'+esc(x)+'</div>';}).join('')+'<button class="btn gold" data-act="close">OK</button>');else toast('Team suggested');break;
     case 'clearteam':selFor(f.id).lineup=Array(12).fill(null);selFor(f.id).reserves=[];T.pick=null;emptySync(f.id);save();render();break;
     case 'tput':var s1=selFor(f.id),ts=+d.slot;if(ts>=12&&ts-12>=s1.reserves.length)s1.reserves.push(d.id);else setSlot(s1,ts,d.id);closeModal();emptySync(f.id);save();render();break;
@@ -1439,8 +1487,8 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'saveplayer':var nfull=document.getElementById('npFull').value.trim(),nmv=document.getElementById('npName').value.trim()||shortName(nfull);if(!nmv)break;S.players.push({id:uid('p'),name:nmv,full:nfull,nick:document.getElementById('npNick').value.trim(),role:document.getElementById('npRole').value.trim(),active:true});closeModal();save();render();toast(nmv+' added');break;
     case 'bulkadd':modal('<h4>Paste a list</h4><div class="field"><label>One name per line, e.g. copied from the squad spreadsheet</label><textarea id="bulk"></textarea></div><button class="btn gold" data-act="savebulk">Add players</button><button class="btn ghost" data-act="close">Cancel</button>');break;
     case 'savebulk':var have={};S.players.forEach(function(p){have[p.name.toLowerCase()]=1;});var added=0;document.getElementById('bulk').value.split(/\r?\n/).map(function(x){return x.split('\t')[0].trim();}).filter(Boolean).forEach(function(x){var dn=/^[A-Z]\.\s/.test(x)?x:shortName(x);if(!have[dn.toLowerCase()]){S.players.push({id:uid('p'),name:dn,full:dn===x?'':x,active:true});have[dn.toLowerCase()]=1;added++;}});closeModal();save();render();toast(added+' player(s) added');break;
-    case 'editplayer':var pl=player(d.id);modal('<h4>Edit player</h4><div class="field"><label>Full name</label><input id="epFull" value="'+esc(pl.full||'')+'"></div><div class="field"><label>Name on team sheets</label><input id="epName" value="'+esc(pl.name)+'"></div><div class="field"><label>Nickname (optional)</label><input id="epNick" value="'+esc(pl.nick||'')+'"></div><div class="field"><label>Role (optional)</label><input id="epRole" value="'+esc(pl.role||'')+'" placeholder="e.g. Captain"></div><label style="display:flex;gap:10px;align-items:center;min-height:44px"><input type="checkbox" id="epAct" style="width:22px;height:22px"'+(pl.active?' checked':'')+'> Active (in the current squad)</label><div class="note">Inactive players keep their past results but aren\u2019t offered for selection.</div><button class="btn gold" data-act="saveedit" data-id="'+pl.id+'">Save</button><button class="btn ghost" data-act="close">Cancel</button>');if(isAdmin())accessInject(d.id);break;
-    case 'saveedit':var pe=player(d.id),nv=document.getElementById('epName').value.trim();if(nv)pe.name=nv;pe.full=document.getElementById('epFull').value.trim();pe.nick=document.getElementById('epNick').value.trim();pe.role=document.getElementById('epRole').value.trim();pe.active=document.getElementById('epAct').checked;closeModal();save();render();break;
+    case 'editplayer':var pl=player(d.id);modal('<h4>Edit player</h4><div class="field"><label>Full name</label><input id="epFull" value="'+esc(pl.full||'')+'"></div><div class="field"><label>Name on team sheets</label><input id="epName" value="'+esc(pl.name)+'"></div><div class="field"><label>Nickname (optional)</label><input id="epNick" value="'+esc(pl.nick||'')+'"></div><div class="field"><label>Role (optional)</label><input id="epRole" value="'+esc(pl.role||'')+'" placeholder="e.g. Captain"></div><label style="display:flex;gap:10px;align-items:center;min-height:44px"><input type="checkbox" id="epAct" style="width:22px;height:22px"'+(pl.active?' checked':'')+'> Active (in the current squad)</label><div class="note">Inactive players keep their past results but aren\u2019t offered for selection.</div>'+prefFields(pl)+'<button class="btn gold" data-act="saveedit" data-id="'+pl.id+'">Save</button><button class="btn ghost" data-act="close">Cancel</button>');if(isAdmin())accessInject(d.id);break;
+    case 'saveedit':var pe=player(d.id),nv=document.getElementById('epName').value.trim();if(nv)pe.name=nv;pe.full=document.getElementById('epFull').value.trim();pe.nick=document.getElementById('epNick').value.trim();pe.role=document.getElementById('epRole').value.trim();pe.active=document.getElementById('epAct').checked;var psv=(document.getElementById('epPSet')||{}).value||'any',ppv=(document.getElementById('epPPos')||{}).value||'any';if(psv==='any'&&ppv==='any')delete pe.pref;else pe.pref={set:psv,pos:ppv};closeModal();save();render();break;
     case 'editrule':ruleModal(d.id);break;
     case 'addrule':ruleModal(null);break;
     case 'saverule':var k=d.id||('t'+Date.now().toString(36)),rr0=k&&S.rules.types[k]?S.rules.types[k]:{};var gv=function(id){return parseInt(document.getElementById(id).value,10)||0;};
@@ -1685,7 +1733,7 @@ function subsText(){var t=subsTable(),out='Lions subs (from '+fdate(subsFrom())+
 /* who can do what: every button is checked here, and the database checks again */
 var VIEW_ACTS={cups:1,season:1,phist:1,printsheet:1,doprint:1,closeprint:1,vdseen:1,clashmine:1,clashtheirs:1,close:1,choosefx:1,pickfx:1,allsets:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,imseen:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,fxf:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
 var SCORE_ACTS={spare:1,nospare:1,vc:1,undo:1,cancelsel:1,skip:1,other:1,otherok:1};
-var EDIT_ACTS={suggest:1,clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,stopscore:1,stopscoreok:1,lockm:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1,leaguecard:1,sendleague:1,copyleague:1};
+var EDIT_ACTS={clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,stopscore:1,stopscoreok:1,lockm:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1,leaguecard:1,sendleague:1,copyleague:1};
 var ADMIN_HIDE=['teamsheet','resimg','report','copyres','addfx','comps','bulkadd','editrule','addrule','savegeneral','importpaste','seedforce','subtick'];
 function lockBlocked(d){return !!(d.cell||d.name||d.tw||d.v!==undefined||d.sp!==undefined||['spare','nospare','vc','undo','skip','other','otherok','oppnames','saveopp','mput','mclear','mswap','takeover','stopscore','stopscoreok'].indexOf(d.act)>-1);}
 function needFor(d){if(d.tab)return 'view';if(d.v!==undefined||d.sp!==undefined||d.cell)return 'score';
@@ -1698,7 +1746,7 @@ function denied(nd,m){if(nd==='view')return false;
   return false;}
 (function(){var ed=Object.keys(EDIT_ACTS).concat(Object.keys(SCORE_ACTS)).concat(ADMIN_HIDE,['start']),sel=function(pre,l){return l.map(function(a){return pre+' [data-act="'+a+'"]';}).join(',');};
   var css=sel('body.r-viewer',ed)+',body.r-viewer [data-av],body.r-viewer [data-req],body.r-viewer [data-nick],body.r-viewer [data-tw],body.r-viewer .pad,body.r-viewer .imp,'+
-    sel('body.r-scorer',ADMIN_HIDE)+',body.r-scorer [data-av],body.r-scorer [data-req],body.r-scorer [data-nick],body.r-scorer .imp{display:none!important}';
+    sel('body.r-scorer',ADMIN_HIDE)+',body.r-scorer [data-av],body.r-scorer [data-req],body.r-scorer [data-nick],body.r-scorer .imp,body.r-scorer .adm{display:none!important}';
   var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);})();
 function watchCard(m,tg,s0){var sc=m.scorer,at=SY.at['match:'+m.fid];
   return '<div class="card now"><div class="between"><div class="grow"><div class="small muted">Live · Set <b class="gold">'+(s0+1)+'</b> · Hand <b class="gold">'+(tg.h+1)+'</b></div><div class="name">'+(!sc?'Nobody is scoring':myScoring(m)?'Scoring by you (on another device)':'Scoring by '+esc(sc.name))+'</div><div class="small muted">Next up: '+esc(slotName(m,tg.t,tg.p,'live'))+(at?' · updated '+esc(timeOf(at).slice(-5)):'')+'</div></div>'+
@@ -1712,7 +1760,7 @@ render();
 sbInit();
 feedFetch(false);window.addEventListener('online',function(){feedFetch(false);});document.addEventListener('visibilitychange',function(){if(!document.hidden)feedFetch(false);});
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude|anthropic/.test(location.hostname)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
-window.__hub={bands:bands,applyDraw:applyDraw,drawFx:drawFx,allTimePins:allTimePins,cupsOn:cupsOn,SV:SV,sheetData:sheetData,seasonList:seasonList,curSeason:curSeason,seasonAverages:seasonAverages,openPrintSheet:openPrintSheet,isFrozenFx:isFrozenFx,averages31:averages,save:save,merge3:merge3,teamStats:teamStats,clashKeys:clashKeys,viewerDraws:viewerDraws,SY:function(){return SY;},NET:NET,docsOf:docsOf,dirtyKeys:dirtyKeys,needFor:needFor,subsTable:subsTable,myRole:myRole,pull:pull,push:push,people:function(){return PEOPLE;},render:render,T:T,S:function(){return S;},result:result,averages:averages,suggest:suggest,enter:enter,target:function(){return target(curMatch());},curMatch:curMatch,reportText:reportText,scoresText:scoresText,seed:seed,isLS:isLS,lsFill:lsFill,syncPast:syncPast,averages:averages,parseTable:parseTable,feedFetch:feedFetch,lionsPos:lionsPos,feedNews:feedNews,leagueImg:leagueImg,leagueCardCanvas:leagueCardCanvas,leagueMailText:leagueMailText,setS:function(x){S=x;render();}};
+window.__hub={avgMap:avgMap,suggest:suggest,tacticOf:tacticOf,earlyLate:earlyLate,bands:bands,applyDraw:applyDraw,drawFx:drawFx,allTimePins:allTimePins,cupsOn:cupsOn,SV:SV,sheetData:sheetData,seasonList:seasonList,curSeason:curSeason,seasonAverages:seasonAverages,openPrintSheet:openPrintSheet,isFrozenFx:isFrozenFx,averages31:averages,save:save,merge3:merge3,teamStats:teamStats,clashKeys:clashKeys,viewerDraws:viewerDraws,SY:function(){return SY;},NET:NET,docsOf:docsOf,dirtyKeys:dirtyKeys,needFor:needFor,subsTable:subsTable,myRole:myRole,pull:pull,push:push,people:function(){return PEOPLE;},render:render,T:T,S:function(){return S;},result:result,averages:averages,suggest:suggest,enter:enter,target:function(){return target(curMatch());},curMatch:curMatch,reportText:reportText,scoresText:scoresText,seed:seed,isLS:isLS,lsFill:lsFill,syncPast:syncPast,averages:averages,parseTable:parseTable,feedFetch:feedFetch,lionsPos:lionsPos,feedNews:feedNews,leagueImg:leagueImg,leagueCardCanvas:leagueCardCanvas,leagueMailText:leagueMailText,setS:function(x){S=x;render();}};
 })();
 </script>
 </body>
