@@ -309,6 +309,15 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   A.go('score','L8');snap(A,'l8');{const c=A.d.querySelector('#view .card:not(.board) table');const tb=c.closest('.card'),st=[...tb.querySelectorAll('.setc')].map(x=>parseInt(x.textContent)),lt=[...tb.querySelectorAll('tr.up td.lt')].map(x=>x.textContent);
    ok(st.length===2&&lt.length===2&&lt.includes('/')&&lt.some(x=>x==='▲'+Math.abs(st[0]-st[1])),'Lead Tot: ▲'+Math.abs(st[0]-st[1])+' and / ('+lt.join(' | ')+')');
    ok([...tb.querySelectorAll('tr.up td.hc .lead')].length>0&&[...tb.querySelectorAll('tr.up td.hc')].every(x=>x.textContent===''||x.textContent==='/'||/^▲\d+$/.test(x.textContent)),'Lead hand cells: ▲n or /');}
+  // v3.8: an empty score sheet doesn't lock the Team page
+  A.go('score','L12');A.click('[data-act="start"]');await wait(150);
+  {const S=A.H.S();ok(S.matches.L12&&!/Scoring has started/.test((A.go('team','L12'),A.d.getElementById('view').textContent))&&A.has('[data-act="suggest"]')&&![...A.d.querySelectorAll('#view .slot')].some(b=>b.disabled),'empty sheet: Team page open (Suggest team, slots enabled, no warning)');
+   const sel=S.sel.L12||(S.sel.L12={avail:{},req:{},lineup:Array(12).fill(null),reserves:[]});S.players.filter(p=>p.active).forEach(p=>sel.avail[p.id]='in');A.click('[data-act="suggest"]');A.click('[data-act="close"]');await wait(200);
+   ok(S.sel.L12.lineup.filter(Boolean).length===12&&JSON.stringify(S.matches.L12.lineup)===JSON.stringify(S.sel.L12.lineup),'Suggest team fills the team and the empty sheet follows it');
+   A.go('score','L12');ok(A.has('.pad'),'the phone that opened scoring keeps its keypad');
+   L.go('score','L12');await wait(30);{const t=L.d.getElementById('view').textContent;ok(/Ready to score\?/.test(t)&&/Opened by you on another device, no scores yet/.test(t)&&L.has('[data-act="start"]'),'another device: Ready to score, opened by …');}
+   L.click('[data-act="start"]');await wait(200);ok(L.has('.pad')&&JSON.stringify(L.H.S().matches.L12.lineup)===JSON.stringify(S.sel.L12.lineup),'Start scoring there: keypad with the new team');
+   L.click('[data-v="7"]');await wait(300);A.go('team','L12');ok(/Scoring has started/.test(A.d.getElementById('view').textContent)&&!A.has('[data-act="suggest"]'),'after one hand the Team page locks again');}
   ok(/Close season 2026\/27/.test((A.go('backup'),A.d.getElementById('view').textContent))&&!C.H.needFor({act:'closeseasonok'})!=='admin','Close season on Backup page for admins');
   A.click('[data-act="closeseason"]');A.set('csName','2026/28');A.click('[data-act="closeseasonok"]');ok(A.H.curSeason()==='2026-27','wrong confirmation text: season not closed');
   A.set('csName','2026/27');A.click('[data-act="closeseasonok"]');await wait(300);

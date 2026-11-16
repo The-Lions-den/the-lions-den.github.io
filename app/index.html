@@ -379,6 +379,7 @@ function setTot(m,t,s){var a=0;for(var k=0;k<m.rules.per;k++)a+=pTot(m,t,s*m.rul
 function matchTot(m,t){var a=0;for(var s=0;s<m.rules.sets;s++)a+=setTot(m,t,s);return a;}
 function setFilled(m,t,s){var n=0;for(var k=0;k<m.rules.per;k++)for(var h=0;h<m.rules.hands;h++)if(m[t][s*m.rules.per+k][h])n++;return n;}
 function setDone(m,s){var full=m.rules.per*m.rules.hands;return setFilled(m,'L',s)===full&&setFilled(m,'O',s)===full;}
+function emptySync(fid){var m=S.matches[fid];if(m&&!hasHands(m))m.lineup=selFor(fid).lineup.slice();} // v3.8: keep an empty score sheet's team in step with the Team tab
 function hasHands(m){return !!m&&['L','O'].some(function(t){return (m[t]||[]).some(function(r){return (r||[]).some(Boolean);});});}
 function allDone(m){for(var s=0;s<m.rules.sets;s++)if(!setDone(m,s))return false;return true;}
 function slotLocked(m,p){return m.L[p].some(function(c){return !!c;});}
@@ -702,7 +703,7 @@ function vTeam(){var f=curFx();if(!f)return '<div class="card">Choose a fixture 
   var sel=selFor(f.id),am=avgMap(),R=rotationInfo(f.id),act=S.players.filter(function(p){return p.active;}).sort(firstSort);
   var counts={in:0,out:0};act.forEach(function(p){if(sel.avail[p.id]==='in')counts.in++;else counts.out++;});
   var reqCount={};act.forEach(function(p){var r=sel.req[p.id];if(r&&sel.avail[p.id]!=='out')reqCount[r]=(reqCount[r]||0)+1;});
-  var m=S.matches[f.id],started=!!m;
+  var m=S.matches[f.id],started=hasHands(m);
   var h='<div class="sec">1. Availability</div><div class="card"><div class="chips" style="padding-top:0"><span class="chip g">'+counts.in+' in</span><span class="chip">'+counts.out+' out</span></div>';
   Object.keys(reqCount).forEach(function(s){if(reqCount[s]>3)h+='<div class="warn">'+reqCount[s]+' players have asked for set '+s+'. A set only has 3 places.</div>';});
   h+='<div class="list" style="margin-top:6px">';
@@ -768,8 +769,8 @@ function boardHTML(m){var R=result(m),pins=m.rules.result==='pins';
 function vScore(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';
   var m=S.matches[f.id];
   if((!m||!hasHands(m))&&!canEdit())return '<div class="card"><h2>Not started yet</h2><div class="small muted">The scores appear here live, hand by hand, once the scorer starts.</div></div>';
-  if(!m){var sel=selFor(f.id),n=sel.lineup.filter(Boolean).length,r=rulesFor(f);
-    return '<div class="card"><h2>Ready to score?</h2><div class="small muted">'+esc(fxComp(f))+' · '+esc(r.label)+' rules: '+(r.result==='sets'?r.setWin+' per set, '+r.matchWin+' for the match':'total pins decide')+'. Spare keypad '+r.spareMin+'–'+r.spareMax+'.</div>'+
+  if(!m||(!hasHands(m)&&!canScore(m))){var sel=selFor(f.id),n=sel.lineup.filter(Boolean).length,r=rulesFor(f);
+    return '<div class="card"><h2>Ready to score?</h2>'+(m&&m.scorer?'<div class="small muted">Opened by '+esc(myScoring(m)?'you on another device':m.scorer.name)+', no scores yet.</div>':'')+'<div class="small muted">'+esc(fxComp(f))+' · '+esc(r.label)+' rules: '+(r.result==='sets'?r.setWin+' per set, '+r.matchWin+' for the match':'total pins decide')+'. Spare keypad '+r.spareMin+'–'+r.spareMax+'.</div>'+
       (n<12?'<div class="warn">Only '+n+' of 12 Lions slots are filled. Empty slots can be filled during the match.</div>':'')+
       '<button class="btn gold" data-act="start">Start scoring</button></div>';}
   var tg=target(m),R=result(m),h=boardHTML(m),r=m.rules;
@@ -1336,12 +1337,12 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if((d.act==='editfx'||d.act==='savefx'||d.act==='delfx')&&d.id&&isFrozenFid(d.id)){frozenMsg();return;}
   if(m&&isLocked(m)&&lockBlocked(d)){toast(isAdmin()?'Match locked. Tap Unlock on the Scores tab to correct it.':'Match locked. Ask an admin to unlock it.');return;}
   if(d.tab){if(d.fx)S.ui.fx=d.fx;S.ui.tab=d.tab;T.sel=null;T.spare=false;T.pick=null;closeModal();save();render();window.scrollTo(0,0);return;}
-  if(d.av){var sel=selFor(f.id);if(d.av==='in')sel.avail[d.id]='in';else delete sel.avail[d.id];if(d.av!=='in'){var i=sel.lineup.indexOf(d.id);if(i>-1&&!S.matches[f.id])sel.lineup[i]=null;var ri0=sel.reserves.indexOf(d.id);if(ri0>-1)sel.reserves.splice(ri0,1);}save();render();return;}
+  if(d.av){var sel=selFor(f.id);if(d.av==='in')sel.avail[d.id]='in';else delete sel.avail[d.id];if(d.av!=='in'){var i=sel.lineup.indexOf(d.id);if(i>-1&&!hasHands(S.matches[f.id]))sel.lineup[i]=null;var ri0=sel.reserves.indexOf(d.id);if(ri0>-1)sel.reserves.splice(ri0,1);}emptySync(f.id);save();render();return;}
   if(d.req!==undefined){var sl=selFor(f.id);sl.req[d.id]=+d.req;save();render();return;}
   if(d.slot!==undefined&&!d.act){var i2=+d.slot,sl0=selFor(f.id);if(T.pick===null||T.pick===undefined){T.pick=i2;render();return;}
     if(T.pick===i2){T.pick=null;render();pickPlayerModal(i2,'team');return;}
     var A0=getSlot(sl0,T.pick),B0=getSlot(sl0,i2);if(T.pick>=12&&i2>=12){sl0.reserves[T.pick-12]=B0;sl0.reserves[i2-12]=A0;}else{if(T.pick<12)sl0.lineup[T.pick]=B0||null;else if(B0)sl0.reserves[T.pick-12]=B0;else sl0.reserves.splice(T.pick-12,1);if(i2<12)sl0.lineup[i2]=A0||null;else if(A0)sl0.reserves[i2-12]=A0;else sl0.reserves.splice(i2-12,1);}
-    T.pick=null;save();render();return;}
+    T.pick=null;emptySync(f.id);save();render();return;}
   if(d.v!==undefined){enter(+d.v,false,false);return;}
   if(d.sp!==undefined){enter(+d.sp,true,false);return;}
   if(d.cell){var a=d.cell.split(','),cm=curMatch();if(cm&&lsLocked(cm,a[0],+a[1])){toast('L/S copies the lowest score from the earlier sets');return;}T.sel={t:a[0],p:+a[1],h:+a[2]};T.spare=false;S.ui.tab='score';render();window.scrollTo(0,0);return;}
@@ -1383,16 +1384,16 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'savesubs':var fe=parseInt(fval('sbFee'),10);S.rules.general.subFee=fe>0?fe:5;S.rules.general.subsFrom=fval('sbFrom')||subsFrom();save();render();toast('Subs settings saved');break;
     case 'choosefx':chooseFxModal();break;
     case 'pickfx':S.ui.fx=d.id;T.sel=null;T.pick=null;closeModal();if(S.ui.tab==='fixtures'){}save();render();toast('Fixture selected');break;
-    case 'suggest':var w=suggest(f.id);save();render();if(w.length)modal('<h4>Team suggested</h4>'+w.map(function(x){return '<div class="warn">'+esc(x)+'</div>';}).join('')+'<button class="btn gold" data-act="close">OK</button>');else toast('Team suggested');break;
-    case 'clearteam':selFor(f.id).lineup=Array(12).fill(null);selFor(f.id).reserves=[];T.pick=null;save();render();break;
-    case 'tput':var s1=selFor(f.id),ts=+d.slot;if(ts>=12&&ts-12>=s1.reserves.length)s1.reserves.push(d.id);else setSlot(s1,ts,d.id);closeModal();save();render();break;
+    case 'suggest':var w=suggest(f.id);emptySync(f.id);save();render();if(w.length)modal('<h4>Team suggested</h4>'+w.map(function(x){return '<div class="warn">'+esc(x)+'</div>';}).join('')+'<button class="btn gold" data-act="close">OK</button>');else toast('Team suggested');break;
+    case 'clearteam':selFor(f.id).lineup=Array(12).fill(null);selFor(f.id).reserves=[];T.pick=null;emptySync(f.id);save();render();break;
+    case 'tput':var s1=selFor(f.id),ts=+d.slot;if(ts>=12&&ts-12>=s1.reserves.length)s1.reserves.push(d.id);else setSlot(s1,ts,d.id);closeModal();emptySync(f.id);save();render();break;
     case 'addres':var sr=selFor(f.id);pickPlayerModal(12+sr.reserves.length,'team');break;
-    case 'tclear':setSlot(selFor(f.id),+d.slot,null);closeModal();save();render();break;
+    case 'tclear':setSlot(selFor(f.id),+d.slot,null);closeModal();emptySync(f.id);save();render();break;
     case 'mput':logChange(m,'Line-up changed');var sx=selFor(f.id),old=m.lineup[+d.slot],rix=sx.reserves.indexOf(d.id);m.lineup[+d.slot]=d.id;if(rix>-1){if(old)sx.reserves[rix]=old;else sx.reserves.splice(rix,1);}else if(old)sx.reserves.push(old);sx.lineup=m.lineup.slice();lsFill(m);closeModal();save();render();break;
     case 'mclear':m.lineup[+d.slot]=null;closeModal();save();render();break;
     case 'mswap':var A=+d.a,B=+d.b;if(slotLocked(m,A)||slotLocked(m,B)){toast('That slot is locked');break;}var t2=m.lineup[A];m.lineup[A]=m.lineup[B];m.lineup[B]=t2;selFor(f.id).lineup=m.lineup.slice();closeModal();save();render();break;
     case 'teamsheet':teamSheetImg();break;
-    case 'start':var nm=newMatch(S,f.id);nm.lineup=selFor(f.id).lineup.slice();nm.scorer=meTag();S.matches[f.id]=nm;T.sel=null;save();render();break;
+    case 'start':var nm=newMatch(S,f.id),om=S.matches[f.id];if(om&&hasHands(om))break;nm.lineup=selFor(f.id).lineup.slice();if(om&&om.opp&&om.opp.length===nm.opp.length)nm.opp=om.opp.slice();nm.scorer=meTag();S.matches[f.id]=nm;T.sel=null;save();render();break;
     case 'spare':T.spare=true;render();break;
     case 'nospare':T.spare=false;render();break;
     case 'vc':enter(0,false,true);break;
