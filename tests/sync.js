@@ -354,19 +354,19 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    A.go('team',fid);A.click('[data-act="unlockin"]');await wait(150);ok(/1\. Availability/.test(vt())&&A.has('[data-av]')&&A.has('[data-act="suggest"]')&&![...A.d.querySelectorAll('#view .slot')].some(b=>b.disabled)&&A.vis('[data-act="lockin"]'),'unlocked: availability and editing back, Lock in team again');
    A.go('home');ok(!/Team locked in/.test(A.d.querySelector('.card.now').textContent),'Home chip gone');
    // new player in Team mode (reserve)
-   A.go('team',fid);A.click('[data-act="addres"]');ok(A.has('[data-act="newplayer"]')&&/New player \(N\/P\)/.test(A.modal()),'Team picker: New player (N/P) at the top of Bring in');
+   A.go('team',fid);A.click('[data-act="addres"]');ok(A.has('[data-act="newplayer"]')&&/New player \(NR\)/.test(A.modal()),'Team picker: New player (N/P) at the top of Bring in');
    A.click('[data-act="newplayer"]');A.set('nnFull','Sam Newman');A.click('[data-act="savenp"]');await wait(150);
    const sam=S.players.find(p=>p.full==='Sam Newman');ok(sam&&sam.active&&sam.name==='S. Newman'&&S.sel[fid].reserves.includes(sam.id)&&S.sel[fid].np.includes(sam.id),'new player added to the squad, reserve, marked N/P');
    ok(JSON.stringify(B.docs.players.data).includes(sam.id),'new player shared');}
   {const S=A.H.S(),m=S.matches.L12;A.go('score','L12');if(!A.has('[data-name="L,11"]'))A.click('[data-act="allsets"]');A.click('[data-name="L,11"]');ok(A.has('[data-act="newplayer"]'),'Score picker: New player (N/P)');snap(A,'pick');
    A.click('[data-act="newplayer"]');snap(A,'npm');A.set('nnFull','Tom Fresh');A.click('[data-act="savenp"]');await wait(150);
    const tom=S.players.find(p=>p.full==='Tom Fresh');ok(tom&&m.lineup[11]===tom.id&&S.sel.L12.np.includes(tom.id)&&S.sel.L12.lineup[11]===tom.id,'Score tab: new player put in slot 12, marked N/P');
-   ok(A.H.npMark(m,'L',11)===' (N/P)'&&A.H.npMark(m,'L',0)==='','league scorecard: (N/P) after his name only');
-   ok(!/N\/P/.test(A.d.getElementById('view').textContent),'no N/P on the score sheet');
-   A.click('[data-name="L,11"]');ok(/Remove the \(N\/P\) marker/.test(A.modal()),'picker offers to remove the marker');A.click('[data-act="nptoggle"]');ok(A.H.npMark(m,'L',11)==='','marker removed');
-   A.click('[data-name="L,11"]');A.click('[data-act="nptoggle"]');ok(A.H.npMark(m,'L',11)===' (N/P)','marker back on (any player can be marked)');
+   ok(A.H.npMark(m,'L',11)===' (NR)'&&A.H.npMark(m,'L',0)==='','league scorecard: (N/P) after his name only');
+   ok(!/NR/.test(A.d.getElementById('view').textContent),'no N/P on the score sheet');
+   A.click('[data-name="L,11"]');ok(/Remove the \(NR\) marker/.test(A.modal()),'picker offers to remove the marker');A.click('[data-act="nptoggle"]');ok(A.H.npMark(m,'L',11)==='','marker removed');
+   A.click('[data-name="L,11"]');A.click('[data-act="nptoggle"]');ok(A.H.npMark(m,'L',11)===' (NR)','marker back on (any player can be marked)');
    A.click('[data-act="oppnames"][data-set="1"]');const cbs=[...A.d.querySelectorAll('[data-onpx]')];ok(cbs.length===3&&cbs.every(c=>!c.checked),'opposition names: N/P tick per name, off by default');snap(A,'opp');
-   cbs[1].checked=true;A.click('[data-act="saveopp"]');await wait(100);ok(JSON.stringify(m.onp)==='[4]'&&A.H.npMark(m,'O',4)===' (N/P)'&&A.H.npMark(m,'O',3)==='','opposition N/P saved for that name only');
+   cbs[1].checked=true;A.click('[data-act="saveopp"]');await wait(100);ok(JSON.stringify(m.onp)==='[4]'&&A.H.npMark(m,'O',4)===' (NR)'&&A.H.npMark(m,'O',3)==='','opposition N/P saved for that name only');
    A.click('[data-act="oppnames"][data-set="1"]');A.d.querySelectorAll('[data-onpx]')[1].checked=false;A.click('[data-act="saveopp"]');ok(!m.onp.length,'opposition N/P can be cleared');
    ok(A.H.needFor({act:'savenp'})==='edit'&&A.H.needFor({act:'lockin'})==='admin','permissions: new player for scorers + admins, lock for admins');}
   // v3.11: team selection hidden from viewers until Publish results; Sent to league / Resend
@@ -398,6 +398,51 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    A.go('score',fid);A.d.getElementById('view').insertAdjacentHTML('beforeend','<button id="tsl" data-act="sendleague"></button>');A.click('#tsl');ok(/Send it again\?/.test(A.modal())&&/Sent to league by Andy Nancollis/.test(A.modal())&&A.has('#mbox [data-act="sendleague"][data-ok="1"]'),'Resend asks first');ok(A.has('#mbox [data-act="leaguecard"]'),'Cancel goes back to the card');A.d.getElementById('modal').click();
    ok(A.H.needFor({act:'leaguemark'})==='edit','Mark as sent: scorers and admins');
    ok(A.H.lcCell({v:7,sp:true})==='7','spares drawn without brackets');}
+  // v3.12: league email, cup note, GD groups, L/S limits, cup tie-break (rule 42)
+  {const S=A.H.S(),tot=(m,t)=>m[t].reduce((a,r)=>a+r.reduce((b,c)=>b+(c?c.v:0),0),0);
+   A.go('score','L8');
+   ok(A.H.leagueMailText()==='Hi John\n\nScorecard for match on 6th Nov 2026, Steamers vs Lions.\n\nLions won, 12 – 2.\n\nMany thanks\n\nAndy Nancollis, The Lions.','league email: new wording ('+JSON.stringify(A.H.leagueMailText())+')');
+   S.rules.general.leagueContact='Sarah';ok(/^Hi Sarah\n/.test(A.H.leagueMailText()),'league contact name setting');S.rules.general.leagueContact='John';
+   A.go('rules');ok(A.has('#gContact'),'Settings: league contact name field');
+   ok(/48 hours/.test(A.H.cardNote(S.fixtures.find(f=>f.id==='L8'))),'league card note: 48 hours (rule 23)');
+   const gdt=S.fixtures.find(f=>f.comp==='gdt');ok(S.comps.find(c=>c.id==='gdt').type==='group'&&S.rules.types.group&&S.rules.types.group.result==='sets'&&S.rules.types.group.matchWin===6,'GD Tournament group games: league-style points (rule 51)');
+   ok(S.rules.types.cup.tie==='sudden'&&/rule 42/.test(S.rules.types.cup.notes),'cup tie rule = sudden death (rule 42)');
+   // L/S limits
+   const used=['L10','L12','L14','L15'],lf=S.fixtures.filter(f=>/^L/.test(f.id)&&f.status==='scheduled'&&!S.matches[f.id]&&!used.includes(f.id)),fid=lf[lf.length-3].id;
+   const sel=S.sel[fid]||(S.sel[fid]={avail:{},req:{},lineup:Array(12).fill(null),reserves:[]});
+   A.go('team',fid);A.click('[data-slot="0"]');A.click('[data-slot="0"]');ok(!/L\/S \(lowest score\)/.test(A.modal())&&/No L\/S in set 1/.test(A.modal()),'L/S not offered in set 1');A.click('[data-act="close"]');
+   A.click('[data-slot="5"]');A.click('[data-slot="5"]');ok(/L\/S \(lowest score\)/.test(A.modal()),'L/S offered in set 2');A.click('[data-act="close"]');
+   sel.lineup[3]='LS';sel.lineup[6]='LS';A.go('team',fid);A.click('[data-slot="9"]');A.click('[data-slot="9"]');ok(!/L\/S \(lowest score\)/.test(A.modal())&&/used twice/.test(A.modal()),'L/S limited to 2 (rule 14)');A.click('[data-act="close"]');sel.lineup[3]=null;sel.lineup[6]=null;
+   const semi=S.fixtures.find(f=>f.comp!=='league'&&/semi/i.test(f.round||''));A.go('team',semi.id);A.click('[data-slot="5"]');A.click('[data-slot="5"]');ok(/Semi-Final or Final/.test(A.modal())&&!/L\/S \(lowest score\)/.test(A.modal()),'no L/S in a cup Semi-Final (rule 41)');A.click('[data-act="close"]');
+   // cup tie
+   const mk=(id,cupRules)=>{const m=JSON.parse(JSON.stringify(S.matches.L8));Object.assign(m,{fid:id,lock:null,unlockedAt:null,everLocked:false,log:[],doneAt:Date.now(),scorer:null,hist:[],tieWinner:null,sd:null});delete m.pub;delete m.leagueSent;m.rules=JSON.parse(JSON.stringify(S.rules.types.cup));
+     const f=S.fixtures.find(x=>x.id===id);m.home=f.home;let g=0;while(tot(m,'O')<tot(m,'L')&&g++<900){for(const row of m.O)for(const c of row)if(!c.sp&&!c.vc&&c.v<9&&tot(m,'O')<tot(m,'L'))c.v++;}S.matches[id]=m;return m;};
+   const kr2=S.fixtures.find(f=>f.comp==='ko'&&/round 2/i.test(f.round||'')),m=mk(kr2.id);A.H.save();await wait(150);
+   ok(tot(m,'L')===tot(m,'O')&&A.H.pinsTie(m),'cup match level on pins ('+tot(m,'L')+')');
+   A.go('score',kr2.id);const vt=()=>A.d.getElementById('view').textContent;
+   ok(/Tied on pins/.test(vt())&&/League rule 42/.test(vt())&&/Sudden death to decide it/.test(vt())&&A.has('[data-act="sdstart"]')&&!A.has('[data-act="lockm"]'),'tie guide card, board message, no Publish yet');snap(A,'tieguide');
+   ok(/cup match/i.test(vt())&&/72 hours/.test(vt()),'cup card note: first-named team, 72 hours (rule 44)');
+   A.click('[data-act="sdstart"]');const cbs=[...A.d.querySelectorAll('[data-sdpick]')];ok(cbs.filter(c=>c.checked).length===6&&/Sudden death: pick 3 each/.test(A.modal()),'pick 3 each, set 4 ticked');snap(A,'sdpick');
+   A.click('[data-act="sdgo"]');await wait(50);ok(m.sd&&!m.sd.final&&m.sd.L.length===3&&m.sd.O.length===3&&A.has('[data-v="7"]')&&/Sudden death/.test(vt()),'sudden death started, keypad shown');
+   const H=A.H.S().matches[kr2.id],ht=H.home?'L':'O',at=H.home?'O':'L';
+   [8,6,7,9,8].forEach(v=>A.click('[data-v="'+v+'"]'));ok(/Needs 4 to tie, 5 to win\./.test(vt()),'last thrower hint: needs 4 to tie, 5 to win');snap(A,'sdlast');
+   A.click('[data-v="4"]');await wait(30);ok(/Still level: play another hand/.test(vt())&&A.has('[data-act="sdmore"]'),'round 1 level: play another hand');
+   A.click('[data-act="sdmore"]');ok(A.H.sdState(m).n===2&&A.has('[data-v="5"]'),'round 2 started');
+   [9,7,7,8,9].forEach(v=>A.click('[data-v="'+v+'"]'));A.click('[data-act="undo"]');ok(!m.sd[at][1].h[1]&&m.sd[at][0].h[1],'undo removes the last sudden-death hand');A.click('[data-v="9"]');A.click('[data-v="8"]');await wait(50);
+   const R=A.H.sdState(m);ok(R.winner===at&&R[at]===25&&R[ht]===23,'away team wins round 2, 25 – 23 (each round from zero)');
+   ok(/win on sudden death/.test(vt())&&A.has('[data-act="lockm"]'),'board: win on sudden death; Publish results back');snap(A,'sdwon');
+   ok(/won on the sudden-death hand, \d+ pins each\./.test(A.H.leagueMailText()),'email: won on the sudden-death hand');
+   ok(/SUDDEN DEATH/.test(A.H.scoresText())&&/sudden-death hand/.test(A.H.reportText()),'all-scores text and report include the sudden death');
+   const pid=m.lineup[m.sd.L[0].p],a=A.H.averages31().find(x=>x.pid===pid),sdp=m.sd.L[0].h.reduce((s,c)=>s+(c?c.v:0),0);
+   ok(a&&a.pinsAll-a.pins===sdp&&Math.abs(a.avgGame-a.pins/a.games)<1e-9,'stats: sudden-death pins in the pins tally, not the average');
+   A.click('[data-sdcell="L,0,0"]');ok(/Changing/.test(vt()),'tap a sudden-death score to change it');A.click('[data-act="cancelsel"]');
+   await V.H.pull(false);await wait(100);V.go('score',kr2.id);ok(/win on sudden death/.test(V.d.getElementById('view').textContent)&&/Sudden death/.test(V.d.getElementById('view').textContent)&&!V.has('[data-sdcell]'),'viewer sees the result and the sudden-death table, read-only');
+   A.go('score',kr2.id);A.click('[data-act="oppnames"][data-set="0"]');A.set('on0','L/S');A.click('[data-act="saveopp"]');ok(/No L\/S in set 1/.test(A.toast())&&m.opp[0]!=='L/S','opposition L/S refused in set 1');A.click('[data-act="close"]');
+   // Final: 5th set
+   const kf=S.fixtures.find(f=>f.comp==='ko'&&A.H.isFinalFx(f)),mf=mk(kf.id);A.H.save();A.go('score',kf.id);
+   ok(/5th set to decide it/.test(vt())&&/complete 5th set/.test(vt()),'Final: guide says 5th set');A.click('[data-act="sdstart"]');A.click('[data-act="sdgo"]');await wait(50);
+   ok(mf.sd&&mf.sd.final&&/5th set \(Final\)/.test(vt())&&/5th set · Hand/.test(vt()),'Final: 5th set scored like a normal set');snap(A,'final5');
+   A.click('[data-act="sdcancel"]');ok(!mf.sd,'cancel before any score');}
   ok(/Close season 2026\/27/.test((A.go('backup'),A.d.getElementById('view').textContent))&&!C.H.needFor({act:'closeseasonok'})!=='admin','Close season on Backup page for admins');
   A.click('[data-act="closeseason"]');A.set('csName','2026/28');A.click('[data-act="closeseasonok"]');ok(A.H.curSeason()==='2026-27','wrong confirmation text: season not closed');
   A.set('csName','2026/27');A.click('[data-act="closeseasonok"]');await wait(300);

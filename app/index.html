@@ -250,15 +250,17 @@ function syncSquad(D){if((D.squadV||0)>=SQUAD.v)return;var used={};
     if(!p){p={id:id,active:true};D.players.push(p);}
     used[p.id]=1;p.full=full;p.name=shortName(full);p.role=role;if(nick)p.nick=nick;p.active=true;});
   D.squadV=SQUAD.v;}
+var CUP_TIE_NOTE='Decided on total pins only. A tie is settled by a sudden-death hand: 3 players from each team who played, one hand each, highest total wins; in a Final, a complete 5th set (league rule 42).';
 function defaultRules(){return {
   types:{
     league:{label:'League',result:'sets',setWin:2,setTie:1,matchWin:6,matchTie:3,tie:'share',extraHands:1,spareMin:9,spareMax:27,maxHand:27,averages:true,sets:4,per:3,hands:6,notes:'2 points per set won, 6 for most pins overall.'},
-    cup:{label:'Cup',result:'pins',setWin:0,setTie:0,matchWin:0,matchTie:0,tie:'captains',extraHands:1,spareMin:9,spareMax:27,maxHand:27,averages:true,sets:4,per:3,hands:6,notes:'Decided on total pins only. Tie rule to confirm with the league.'},
-    frontpin:{label:'Front Pin',result:'pins',setWin:0,setTie:0,matchWin:0,matchTie:0,tie:'captains',extraHands:1,spareMin:1,spareMax:27,maxHand:27,averages:false,sets:4,per:3,hands:6,notes:'Pins only count once the front pin is hit. A spare = all remaining pins down; only those are reset, so a spare can be under 9.'}
+    cup:{label:'Cup',result:'pins',setWin:0,setTie:0,matchWin:0,matchTie:0,tie:'sudden',extraHands:1,spareMin:9,spareMax:27,maxHand:27,averages:true,sets:4,per:3,hands:6,notes:CUP_TIE_NOTE},
+    group:{label:'Group',result:'sets',setWin:2,setTie:1,matchWin:6,matchTie:3,tie:'share',extraHands:1,spareMin:9,spareMax:27,maxHand:27,averages:true,sets:4,per:3,hands:6,notes:'GD Tournament group games: played for points like the league, 2 per set won, 6 for most pins (league rule 51).'},
+    frontpin:{label:'Front Pin',result:'pins',setWin:0,setTie:0,matchWin:0,matchTie:0,tie:'sudden',extraHands:1,spareMin:1,spareMax:27,maxHand:27,averages:false,sets:4,per:3,hands:6,notes:'Pins only count once the front pin is hit. A spare = all remaining pins down; only those are reset, so a spare can be under 9.'}
   },
-  general:{leagueEmail:'john.bastincsl@outlook.com',sendWhen:'away',home:'Golden Lion',league:'Central Skittle League',season:'2026-27',teamName:'THE LIONS',awayWeeks:3}
+  general:{leagueEmail:'john.bastincsl@outlook.com',leagueContact:'John',sendWhen:'away',home:'Golden Lion',league:'Central Skittle League',season:'2026-27',teamName:'THE LIONS',awayWeeks:3}
 };}
-var COMPS=[['league','League Div 2','league'],['fp','Front Pin Cup','frontpin'],['ko','Knock Out Cup','cup'],['gd','George Davis Cup','cup'],['cs','Chairman’s Shield','cup'],['gdt','GD Tournament','cup']];
+var COMPS=[['league','League Div 2','league'],['fp','Front Pin Cup','frontpin'],['ko','Knock Out Cup','cup'],['gd','George Davis Cup','cup'],['cs','Chairman’s Shield','cup'],['gdt','GD Tournament','group']];
 var LEAGUE=[[1,'2026-09-04','Renegades',0,'Workingmens'],[2,'2026-09-11','Box Tops',1],[3,'2026-09-18','Reptiles',0,'49 Club Upstairs'],[4,'2026-10-02',null],[5,'2026-10-09','Double Six',1],[6,'2026-10-16','Wookurs',0,'Conservative Club'],[7,'2026-10-30',null],[8,'2026-11-06','Steamers',0,'White Hart'],[9,'2026-11-20','Gatecrashers',1],[10,'2026-12-04','Persuaders',0,'Boro Club'],[11,'2026-12-18','Belvedere',1],[12,'2027-01-29','Renegades',1],[13,'2027-02-05','Box Tops',0,'White Hart'],[14,'2027-02-12','Reptiles',1],[15,'2027-02-19',null],[16,'2027-03-05','Double Six',0,'Regency'],[17,'2027-03-12','Wookurs',1],[18,'2027-03-19',null],[19,'2027-04-02','Steamers',1],[20,'2027-04-09','Gatecrashers',0,'Social Club'],[21,'2027-04-16','Persuaders',1],[22,'2027-04-23','Belvedere',0,'Coach House']];
 var CUPS=[['2026-09-25','fp','Round 1'],['2026-10-23','fp','Round 2'],['2026-11-27','ko','Round 1'],['2026-12-11','ko','Round 2'],['2027-01-08','gdt','Tournament 1'],['2027-01-15','gdt','Tournament 2'],['2027-01-22','gdt','Tournament 3'],['2027-01-27','fp','Semi Finals'],['2027-02-10','ko','Semi Finals'],['2027-02-26','gd','R1 & Chairman’s Shield R1'],['2027-03-06','fp','Finals'],['2027-03-13','ko','Finals'],['2027-03-17','gd','R2 & Chairman’s Shield R2'],['2027-04-07','gd','Semi Finals (incl. Chairman’s Shield)'],['2027-04-24','gd','Finals (incl. Chairman’s Shield)']];
 var NOV6={L:[[6,4,9,5,6,6],[7,6,7,9,8,7],[9,3,8,7,8,6],[7,3,7,'b16',5,8],[7,8,7,8,7,8],[9,9,8,8,9,8],[6,3,9,6,8,5],[5,3,6,7,8,6],[6,5,5,6,6,7],[6,5,9,4,9,7],[7,9,'b14',9,'b12','b16'],[7,9,'b16',6,8,8]],
@@ -367,7 +369,7 @@ function homeT(m){return m.home?'L':'O';}
 function awayT(m){return m.home?'O':'L';}
 function order(m){var o=[],r=m.rules;for(var s=0;s<r.sets;s++)for(var h=0;h<r.hands;h++)[homeT(m),awayT(m)].forEach(function(t){for(var k=0;k<r.per;k++)o.push({t:t,p:s*r.per+k,h:h});});return o;}
 function nextEmpty(m){var o=order(m);for(var i=0;i<o.length;i++)if(!m[o[i].t][o[i].p][o[i].h])return o[i];return null;}
-function target(m){return T.sel||nextEmpty(m);}
+function target(m){return (T.sel&&!T.sel.sd?T.sel:null)||nextEmpty(m);}
 function next6(t){var d=new Date(t);d.setHours(6,0,0,0);if(d.getTime()<=t)d.setDate(d.getDate()+1);return d.getTime();}
 function published(m){return !!(m&&(m.pub||isLocked(m)));} // v3.11: Publish results (or the 6am auto-lock) shows the team to viewers
 function dropSel(){Object.keys(S.sel).forEach(function(k){var kk='sel:'+k;delete SY.at[kk];delete SY.base[kk];delete BJ[kk];});S.sel={};} // viewers never keep team selections
@@ -384,7 +386,7 @@ function setDone(m,s){var full=m.rules.per*m.rules.hands;return setFilled(m,'L',
 function lockedIn(fid){var s=S.sel[fid],m=S.matches[fid];return !!(s&&s.lockin&&s.lockin.at&&!hasHands(m));} // v3.10
 function lockTxt(l){var d=new Date(l.at);return 'Team locked in by '+(l.by||'an admin')+' \u00b7 '+d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
 function npOn(fid,pid){var s=S.sel[fid];return !!(s&&s.np&&pid&&s.np.indexOf(pid)>-1);}
-function npMark(m,t,p){if(t==='L')return npOn(m.fid,m.lineup[p])?' (N/P)':'';return (m.onp||[]).indexOf(p)>-1?' (N/P)':'';} // league scorecard only
+function npMark(m,t,p){if(t==='L')return npOn(m.fid,m.lineup[p])?' (NR)':'';return (m.onp||[]).indexOf(p)>-1?' (NR)':'';} // league scorecard only
 function emptySync(fid){var m=S.matches[fid];if(m&&!hasHands(m))m.lineup=selFor(fid).lineup.slice();} // v3.8: keep an empty score sheet's team in step with the Team tab
 function hasHands(m){return !!m&&['L','O'].some(function(t){return (m[t]||[]).some(function(r){return (r||[]).some(Boolean);});});}
 function allDone(m){for(var s=0;s<m.rules.sets;s++)if(!setDone(m,s))return false;return true;}
@@ -405,24 +407,94 @@ function result(m){ // {l,o, winner:'L'|'O'|'D'|null, tied}
     for(var s=0;s<r.sets;s++){if(!setDone(m,s))continue;var a=setTot(m,'L',s),b=setTot(m,'O',s);if(a>b)l+=r.setWin;else if(b>a)o+=r.setWin;else{l+=r.setTie;o+=r.setTie;}}
     if(done){if(A>B)l+=r.matchWin;else if(B>A)o+=r.matchWin;else if(r.tie==='captains'&&m.tieWinner&&m.tieWinner!=='D'){if(m.tieWinner==='L')l+=r.matchWin;else o+=r.matchWin;}else{l+=r.matchTie;o+=r.matchTie;}}
   }
-  if(done){if(A>B)w='L';else if(B>A)w='O';else w=m.tieWinner||(r.tie==='share'?'D':null);}
-  return {l:l,o:o,winner:w,tied:tied,A:A,B:B,done:done};
+  var sq=(done&&A===B&&r.result==='pins'&&m.sd)?sdState(m):null;
+  if(done){if(A>B)w='L';else if(B>A)w='O';else w=(sq&&sq.winner)||m.tieWinner||(r.tie==='share'?'D':null);}
+  return {l:l,o:o,winner:w,tied:tied,A:A,B:B,done:done,sd:sq};
 }
 function cellHTML(c){if(!c)return '<span class="e">·</span>';if(c.vc)return '<span class="vc">V/C</span>';if(c.sp)return '<span class="ring">'+c.v+'</span>';return String(c.v);}
 function cellText(c){if(!c)return '-';if(c.vc)return 'V/C';if(c.sp)return '['+c.v+']';return String(c.v);}
 function slotName(m,t,p,out){if(t==='L')return m.lineup[p]?outName(m.lineup[p],out):'Lions '+(p+1);return (m.opp[p]&&m.opp[p].trim())||'Opp '+(p+1);}
 
+function cupType(t){return t==='cup'||t==='group';}
+function isFinalFx(f){return !!(f&&f.round&&/final/i.test(f.round)&&!/semi/i.test(f.round));}
+function noLSround(f){return !!(f&&compType(f)!=='league'&&f.round&&/semi|final/i.test(f.round));} // league rules 15 + 41
+function lsCount(arr){return (arr||[]).filter(function(x){return x==='LS'||/^l\s*\/\s*s$/i.test(String(x||'').trim());}).length;}
+/* ---- cup tie-break, league rule 42: a sudden-death hand (3 players each who played, one hand each; each round starts from zero), or a complete 5th set in a Final ---- */
+function pinsTie(m){return !!(m&&m.rules.result==='pins'&&allDone(m)&&matchTot(m,'L')===matchTot(m,'O'));}
+function sdCols(m){return m.sd?(m.sd.final?6:(m.sd.n||1)):0;}
+function sdOrder(m){var o=[],sd=m.sd;if(!sd)return o;var hs=sd.final?[0,1,2,3,4,5]:[sdCols(m)-1];hs.forEach(function(x){[homeT(m),awayT(m)].forEach(function(t){sd[t].forEach(function(r,i){o.push({sd:true,t:t,i:i,h:x});});});});return o;}
+function sdCell(m,t,i,x){var r=m.sd[t][i];return (r.h&&r.h[x])||null;}
+function sdNext(m){var o=sdOrder(m);for(var i=0;i<o.length;i++){var x=o[i];if(!sdCell(m,x.t,x.i,x.h))return x;}return null;}
+function sdLeft(m){return sdOrder(m).filter(function(x){return !sdCell(m,x.t,x.i,x.h);}).length;}
+function sdRoundTot(m,t,x){return m.sd[t].reduce(function(a,r,i){var c=sdCell(m,t,i,x);return a+(c?c.v:0);},0);}
+function sdTeamTot(m,t){if(!m.sd)return 0;if(m.sd.final){var s=0;for(var x=0;x<6;x++)s+=sdRoundTot(m,t,x);return s;}return sdRoundTot(m,t,sdCols(m)-1);}
+function sdAllPins(m,t){if(!m.sd)return 0;var s=0;for(var x=0;x<sdCols(m);x++)s+=sdRoundTot(m,t,x);return s;} // every tie-break pin, for the pins tallies only (never averages)
+function sdRowPins(m,t,i){var s=0;for(var x=0;x<sdCols(m);x++){var c=sdCell(m,t,i,x);if(c)s+=c.v;}return s;}
+function sdAny(m){return !!(m.sd&&['L','O'].some(function(t){return m.sd[t].some(function(r){return (r.h||[]).some(Boolean);});}));}
+function sdState(m){var sd=m.sd;if(!sd)return null;var done=!sdNext(m),a=sdTeamTot(m,'L'),b=sdTeamTot(m,'O');return {done:done,L:a,O:b,winner:done&&a!==b?(a>b?'L':'O'):null,level:done&&a===b,final:!!sd.final,n:sdCols(m)};}
+function sdName(m,t,i,out){return slotName(m,t,m.sd[t][i].p,out);}
+function sdTarget(m){if(!m||!m.sd)return null;if(T.sel&&T.sel.sd)return T.sel;return (!T.sel&&!nextEmpty(m))?sdNext(m):null;}
+function sdHint(m,st){var t=st.t,ot=t==='L'?'O':'L',nm=function(x){return x==='L'?'Lions':oppTeam(m);},fin=m.sd.final;
+  var mine=fin?sdTeamTot(m,t):sdRoundTot(m,t,st.h),oth=fin?sdTeamTot(m,ot):sdRoundTot(m,ot,st.h),o=sdOrder(m);
+  var left=o.filter(function(x){return x.t===t&&!sdCell(m,x.t,x.i,x.h);}).length,othLeft=o.filter(function(x){return x.t===ot&&!sdCell(m,x.t,x.i,x.h);}).length;
+  if(!othLeft&&left===1){var tie=oth-mine;return tie<0?nm(t)+' are already ahead: any score wins it.':'Needs '+tie+' to tie, '+(tie+1)+' to win.';}
+  var d=mine-oth;if(fin)return d===0?'Level in the 5th set.':nm(t)+(d>0?' lead':' trail')+' the 5th set by '+Math.abs(d)+'.';
+  var pre=st.h>0?'Round '+st.h+' was level '+sdRoundTot(m,'L',st.h-1)+' – '+sdRoundTot(m,'O',st.h-1)+'. ':'';
+  if(!othLeft)return pre+nm(ot)+' have thrown '+oth+' this round.';
+  return pre+(d===0?'Level this round.':nm(t)+(d>0?' lead':' trail')+' this round by '+Math.abs(d)+'.');}
+function tieGuide(m,f){var fin=isFinalFx(f),h='<div class="card now"><h2>Tied on pins</h2><div class="small" style="line-height:1.5"><b>League rule 42:</b> '+(fin?'this is a Final, so play a complete 5th set. 3 players from each team, 6 hands each, as a normal set. Highest set total wins.':'play a sudden-death hand. 3 players from each team who played in this match throw one hand each (3 balls). Highest total wins. Still level? Play another hand.')+'</div>';
+  if(m.tieWinner&&m.tieWinner!=='D')h+='<div class="note gold">Captains agreed: '+(m.tieWinner==='L'?'Lions':esc(oppTeam(m)))+' won.</div>';
+  if(canEdit()&&!isLocked(m))h+='<button class="btn gold" data-act="sdstart">'+(fin?'Start the 5th set':'Start sudden death')+'</button><div class="note">Pick the 3 players for each team, then score it with the normal keypad.</div>'+
+    '<div class="small muted" style="margin-top:10px">Captains agreed the result another way? <button class="gold" style="text-decoration:underline;min-height:40px" data-tw="L">Lions won</button> · <button class="gold" style="text-decoration:underline;min-height:40px" data-tw="O">'+esc(oppTeam(m))+' won</button></div>';
+  return h+'</div>';}
+function sdTableHTML(m,ed){var sd=m.sd,cols=sdCols(m),fin=!!sd.final,s=sdState(m),H=homeT(m),Aw=awayT(m),cur=ed?sdTarget(m):null,nc=cols+1+(fin?1:0),hd='',rows='';
+  for(var x=0;x<cols;x++)hd+='<th class="hc">'+(x+1)+'</th>';
+  [H,Aw].forEach(function(t,ti){var rt=[];for(var x=0;x<cols;x++)rt.push(sdRoundTot(m,t,x));
+    var big=fin?sdTeamTot(m,t):rt[cols-1],small=fin?'':rt.slice(0,cols-1).map(function(v,k){return '<small>R'+(k+1)+' '+v+'</small>';}).join('');
+    rows+='<tr class="tbar'+(s.winner===t?' win':'')+(ti?' sep':'')+'"><td colspan="'+nc+'"><div class="tb"><span class="tbn">'+esc(t==='L'?'Lions':oppTeam(m))+(fin?'':' · round '+cols)+'</span><span class="tbv">'+big+small+'</span></div></td></tr>';
+    sd[t].forEach(function(r,i){var cells='';for(var x=0;x<cols;x++){var c=sdCell(m,t,i,x),sl=cur&&cur.t===t&&cur.i===i&&cur.h===x;cells+='<td class="hc"><button class="c'+(sl?' sel':'')+'"'+(ed?' data-sdcell="'+t+','+i+','+x+'"':'')+'>'+cellHTML(c)+'</button></td>';}
+      rows+='<tr><td class="n"><span class="nm'+(t==='L'?' l':'')+'">'+esc(sdName(m,t,i,'live'))+'</span></td>'+cells+(fin?'<td class="t">'+sdRowPins(m,t,i)+'</td>':'')+'</tr>';});
+    if(!fin)rows+='<tr class="dn"><td class="lbl">Round total</td>'+rt.map(function(v){return '<td class="hc">'+v+'</td>';}).join('')+'</tr>';});
+  var st=s.winner?(s.winner==='L'?'Lions':esc(oppTeam(m)))+' win':s.level&&!fin?'Level':fin?'In play':'Round '+cols;
+  var note=fin?'A complete set: 3 players each, 6 hands each. Highest set total wins.':'One hand each (3 balls). Highest round total wins. Still level? Play another round: each round starts from zero.';
+  var h='<div class="card liveset"><div class="between" style="margin-bottom:8px"><h2 style="margin:0">'+(fin?'5th set (Final)':'Sudden death')+'</h2><span class="small muted">'+st+'</span></div><div class="small muted" style="margin:-2px 0 8px">'+note+'</div><div class="tscroll"><table><thead><tr><th class="n">Player</th>'+hd+(fin?'<th class="tt">Tot</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+  if(s.level&&!fin&&canEdit()&&!isLocked(m))h+='<button class="btn gold" data-act="sdmore">Play another hand</button>';
+  if(canEdit()&&!isLocked(m)&&!sdAny(m))h+='<button class="btn ghost sm" data-act="sdcancel">Cancel sudden death</button>';
+  return h+'</div>';}
+function sdKeypad(m,st,r){var cur=sdCell(m,st.t,st.i,st.h),fin=m.sd.final,ch=T.sel&&T.sel.sd;
+  var h='<div class="card now"><div class="small muted">'+(fin?'5th set · Hand <b class="gold">'+(st.h+1)+'</b>':'Sudden death · Round <b class="gold">'+(st.h+1)+'</b>')+' · '+(st.t==='L'?'Lions':esc(oppTeam(m)))+' #'+(st.i+1)+'</div><div class="who">'+esc(sdName(m,st.t,st.i,'live'))+'</div>'+
+    (ch?'<div class="chg">Changing: <b>'+(cur?esc(cellText(cur)):'–')+'</b> → ?</div><div class="small muted"><button class="gold" style="text-decoration:underline;min-height:40px" data-act="cancelsel">Cancel, back to next turn</button></div>':'')+
+    '<div class="hint">'+esc(sdHint(m,st))+'</div>';
+  if(T.spare){h+='<div class="between" style="margin-top:12px"><span class="gold" style="font-weight:600">Spare! Hand total?</span><button class="muted" style="text-decoration:underline;min-height:40px" data-act="nospare">Cancel</button></div><div class="pad">';
+    for(var i=r.spareMin;i<=r.spareMax;i++)h+='<button class="k sp'+(ch&&cur&&cur.sp&&cur.v===i?' cur':'')+'" data-sp="'+i+'">'+i+'</button>';h+='</div>';}
+  else{var cu=ch&&cur?cur:null,plain=cu&&!cu.sp&&!cu.vc;h+='<div class="pad">';for(var j=0;j<=9;j++)h+='<button class="k'+(plain&&cu.v===j?' cur':'')+'" data-v="'+j+'">'+j+'</button>';
+    h+='<button class="k fn gold'+(cu&&cu.sp?' cur':'')+'" data-act="spare">Spare</button><button class="k fn'+(cu&&cu.vc?' cur':'')+'" data-act="vc">V/C</button><button class="k fn'+(plain&&cu.v>9?' cur':'')+'" data-act="other">Other</button><button class="k fn" data-act="undo">Undo</button><button class="k fn" data-act="skip">Next ›</button></div>';}
+  return h+'</div>';}
+function sdPickModal(){var f=curFx(),m=curMatch(),fin=isFinalFx(f);var col=function(t){var nm=t==='L'?'Lions':oppTeam(m),q='';
+    for(var p=0;p<mP(m);p++){if(isLS(m,t,p))continue;if(t==='L'&&!m.lineup[p])continue;var on=p>=mP(m)-3;
+      q+='<label class="small" style="display:flex;gap:10px;align-items:center;min-height:40px"><input type="checkbox" data-sdpick="'+t+','+p+'" style="width:22px;height:22px"'+(on?' checked':'')+'> '+(p+1)+'. '+esc(slotName(m,t,p))+'</label>';}
+    return '<div class="sec">'+esc(nm)+'</div>'+q;};
+  modal('<h4>'+(fin?'5th set: pick 3 each':'Sudden death: pick 3 each')+'</h4><div class="small muted">3 players from each team who played in this match. Set 4 is ticked to start with.</div>'+col(homeT(m))+col(awayT(m))+
+    '<button class="btn gold" data-act="sdgo">'+(fin?'Start the 5th set':'Start sudden death')+'</button><button class="btn ghost" data-act="close">Cancel</button>');}
+function cardNote(f){var e=esc(S.rules.general.leagueEmail);
+  if(compType(f)!=='league')return f.home?'Cup match: we’re the first-named team, so we send the card in, within 72 hours, to '+e+' (league rule 44).':'Cup match: the first-named team ('+esc(f.opp||'opponents')+') sends the card in within 72 hours (league rule 44). You can still make one.';
+  return f.home?'Home match: the away captain sends the card in within 48 hours, but you can still make one.':'Away match: send the completed card to '+e+' within 48 hours (league rule 23).';}
 function isLS(m,t,p){return t==='L'?m.lineup[p]==='LS':/^l\s*\/\s*s$/i.test(String(m.opp[p]||'').trim());}
 function lsFill(m){if(!m)return;var per=m.rules.per;['L','O'].forEach(function(t){for(var p=0;p<m[t].length;p++){if(!isLS(m,t,p))continue;var s=Math.floor(p/per);if(s===0)continue;
     var best=-1,bt=1e9,ok=true;for(var q=0;q<s*per;q++){if(!m[t][q].every(function(c){return !!c;})){ok=false;break;}if(isLS(m,t,q))continue;var v=pTot(m,t,q);if(v<bt){bt=v;best=q;}}
     if(ok&&best>-1)m[t][p]=m[t][best].map(function(c){return {v:c.v,sp:c.sp,vc:c.vc};});}});}
 function lsLocked(m,t,p){return isLS(m,t,p)&&Math.floor(p/m.rules.per)>0;}
-function enter(v,sp,vc){var m=curMatch();if(!m)return;var tg=target(m);if(!tg)return;
+function enter(v,sp,vc){var m=curMatch();if(!m)return;var st=sdTarget(m);
+  if(st){var row=m.sd[st.t][st.i];if(!row.h)row.h=[];var was=row.h[st.h]||null;m.hist.push({sd:1,t:st.t,i:st.i,h:st.h,prev:was});row.h[st.h]={v:v,sp:!!sp,vc:!!vc};
+    logChange(m,(m.sd.final?'5th set':'Sudden death')+' · '+sdName(m,st.t,st.i)+' '+(m.sd.final?'hand':'round')+' '+(st.h+1)+': '+(was?cellText(was):'–')+' → '+cellText(row.h[st.h]));T.sel=null;T.spare=false;save();render();return;}
+  var tg=target(m);if(!tg)return;
   var was=m[tg.t][tg.p][tg.h];m.hist.push({t:tg.t,p:tg.p,h:tg.h,prev:was});if(m.hist.length>600)m.hist.shift();
   m[tg.t][tg.p][tg.h]={v:v,sp:!!sp,vc:!!vc};logChange(m,handLabel(m,tg)+': '+(was?cellText(was):'–')+' → '+cellText(m[tg.t][tg.p][tg.h]));T.sel=null;T.spare=false;lsFill(m);
   if(allDone(m)){var fx=fxById(m.fid);if(fx)fx.status='played';if(!m.doneAt)m.doneAt=Date.now();}
   save();render();}
-function undo(){var m=curMatch();if(!m)return;var last=m.hist.pop();if(!last){toast('Nothing to undo');return;}var cw=m[last.t][last.p][last.h];m[last.t][last.p][last.h]=last.prev||null;logChange(m,'Undo · '+handLabel(m,last)+': '+(cw?cellText(cw):'–')+' → '+(last.prev?cellText(last.prev):'–'));lsFill(m);T.sel=null;T.spare=false;if(!allDone(m)){m.done=false;m.doneAt=null;}save();render();}
+function undo(){var m=curMatch();if(!m)return;var lz=m.hist[m.hist.length-1];
+  if(lz&&lz.sd){m.hist.pop();var rw=m.sd&&m.sd[lz.t]&&m.sd[lz.t][lz.i];if(rw&&rw.h){var cz=rw.h[lz.h];rw.h[lz.h]=lz.prev||null;logChange(m,'Undo · '+(m.sd.final?'5th set':'sudden death')+' '+sdName(m,lz.t,lz.i)+': '+(cz?cellText(cz):'–')+' → '+(lz.prev?cellText(lz.prev):'–'));}T.sel=null;T.spare=false;save();render();return;}
+  var last=m.hist.pop();if(!last){toast('Nothing to undo');return;}var cw=m[last.t][last.p][last.h];m[last.t][last.p][last.h]=last.prev||null;logChange(m,'Undo · '+handLabel(m,last)+': '+(cw?cellText(cw):'–')+' → '+(last.prev?cellText(last.prev):'–'));lsFill(m);T.sel=null;T.spare=false;if(!allDone(m)){m.done=false;m.doneAt=null;}save();render();}
 function chaseHint(m,tg){
   var r=m.rules,s=Math.floor(tg.p/r.per),H=homeT(m),A=awayT(m),full=r.per*r.hands;
   var nm=function(t){return t==='L'?'Lions':oppTeam(m);};
@@ -445,13 +517,14 @@ function averages(sid,lg){sid=sid||curSeason();
   Object.keys(S.matches).forEach(function(fid){var m=S.matches[fid];if(!m.rules.averages)return;if(!allDone(m))return;if(!inSeason(fid,sid))return;var fxa=fxById(fid),isCup=fxa?compType(fxa)!=='league':m.type!=='league';if(lg&&isCup)return;
     m.lineup.forEach(function(pid,p){if(!pid||pid==='LS')return;var a=st[pid]||(st[pid]={pid:pid,games:0,pins:0,hands:0,spares:0,high:0,vc:0,f50:0});
       var tot=pTot(m,'L',p),fx=fxById(fid),hm=!fx||fx.home;a.games++;a.pins+=tot;if(isCup){a.cg=(a.cg||0)+1;a.cp=(a.cp||0)+tot;}else if(hm){a.hg=(a.hg||0)+1;a.hp=(a.hp||0)+tot;}else{a.ag=(a.ag||0)+1;a.ap=(a.ap||0)+tot;}a.hands+=m.L[p].filter(function(c){return !!c;}).length;a.high=Math.max(a.high,tot);if(tot>=50)a.f50=(a.f50||0)+1;
-      m.L[p].forEach(function(c){if(c&&c.sp)a.spares++;if(c&&c.vc)a.vc++;});});});
-  return Object.keys(st).map(function(k){var a=st[k];a.avgHand=a.hands?a.pins/a.hands:0;a.avgGame=a.games?a.pins/a.games:0;return a;}).sort(function(x,y){return (y.avgGame-x.avgGame)||(y.avgHand-x.avgHand);});
+      m.L[p].forEach(function(c){if(c&&c.sp)a.spares++;if(c&&c.vc)a.vc++;});});
+    if(m.sd&&pinsTie(m))m.sd.L.forEach(function(r,i){var pid=m.lineup[r.p];if(st[pid])st[pid].xp=(st[pid].xp||0)+sdRowPins(m,'L',i);});});
+  return Object.keys(st).map(function(k){var a=st[k];a.avgHand=a.hands?a.pins/a.hands:0;a.avgGame=a.games?a.pins/a.games:0;a.pinsAll=a.pins+(a.xp||0);return a;}).sort(function(x,y){return (y.avgGame-x.avgGame)||(y.avgHand-x.avgHand);});
 }
 function teamStats(sid,lg){sid=sid||curSeason(); // pins: every finished match (Front Pin included unless lg); averages & spares: League and Cup only (rules.averages); Home/Away = league, Cup = cups
   var z=function(){return {pins:0,n:0,tot:0,sp:0};},o={all:z(),home:z(),away:z(),cup:z()};
-  Object.keys(S.matches).forEach(function(fid){var m=S.matches[fid];if(!m||!allDone(m))return;if(!inSeason(fid,sid))return;var fx=fxById(fid),ty=fx?compType(fx):m.type;if(lg&&ty!=='league')return;var w=ty==='league'?((!fx||fx.home)?o.home:o.away):ty==='cup'?o.cup:null,t=matchTot(m,'L');
-    [o.all,w].filter(Boolean).forEach(function(b){b.pins+=t;if(m.rules.averages){b.n++;b.tot+=t;m.L.forEach(function(row){(row||[]).forEach(function(c){if(c&&c.sp)b.sp++;});});}});});
+  Object.keys(S.matches).forEach(function(fid){var m=S.matches[fid];if(!m||!allDone(m))return;if(!inSeason(fid,sid))return;var fx=fxById(fid),ty=fx?compType(fx):m.type;if(lg&&ty!=='league')return;var w=ty==='league'?((!fx||fx.home)?o.home:o.away):cupType(ty)?o.cup:null,t=matchTot(m,'L'),xs=m.sd?sdAllPins(m,'L'):0;
+    [o.all,w].filter(Boolean).forEach(function(b){b.pins+=t+xs;if(m.rules.averages){b.n++;b.tot+=t;m.L.forEach(function(row){(row||[]).forEach(function(c){if(c&&c.sp)b.sp++;});});}});});
   return o;}
 function n0(n){return Number(n||0).toLocaleString('en-GB');}
 function avgMap(){var o={};seasonAverages(prevSeasonId(curSeason())).forEach(function(a){o[a.pid]=a;}); // early in a season, last season's form fills the gaps
@@ -530,7 +603,7 @@ function csSwitch(fx){var later=S.fixtures.filter(function(x){return x.comp==='g
    Raw form {M:[{opp,home,cup,played,for,against,res,pts,tsp}], P:[{pid,scores,spm|spares}], teamSp} -> finishSheet(). */
 function sheetRaw(id){var sm=seasonSummary(id);
   if(!isLiveSeason(id)&&sm){if(sm.sheet&&sm.sheet.raw)return sm.sheet.raw;if(sm.sheet)return rawFromOld(sm.sheet);if(sm.builtin)return builtinRaw(sm);}
-  var fx=seasonFixtures(id).filter(function(f){var t=compType(f);if(t==='cup'){var cm=S.matches[f.id];return !!(cm&&allDone(cm))||(!!f.opp&&f.status==='scheduled');}return t==='league'&&f.status!=='vacant'&&f.status!=='cancelled'&&f.status!=='bye';}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+  var fx=seasonFixtures(id).filter(function(f){var t=compType(f);if(cupType(t)){var cm=S.matches[f.id];return !!(cm&&allDone(cm))||(!!f.opp&&f.status==='scheduled');}return t==='league'&&f.status!=='vacant'&&f.status!=='cancelled'&&f.status!=='bye';}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
   var rows={},M=fx.map(function(f,i){var m=S.matches[f.id],done=!!(m&&allDone(m)),R=done?result(m):null,cup=compType(f)!=='league';
     if(done)m.lineup.forEach(function(pid,p){if(!pid||pid==='LS')return;var r=rows[pid]||(rows[pid]={s:{},sp:{}});r.s[i]=pTot(m,'L',p);r.sp[i]=m.L[p].filter(function(c){return c&&c.sp;}).length;});
     return {fid:f.id,date:f.date,opp:(f.opp||'TBC')+(cup?' ('+(CUPSHORT[f.comp]||'Cup')+')':''),home:!!f.home,cup:cup,played:done,for:done?R.A:null,against:done?R.B:null,res:done?(R.A>R.B?'W':R.A<R.B?'L':'D'):'',pts:done&&!cup?R.l:null,tsp:done?spares(m,'L'):0};});
@@ -818,10 +891,21 @@ function setTable(m,s,o){o=o||{};var live=!!o.live;
 function boardHTML(m){var R=result(m),pins=m.rules.result==='pins';
   var side=function(t){var isL=t==='L',tot=isL?R.A:R.B,pts=isL?R.l:R.o;return '<div><div class="tname'+(isL?' l':'')+'">'+(isL?'Lions':esc(oppTeam(m)))+'</div><div class="big">'+tot+'</div>'+(pins?'':'<div class="bpts'+(isL?' gold':'')+'">'+pts+' pt'+(pts===1?'':'s')+'</div>')+'</div>';};
   var on=esc(oppTeam(m)),d=Math.abs(R.A-R.B),pl=' pin'+(d===1?'':'s'),bar;
+  var sub='';
   if(R.done)bar=R.A===R.B?'Level on pins':(R.A>R.B?'Lions':on)+' win by '+d+pl;
   else bar=R.A===R.B?'Level':(R.A>R.B?'Lions':on)+' lead by '+d+pl;
-  return '<div class="card board"><div class="teams">'+side(homeT(m))+'<div class="muted small" style="padding:0 8px">v</div>'+side(awayT(m))+'</div><div class="pts" style="justify-content:center;font-family:Oswald,sans-serif;font-size:27px;font-weight:700;padding:10px 12px;text-align:center">'+
-   bar+'</div></div>';}
+  if(R.done&&R.A===R.B){var each=R.A+' pins each',Hh=homeT(m),Aa=awayT(m);
+    if(pins){var s=R.sd,fin=isFinalFx(fxById(m.fid)),sc=function(){return sdTeamTot(m,Hh)+' – '+sdTeamTot(m,Aa);};
+      if(!s){bar='Tied on pins';sub=fin?'A Final: 5th set to decide it':'Sudden death to decide it';if(m.tieWinner&&m.tieWinner!=='D'){bar=(m.tieWinner==='L'?'Lions':on)+' win';sub=each+' · captains agreed';}}
+      else if(s.winner){bar=(s.winner==='L'?'Lions':on)+' win on '+(s.final?'the 5th set':'sudden death');sub=each+' · '+(s.final?'5th set ':'sudden death ')+sc();}
+      else if(s.level&&!s.final){bar='Still level: play another hand';sub=each+' · sudden death '+sc();}
+      else{var d2=sdTeamTot(m,'L')-sdTeamTot(m,'O'),left=sdLeft(m),prev=[];bar=(s.final?'5th set: ':'')+(d2===0?'Level':'Lions '+(d2>0?'lead':'trail')+' by '+Math.abs(d2));
+        if(!s.final)for(var k=0;k<s.n-1;k++)prev.push('Round '+(k+1)+' level '+sdRoundTot(m,Hh,k)+' – '+sdRoundTot(m,Aa,k));
+        sub=s.final?'5th set decides the Final · '+each:(prev.length?prev.join(' · ')+' · round '+s.n+' ':'Sudden death ')+sc()+(left?' · '+left+' to throw':'');}}
+    else{var sw=0,sl=0;for(var q=0;q<m.rules.sets;q++){var qa=setTot(m,'L',q),qb=setTot(m,'O',q);if(qa>qb)sw++;else if(qb>qa)sl++;}
+      if(R.l===R.o){bar='Match drawn, '+R.l+' – '+R.o;sub=each+(sw===sl?' · '+sw+' set'+(sw===1?'':'s')+' each':'');}else{bar='Level on pins';sub=(R.l>R.o?'Lions':on)+' '+Math.max(R.l,R.o)+' – '+Math.min(R.l,R.o)+' on points';}}}
+  return '<div class="card board"><div class="teams">'+side(homeT(m))+'<div class="muted small" style="padding:0 8px">v</div>'+side(awayT(m))+'</div><div class="pts" style="flex-direction:column;justify-content:center;font-family:Oswald,sans-serif;font-size:27px;font-weight:700;padding:10px 12px;text-align:center">'+
+   bar+(sub?'<div class="bsub" style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;opacity:.8;margin-top:2px">'+esc(sub)+'</div>':'')+'</div></div>';}
 function vScore(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';
   var m=S.matches[f.id];
   if((!m||!hasHands(m))&&!canEdit())return '<div class="card"><h2>Not started yet</h2><div class="small muted">The scores appear here live, hand by hand, once the scorer starts.</div></div>';
@@ -830,7 +914,7 @@ function vScore(){var f=curFx();if(!f)return '<div class="card">Choose a fixture
       (n<12?'<div class="warn">Only '+n+' of 12 Lions slots are filled. Empty slots can be filled during the match.</div>':'')+
       '<button class="btn gold" data-act="start">Start scoring</button></div>';}
   var tg=target(m),R=result(m),h=boardHTML(m),r=m.rules;
-  if(!tg)return h+finishedHTML(f,m);
+  if(!tg){var sdt=pinsTie(m)&&!isLocked(m)?sdTarget(m):null;if(sdt&&canScore(m))return h+sdKeypad(m,sdt,r)+sdTableHTML(m,true)+finishedHTML(f,m,true);return h+finishedHTML(f,m);}
   var s0=Math.floor(tg.p/r.per),cur=m[tg.t][tg.p][tg.h],locked=tg.t==='L';
   var LV={live:true},asb='<button class="btn ghost" data-act="allsets">'+(T.allsets?'Hide other sets':'Show all sets')+'</button>';
   if(!canScore(m)){h+=watchCard(m,tg,s0)+setTable(m,s0,LV)+asb;if(T.allsets){for(var s3=0;s3<r.sets;s3++)if(s3!==s0)h+=setTable(m,s3,LV);}return h;}
@@ -847,17 +931,18 @@ function vScore(){var f=curFx();if(!f)return '<div class="card">Choose a fixture
   return h;}
 
 function roTable(m,st){return setTable(m,st).replace(/ data-(cell|name)="[^"]*"/g,'').replace(/<div style="padding-top:10px;text-align:center"><button class="btn ghost sm" data-act="oppnames"[^>]*>[^<]*<\/button><\/div>/,'');}
-function finishedHTML(f,m){var R=result(m),r=m.rules,lk=isLocked(m),ed=canEdit()&&!lk,h='';
-  if(R.tied&&(r.tie==='captains'||r.tie==='extra')&&(ed||m.tieWinner)){h+='<div class="card now" style="text-align:center">';
+function finishedHTML(f,m,sdShown){var R=result(m),r=m.rules,lk=isLocked(m),ed=canEdit()&&!lk,h='',pt=pinsTie(m);
+  if(pt){if(!m.sd)h+=tieGuide(m,f);else if(!sdShown)h+=sdTableHTML(m,ed);}
+  if(R.tied&&r.result!=='pins'&&(r.tie==='captains'||r.tie==='extra')&&(ed||m.tieWinner)){h+='<div class="card now" style="text-align:center">';
     if(r.tie==='captains')h+='<div class="small muted">Pins are level. Who did the captains agree won?</div><div class="btns" style="grid-template-columns:1fr 1fr 1fr"><button class="btn '+(m.tieWinner==='L'?'gold':'ghost')+'" data-tw="L">Lions</button><button class="btn '+(m.tieWinner==='D'?'gold':'ghost')+'" data-tw="D">Draw</button><button class="btn '+(m.tieWinner==='O'?'gold':'ghost')+'" data-tw="O">'+esc(oppTeam(m))+'</button></div>';
     else h+='<div class="warn">Pins are level. Game Rules say play '+r.extraHands+' extra hand(s). Record the outcome once played.</div><div class="btns" style="grid-template-columns:1fr 1fr"><button class="btn '+(m.tieWinner==='L'?'gold':'ghost')+'" data-tw="L">Lions won</button><button class="btn '+(m.tieWinner==='O'?'gold':'ghost')+'" data-tw="O">'+esc(oppTeam(m))+' won</button></div>';
     h+='</div>';}
   if(lk&&canEdit())h+='<div class="card lockc"><div class="between"><div><div class="name">🔒 Results published</div><div class="small muted">'+esc(lockLine(m))+'</div></div>'+(isAdmin()&&!isFrozenFx(f)?'<button class="btn ghost sm" data-act="unlockm">Unlock</button>':'')+'</div>'+(isFrozenFx(f)?'<div class="note">Season '+esc(seasonLabel(fxSeason(f)))+' is closed: these scores are final.</div>':isAdmin()?'<div class="note">Unlock to correct a score. Every change is recorded below.</div>':'')+'</div>';
-  else if(canEdit())h+='<div class="card now" style="text-align:center"><div class="h1 gold" style="font-size:20px">Match finished</div><div class="small muted">Check the scores against the board, then publish the results. Tap any score below to correct it first.</div><div class="btns"><button class="btn gold" data-act="lockm">Publish results</button><button class="btn ghost" data-act="undo">Undo last</button></div><div class="note">Publishing closes the scores (after that only an admin can unlock them) and shows the team on the app. If nobody publishes, it happens at 6am tomorrow.</div></div>';
+  else if(canEdit()&&!(pt&&!R.winner))h+='<div class="card now" style="text-align:center"><div class="h1 gold" style="font-size:20px">Match finished</div><div class="small muted">Check the scores against the board, then publish the results. Tap any score below to correct it first.</div><div class="btns"><button class="btn gold" data-act="lockm">Publish results</button><button class="btn ghost" data-act="undo">Undo last</button></div><div class="note">Publishing closes the scores (after that only an admin can unlock them) and shows the team on the app. If nobody publishes, it happens at 6am tomorrow.</div></div>';
   for(var st=0;st<r.sets;st++)h+=ed?setTable(m,st):roTable(m,st);
   if(isAdmin())h+='<div class="card"><h2>Share</h2><button class="btn gold" data-act="resimg" style="margin-top:0">Results image</button><button class="btn ghost" data-act="report">Match report text</button><button class="btn ghost" data-act="copyres">Copy all scores as text</button></div>';
   var sg=m.sig||{},ns=(sg.away?1:0)+(sg.home?1:0);
-  if(canEdit())h+='<div class="card"><h2>League result card</h2><div class="note" style="margin-top:0">'+(f.home?'Home match: the away captain normally sends the card in, but you can still make one.':'Away match: send the completed card to '+esc(S.rules.general.leagueEmail)+'.')+'</div>'+
+  if(canEdit())h+='<div class="card"><h2>League result card</h2><div class="note" style="margin-top:0">'+cardNote(f)+'</div>'+
     (m.leagueSent?'<div class="note gold">\u2709\ufe0f '+esc(sentLine(m))+'</div>':'')+'<button class="btn ghost" data-act="sign">'+(ns===2?'Captains signed ✓ (re-sign)':ns===1?'Captains sign (1 of 2 done)':'Captains sign')+'</button><button class="btn gold" data-act="leaguecard">'+(m.leagueSent?'League card (sent)':'Create league card')+'</button></div>';
   if(canEdit()&&m.log&&m.log.length)h+='<div class="card"><h2>Changes after publishing</h2><div class="list">'+m.log.slice().reverse().map(function(x){return '<div><div class="grow"><div class="small">'+esc(x.what)+'</div><div class="small muted">'+esc(x.by)+' · '+esc(clock(x.at))+'</div></div></div>';}).join('')+'</div></div>';
   return h;}
@@ -865,10 +950,11 @@ function vResults(){var f=curFx();if(!f)return '<div class="card">Choose a fixtu
   if(!m)return '<div class="card">No scores recorded for this fixture yet.</div>';
   var R=result(m),h=boardHTML(m);
   for(var st=0;st<m.rules.sets;st++)h+=setTable(m,st).replace(/ data-(cell|name)="[^"]*"/g,'');
+  if(m.sd&&pinsTie(m))h+=sdTableHTML(m,false);
   if(isAdmin())h+='<div class="card"><h2>Share</h2><button class="btn gold" data-act="resimg" style="margin-top:0">Results image</button><button class="btn ghost" data-act="report">Match report text</button><button class="btn ghost" data-act="copyres">Copy all scores as text</button>'+
     '</div>';
   var sg=m.sig||{},ns=(sg.away?1:0)+(sg.home?1:0);
-  if(canEdit())h+='<div class="card"><h2>League result card</h2><div class="note" style="margin-top:0">'+(f.home?'Home match: the away captain normally sends the card in, but you can still make one.':'Away match: send the completed card to '+esc(S.rules.general.leagueEmail)+'.')+'</div>'+
+  if(canEdit())h+='<div class="card"><h2>League result card</h2><div class="note" style="margin-top:0">'+cardNote(f)+'</div>'+
     (m.leagueSent?'<div class="note gold">\u2709\ufe0f '+esc(sentLine(m))+'</div>':'')+'<button class="btn ghost" data-act="sign">'+(ns===2?'Captains signed ✓ (re-sign)':ns===1?'Captains sign (1 of 2 done)':'Captains sign')+'</button><button class="btn gold" data-act="leaguecard">'+(m.leagueSent?'League card (sent)':'Create league card')+'</button></div>';
   if(!R.done)h+='<div class="note">Match not finished yet: images and averages use the scores so far.</div>';
   return h;}
@@ -887,6 +973,8 @@ var ABOUT={
   intro:'Our own Lions app: live scores, fixtures, the league table and everyone’s averages, all in one place. Add it to your phone like an app, or visit it as a website on any computer.',
   install:'On your phone, open the-lions-den.com and tap Share → Add to Home Screen (iPhone) or ⋮ → Add to Home screen (Android). No sign-in needed to view.',
   news:[ /* newest first: [version, date, role, text] */
+    ['v3.12','17 Nov 2026','scorer','Cup ties follow league rule 42: a guide on the Scores tab, then score the sudden-death hand (or a 5th set in a Final) in the app. New registrations are marked (NR). L/S limits from the league rules.'],
+    ['v3.12','17 Nov 2026','all','Bigger, clearer names on the team sheet.'],
     ['v3.11','17 Nov 2026','all','The team for each match now appears on the app once the results are published. Before a match it\u2019s on WhatsApp only.'],
     ['v3.11','17 Nov 2026','scorer','Publish results replaces Lock match. The league card is filled in in handwriting, spares marked in the corners, and shows when it was sent.'],
     ['v3.4','11 Nov 2026','scorer','Live scoring: bigger tap boxes, a header bar for each team with the set total, no Set column, and labels that stay put when the table scrolls.'],
@@ -956,7 +1044,7 @@ function vAverages(){var sid=viewSeason(),live=isLiveSeason(sid),lg=!cupsOn(),a=
     [['avg','Average team score'],['pins','Total pins hit'],['sp','Total team spares']].map(function(r){return '<tr><td class="n">'+r[1]+'</td><td class="t">'+cell(ts.all,r[0])+(LY?(r[0]==='pins'||lb[r[0]]==null||la[r[0]]==null?UD0:upDown(la[r[0]],lb[r[0]],r[0]==='avg'?1:0))+'</td><td>'+lyv(r[0]):'')+'</td><td>'+cell(ts.home,r[0])+'</td><td>'+cell(ts.away,r[0])+'</td>'+(lg?'':'<td>'+cell(ts.cup||{n:0,pins:0,sp:null},r[0])+'</td>')+'</tr>';}).join('')+
     '</tbody></table></div><div class="note">'+(LY?'Last yr = '+esc(seasonLabel(LY.was))+' after the same number of matches ('+LY.n+'); points are league points. ':'')+(lg?'League matches only.':live?'Pins hit include every match recorded in this app (Front Pin too). Average team score and spares: League and Cup matches.':cupsNote(false))+' Home / Away = league matches'+(lg?'':'; Cup = cup matches')+'.</div></div>';
   if(!a.length)h+='<div class="card">No completed '+(lg?'League':'League or Cup')+' matches '+(cur?'yet':'in '+esc(lbl))+'.</div>';
-  else{var BD=bands(a,sid),lyp=LY&&LY.b.pp,ncol=10+(lg?0:1)+(lyp?2:0),row=function(x,i,lo){var w=lyp&&lyp[x.pid];return '<tr'+(lo?' class="low"':'')+'><td class="n"><button class="plink" data-act="phist" data-id="'+esc(x.pid)+'">'+(lo?'\u2013 ':(i+1)+'. ')+esc(pnm(x.pid))+'</button></td><td>'+x.games+'</td><td>'+x.pins+'</td><td class="t">'+x.avgGame.toFixed(2)+(lyp?upDown(x.avgGame,w&&w.avg,2)+'</td><td>'+(w?f2(w.avg):'\u2013'):'')+'</td><td>'+haTxt(x.hg,x.hp)+'</td><td>'+haTxt(x.ag,x.ap)+'</td>'+(lg?'':'<td>'+haTxt(x.cg,x.cp)+'</td>')+'<td>'+(live?x.avgHand.toFixed(2):'\u2013')+'</td><td>'+(x.spares==null?'\u2013':x.spares)+'</td><td>'+x.high+'</td><td>'+(x.f50||0)+'</td></tr>';};
+  else{var BD=bands(a,sid),lyp=LY&&LY.b.pp,ncol=10+(lg?0:1)+(lyp?2:0),row=function(x,i,lo){var w=lyp&&lyp[x.pid];return '<tr'+(lo?' class="low"':'')+'><td class="n"><button class="plink" data-act="phist" data-id="'+esc(x.pid)+'">'+(lo?'\u2013 ':(i+1)+'. ')+esc(pnm(x.pid))+'</button></td><td>'+x.games+'</td><td>'+(x.pinsAll!=null?x.pinsAll:x.pins)+'</td><td class="t">'+x.avgGame.toFixed(2)+(lyp?upDown(x.avgGame,w&&w.avg,2)+'</td><td>'+(w?f2(w.avg):'\u2013'):'')+'</td><td>'+haTxt(x.hg,x.hp)+'</td><td>'+haTxt(x.ag,x.ap)+'</td>'+(lg?'':'<td>'+haTxt(x.cg,x.cp)+'</td>')+'<td>'+(live?x.avgHand.toFixed(2):'\u2013')+'</td><td>'+(x.spares==null?'\u2013':x.spares)+'</td><td>'+x.high+'</td><td>'+(x.f50||0)+'</td></tr>';};
     var rows=BD.main.map(function(x,i){return row(x,i,false);}).join('')+(BD.low.length?'<tr class="band"><td class="n">Fewer than '+TOP_MIN+' matches</td><td colspan="'+(ncol-1)+'"></td></tr>'+BD.low.map(function(x){return row(x,0,true);}).join(''):'');
     h+='<div class="card"><h2>Player averages</h2><div class="tscroll"><table class="avg"><thead><tr><th class="n">Player</th><th>Gm</th><th>Pins</th><th>Avg</th>'+(lyp?'<th class="ud">±</th><th>LY</th>':'')+'<th>Home</th><th>Away</th>'+(lg?'':'<th>Cup</th>')+'<th>Hand</th><th>Spr</th><th>Best</th><th>50+</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="note">'+cupsNote(lg)+' Avg = average score per match; Home / Away = average per league match at home / away'+(lg?'':'; Cup = average per cup match')+'; Hand = average per hand; 50+ = matches with a score of 50 or more. Sorted by average score.'+(BD.on?' Ranked: '+TOP_MIN+' or more matches. Below the line: fewer than '+TOP_MIN+'.':'')+(lyp?' LY = average at this point last season (after '+LY.n+' match'+(LY.n>1?'es':'')+'), ± = change.':'')+' Tap a name for that player’s seasons.</div>'+(live&&cur?'<button class="btn gold" data-act="avgimg">Averages image</button>':'')+'</div>';}
   h+='<div class="card"><h2>Season sheet</h2><div class="small muted">The '+(lg?'league':'league and cup')+' averages sheet for '+esc(lbl)+', ready to print on one A4 page (landscape) or save as a PDF.</div><button class="btn gold" data-act="printsheet">Print season sheet</button></div>';
@@ -994,9 +1082,9 @@ function vSettings(){var on=S.rules.general.nickOn,rows=[['teamsheet','Team shee
 function vRules(){var h='';
   Object.keys(S.rules.types).forEach(function(k){var r=S.rules.types[k];
     h+='<div class="card"><div class="between"><h2 style="margin:0">'+esc(r.label)+'</h2><button class="btn ghost sm" data-act="editrule" data-id="'+k+'">Edit</button></div><div class="small muted" style="margin-top:6px;line-height:1.5">'+
-     (r.result==='sets'?r.setWin+' pts per set won ('+r.setTie+' each if tied) + '+r.matchWin+' for most pins ('+r.matchTie+' each if tied)':'Result on total pins only')+'<br>Tied on pins: '+({share:'share the points',captains:'captains decide',extra:'play '+r.extraHands+' extra hand(s)',notes:'see notes'}[r.tie])+'<br>Spare keypad '+r.spareMin+'–'+r.spareMax+' · Averages: '+(r.averages?'yes':'no')+'<br>'+r.sets*r.per+' players, '+r.sets+' sets of '+r.per+', '+r.hands+' hands'+(r.notes?'<br><i>'+esc(r.notes)+'</i>':'')+'</div></div>';});
+     (r.result==='sets'?r.setWin+' pts per set won ('+r.setTie+' each if tied) + '+r.matchWin+' for most pins ('+r.matchTie+' each if tied)':'Result on total pins only')+'<br>Tied on pins: '+({share:'share the points',captains:'captains decide',sudden:'sudden-death hand (5th set in a Final)',extra:'play '+r.extraHands+' extra hand(s)',notes:'see notes'}[r.tie])+'<br>Spare keypad '+r.spareMin+'–'+r.spareMax+' · Averages: '+(r.averages?'yes':'no')+'<br>'+r.sets*r.per+' players, '+r.sets+' sets of '+r.per+', '+r.hands+' hands'+(r.notes?'<br><i>'+esc(r.notes)+'</i>':'')+'</div></div>';});
   var g=S.rules.general;
-  h+='<div class="card"><button class="btn ghost" data-act="addrule" style="margin-top:0">Add a new match type</button></div><div class="card"><h2>General</h2><div class="field"><label>League results email</label><input id="gEmail" value="'+esc(g.leagueEmail)+'"></div><div class="field"><label>Send results when Lions are</label><select id="gWhen"><option value="away"'+(g.sendWhen==='away'?' selected':'')+'>Away</option><option value="home"'+(g.sendWhen==='home'?' selected':'')+'>Home</option><option value="both"'+(g.sendWhen==='both'?' selected':'')+'>Home and away</option></select></div><div class="field"><label>Home venue</label><input id="gHome" value="'+esc(g.home)+'"></div><div class="field"><label>Weeks away before a returning player starts as a reserve (league)</label><input id="gAway" type="number" inputmode="numeric" value="'+(g.awayWeeks||3)+'"></div><button class="btn gold" data-act="savegeneral">Save</button><div class="note">A finished match keeps the rules it was played under, so editing a rule won’t change past results.</div></div>';
+  h+='<div class="card"><button class="btn ghost" data-act="addrule" style="margin-top:0">Add a new match type</button></div><div class="card"><h2>General</h2><div class="field"><label>League results email</label><input id="gEmail" value="'+esc(g.leagueEmail)+'"></div><div class="field"><label>League contact name (starts the email: Hi …)</label><input id="gContact" value="'+esc(g.leagueContact||'John')+'"></div><div class="field"><label>Send results when Lions are</label><select id="gWhen"><option value="away"'+(g.sendWhen==='away'?' selected':'')+'>Away</option><option value="home"'+(g.sendWhen==='home'?' selected':'')+'>Home</option><option value="both"'+(g.sendWhen==='both'?' selected':'')+'>Home and away</option></select></div><div class="field"><label>Home venue</label><input id="gHome" value="'+esc(g.home)+'"></div><div class="field"><label>Weeks away before a returning player starts as a reserve (league)</label><input id="gAway" type="number" inputmode="numeric" value="'+(g.awayWeeks||3)+'"></div><button class="btn gold" data-act="savegeneral">Save</button><div class="note">A finished match keeps the rules it was played under, so editing a rule won’t change past results.</div></div>';
   return h;}
 function vBackup(){return closeSeasonHTML()+'<div class="card"><h2>Backup</h2><div class="small muted">The team data is shared online, and every phone keeps its own copy. A backup file is a spare copy for safekeeping.</div><button class="btn gold" data-act="export">Save backup file</button><button class="btn ghost" data-act="exportcopy">Copy backup as text</button></div>'+
   '<div class="card"><h2>Restore</h2><div class="small muted">Admins only. Loads a backup file and sends it to the shared data, replacing it for everyone.</div><label class="btn ghost imp" style="display:flex;align-items:center;justify-content:center">Choose backup file<input type="file" id="impFile" accept=".json,application/json,text/plain" style="display:none"></label><button class="btn ghost" data-act="importpaste">Paste backup text</button></div>'+
@@ -1017,15 +1105,17 @@ function pickPlayerModal(slot,mode){ // mode 'team' (selection) or 'match'
   if(mode==='match'&&cur==='LS'){h+='';}
   if(mode==='match'){var others=[];for(var i=0;i<line.length;i++)if(i!==slot&&!slotLocked(m,i))others.push(i);
     if(others.length&&cur)h+='<div class="sec" style="margin-top:0">Swap with</div><div class="list">'+others.map(function(i){return '<div><button class="grow" style="text-align:left" data-act="mswap" data-a="'+slot+'" data-b="'+i+'"><div class="name">'+(i+1)+'. '+esc(line[i]?pname(line[i]):'(empty)')+'</div><div class="small muted">Set '+(Math.floor(i/3)+1)+'</div></button></div>';}).join('')+'</div>';}
-  if(slot<12&&cur!=='LS')h+='<div class="sec" style="margin-top:0">Short of players?</div><div class="list"><div><button class="grow" style="text-align:left" data-act="'+(mode==='match'?'mput':'tput')+'" data-slot="'+slot+'" data-id="LS"><div class="name">L/S (lowest score)</div><div class="small muted">Copies our lowest player total from the earlier sets</div></button></div></div>';
-  h+='<div class="sec">Bring in</div><div class="list"><div><button class="grow" style="text-align:left" data-act="newplayer" data-slot="'+slot+'" data-mode="'+mode+'"><div class="name gold">+ New player (N/P)</div><div class="small muted">Someone not in the squad yet. Adds him and marks (N/P) on the league scorecard.</div></button></div>'+act.map(function(p){var a=sel.avail[p.id];return '<div><button class="grow" style="text-align:left" data-act="'+(mode==='match'?'mput':'tput')+'" data-slot="'+slot+'" data-id="'+p.id+'"><div class="name">'+esc(fullName(p))+'</div><div class="small muted">'+(sel.reserves.indexOf(p.id)>-1?'<span class="gold">Reserve '+(sel.reserves.indexOf(p.id)+1)+'</span> · ':'')+(a==='in'?'Available':'Out')+(sel.req[p.id]?' · asked for set '+sel.req[p.id]:'')+'</div></button></div>';}).join('')+'</div>';
-  if(cur&&cur!=='LS'&&slot<12){var npx=npOn(f.id,cur);h+='<button class="btn ghost" data-act="nptoggle" data-id="'+cur+'">'+(npx?'Remove the (N/P) marker':'Mark (N/P) tonight, new player')+'</button>';}
+  var lsWhy=slot>=12||cur==='LS'?'':slot<3?'No L/S in set 1: it copies a score from an earlier set.':noLSround(f)?'No lowest score in a Semi-Final or Final (league rule 41).':lsCount(line)>=2?'L/S already used twice: 2 is the most allowed (league rule 14).':'';
+  if(lsWhy)h+='<div class="sec" style="margin-top:0">Short of players?</div><div class="small muted" style="margin-bottom:6px">'+lsWhy+'</div>';
+  if(slot<12&&cur!=='LS'&&!lsWhy)h+='<div class="sec" style="margin-top:0">Short of players?</div><div class="list"><div><button class="grow" style="text-align:left" data-act="'+(mode==='match'?'mput':'tput')+'" data-slot="'+slot+'" data-id="LS"><div class="name">L/S (lowest score)</div><div class="small muted">Copies our lowest player total from the earlier sets</div></button></div></div>';
+  h+='<div class="sec">Bring in</div><div class="list"><div><button class="grow" style="text-align:left" data-act="newplayer" data-slot="'+slot+'" data-mode="'+mode+'"><div class="name gold">+ New player (NR)</div><div class="small muted">Someone not in the squad yet. Adds him and marks (NR), new registration, on the league scorecard.</div></button></div>'+act.map(function(p){var a=sel.avail[p.id];return '<div><button class="grow" style="text-align:left" data-act="'+(mode==='match'?'mput':'tput')+'" data-slot="'+slot+'" data-id="'+p.id+'"><div class="name">'+esc(fullName(p))+'</div><div class="small muted">'+(sel.reserves.indexOf(p.id)>-1?'<span class="gold">Reserve '+(sel.reserves.indexOf(p.id)+1)+'</span> · ':'')+(a==='in'?'Available':'Out')+(sel.req[p.id]?' · asked for set '+sel.req[p.id]:'')+'</div></button></div>';}).join('')+'</div>';
+  if(cur&&cur!=='LS'&&slot<12){var npx=npOn(f.id,cur);h+='<button class="btn ghost" data-act="nptoggle" data-id="'+cur+'">'+(npx?'Remove the (NR) marker':'Mark (NR) tonight, new registration')+'</button>';}
   if(cur)h+='<button class="btn danger" data-act="'+(mode==='match'?'mclear':'tclear')+'" data-slot="'+slot+'">'+(slot>=12&&mode!=='match'?'Remove from reserves':'Leave slot empty')+'</button>';
   h+='<button class="btn ghost" data-act="close">Cancel</button>';modal(h);}
 function oppNamesModal(s){var m=curMatch(),per=m.rules.per,team=oppTeam(m),known=(S.oppNames[team]||[]);
   var h='<h4>'+esc(team)+' · set '+(s+1)+'</h4><datalist id="oppKnown">'+known.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>';
-  for(var k=0;k<per;k++){var p=s*per+k;h+='<div class="field"><label for="on'+k+'">Player '+(p+1)+'</label><input id="on'+k+'" data-onp="'+p+'" list="oppKnown" autocomplete="off" autocapitalize="words" enterkeyhint="'+(k<per-1?'next':'done')+'" value="'+esc(m.opp[p]||'')+'" placeholder="Type a name"><label class="small muted" style="display:flex;gap:8px;align-items:center;min-height:36px"><input type="checkbox" data-onpx="'+p+'" style="width:20px;height:20px"'+((m.onp||[]).indexOf(p)>-1?' checked':'')+'> New player (N/P)</label></div>';}
-  h+='<div class="note">Opposition a player short? Type L/S as the name. That slot then copies their lowest total from the earlier sets. Tick N/P only if their scorecard needs it: it shows on the league scorecard only.</div><button class="btn gold" data-act="saveopp" data-set="'+s+'">Save names</button><button class="btn ghost" data-act="close">Cancel</button>';modal(h);
+  for(var k=0;k<per;k++){var p=s*per+k;h+='<div class="field"><label for="on'+k+'">Player '+(p+1)+'</label><input id="on'+k+'" data-onp="'+p+'" list="oppKnown" autocomplete="off" autocapitalize="words" enterkeyhint="'+(k<per-1?'next':'done')+'" value="'+esc(m.opp[p]||'')+'" placeholder="Type a name"><label class="small muted" style="display:flex;gap:8px;align-items:center;min-height:36px"><input type="checkbox" data-onpx="'+p+'" style="width:20px;height:20px"'+((m.onp||[]).indexOf(p)>-1?' checked':'')+'> New registration (NR)</label></div>';}
+  h+='<div class="note">Opposition a player short? Type L/S as the name. That slot then copies their lowest total from the earlier sets. Tick NR (new registration) only if their scorecard needs it: it shows on the league scorecard only.</div><button class="btn gold" data-act="saveopp" data-set="'+s+'">Save names</button><button class="btn ghost" data-act="close">Cancel</button>';modal(h);
   setTimeout(function(){var i=document.getElementById('on0');if(i)i.focus();},60);}
 function fxModal(id){var f=id?fxById(id):{id:'',date:today(),comp:S.comps[0].id,round:'',opp:'',home:true,venue:S.rules.general.home,status:'scheduled'};
   var teams={};S.fixtures.forEach(function(x){if(x.opp)teams[x.opp]=1;});var venues={};S.fixtures.forEach(function(x){if(x.venue)venues[x.venue]=1;});
@@ -1045,7 +1135,7 @@ function ruleModal(k){var isNew=!k,r=isNew?JSON.parse(JSON.stringify(S.rules.typ
   modal('<h4>'+(isNew?'New match type':esc(r.label)+' rules')+'</h4><div class="field"><label>Name</label><input id="rLabel" value="'+esc(r.label)+'"></div>'+
    '<div class="field"><label>Result decided by</label><select id="rRes"><option value="sets"'+(r.result==='sets'?' selected':'')+'>Set points + match bonus</option><option value="pins"'+(r.result==='pins'?' selected':'')+'>Total pins only</option></select></div>'+
    '<div class="grid2">'+num('rSetWin','Points: set won',r.setWin)+num('rSetTie','Points: set tied (each)',r.setTie)+num('rMatchWin','Points: most pins',r.matchWin)+num('rMatchTie','Points: pins tied (each)',r.matchTie)+'</div>'+
-   '<div class="field"><label>When total pins are tied</label><select id="rTie">'+[['share','Share the points'],['captains','Captains decide (app asks who won)'],['extra','Play extra hand(s)'],['notes','See notes']].map(function(o){return '<option value="'+o[0]+'"'+(r.tie===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></div>'+
+   '<div class="field"><label>When total pins are tied</label><select id="rTie">'+[['share','Share the points'],['sudden','Sudden-death hand (5th set in a Final), league rule 42'],['captains','Captains decide (app asks who won)'],['extra','Play extra hand(s)'],['notes','See notes']].map(function(o){return '<option value="'+o[0]+'"'+(r.tie===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></div>'+
    '<div class="grid2">'+num('rExtra','Extra hands on a tie',r.extraHands)+num('rMax','Max hand score',r.maxHand)+num('rSpMin','Spare keypad from',r.spareMin)+num('rSpMax','Spare keypad to',r.spareMax)+num('rSets','Sets',r.sets)+num('rPer','Players per set',r.per)+num('rHands','Hands per set',r.hands)+'</div>'+
    '<label style="display:flex;gap:10px;align-items:center;min-height:44px"><input type="checkbox" id="rAvg" style="width:22px;height:22px"'+(r.averages?' checked':'')+'> Counts towards averages</label>'+
    '<div class="field"><label>Notes</label><textarea id="rNotes">'+esc(r.notes||'')+'</textarea></div>'+
@@ -1060,7 +1150,7 @@ function txt(ctx,t,x,y,o){o=o||{};font(ctx,o.w||'400',o.s||22,o.f);ctx.fillStyle
 function drawLogo(ctx,x,y,h){var p=getLogo();if(!p)return;ctx.save();ctx.translate(x,y);var k=h/1000;ctx.scale(k,k);ctx.fillStyle=GOLD;ctx.fill(p,'evenodd');ctx.restore();}
 function canvasFor(h){var c=document.createElement('canvas');c.width=1080;c.height=h;var ctx=c.getContext('2d');ctx.fillStyle=NAVY;ctx.fillRect(0,0,1080,h);return {c:c,ctx:ctx};}
 function header(ctx,title,line1,line2){drawLogo(ctx,48,48,140);var tx=48+LOGO_W*0.14+32;txt(ctx,line1,tx,84,{s:20,w:'700',c:GOLD,max:1080-tx-48});txt(ctx,title.toUpperCase(),tx,146,{s:54,w:'700',f:'o',max:1080-tx-48});txt(ctx,line2,tx,184,{s:22,c:MUTED,max:1080-tx-48});return 228;}
-function fontsReady(){try{return Promise.all([document.fonts.load('700 40px Oswald'),document.fonts.load('400 40px Oswald'),document.fonts.load('400 30px "Patrick Hand"'),document.fonts.load('400 20px Inter'),document.fonts.load('700 20px Inter')]).catch(function(){});}catch(e){return Promise.resolve();}}
+function fontsReady(){try{return Promise.all([document.fonts.load('700 40px Oswald'),document.fonts.load('400 40px Oswald'),document.fonts.load('400 30px "Patrick Hand"'),document.fonts.load('400 20px Inter'),document.fonts.load('700 20px Inter'),document.fonts.load('600 40px Inter')]).catch(function(){});}catch(e){return Promise.resolve();}}
 function showImage(c,fname,caption){
   var url=c.toDataURL('image/png');
   modal('<h4>'+esc(caption)+'</h4><img class="imgout" src="'+url+'" alt="'+esc(caption)+'"><button class="btn gold" data-act="shareimg">Share / save image</button><div class="note">If sharing isn’t offered, press and hold the image and choose Save to Photos, then post it from WhatsApp.</div><button class="btn ghost" data-act="close">Close</button>');
@@ -1084,7 +1174,7 @@ function lcT(ctx,t,x,y,o){o=o||{};if(o.c===LEAGUE_CARD.ink){o=Object.assign({},o
 function lcHigh(m,t){var best=-1,who=[];for(var p=0;p<mP(m);p++){if(isLS(m,t,p))continue;var v=pTot(m,t,p);if(v>best){best=v;who=[p];}else if(v===best)who.push(p);}
   return {names:who.map(function(p){return slotName(m,t,p);}).join(' / '),score:best>0?best:''};}
 function loadImg(u){return new Promise(function(res){if(!u)return res(null);var i=new Image();i.onload=function(){res(i);};i.onerror=function(){res(null);};i.src=u;});}
-function leagueCardCanvas(m,f,sigs){var L=LEAGUE_CARD,lb=L.labels,INK=L.ink,r=m.rules,per=r.per,R=result(m),W=2000,H=1600;
+function leagueCardCanvas(m,f,sigs){var L=LEAGUE_CARD,lb=L.labels,INK=L.ink,r=m.rules,per=r.per,R=result(m),W=2000,SDH=(m.sd&&pinsTie(m))?360:0,H=1600+SDH;
   var c=document.createElement('canvas');c.width=W;c.height=H;var ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.strokeStyle='#000';ctx.lineCap='butt';
   var box=function(x,y,w,h,lw){ctx.lineWidth=lw||2;ctx.strokeRect(x,y,w,h);},line=function(x1,y1,x2,y2,lw){ctx.lineWidth=lw||2;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();};
   var dots=function(x1,x2,y){ctx.save();ctx.setLineDash&&ctx.setLineDash([3,7]);line(x1,y,x2,y,2);ctx.restore();};
@@ -1110,7 +1200,17 @@ function leagueCardCanvas(m,f,sigs){var L=LEAGUE_CARD,lb=L.labels,INK=L.ink,r=m.
     lcT(ctx,lb.total,bx-16,by+32,{s:26,w:'800',a:'right'});box(bx,by,cw.t,64,3);lcT(ctx,matchTot(m,t)||'',bx+cw.t/2,by+32,{s:32,w:'800',c:INK,a:'center'});
     lcT(ctx,lb.points,bx-16,by+112,{s:26,w:'800',a:'right'});box(bx,by+80,cw.t,64,3);
     if(r.result==='sets')lcT(ctx,t==='L'?R.l:R.o,bx+cw.t/2,by+112,{s:32,w:'800',c:INK,a:'center'});
-    var hi=lcHigh(m,t),hy=by+200;
+    var hy=by+200;if(SDH){var sy0=by+165,ty=sy0+50,n=m.sd[t].length,sdc=sdCols(m),fs=!!m.sd.final,sst=sdState(m);lcT(ctx,fs?'SUDDEN DEATH – 5TH SET':'SUDDEN DEATH',x,sy0+18,{s:30,w:'800'});
+      box(x,ty,TW,HH+RH*n,4);line(x,ty+HH,x+TW,ty+HH,4);lcT(ctx,lb.name,x+cw.n/2,ty+HH/2,{s:26,w:'800',a:'center'});
+      xs.forEach(function(xx,i){line(xx,ty,xx,ty+HH+RH*n,i===0||i>=6?3:2);});
+      lcT(ctx,lb.score,x+cw.n+cw.h*6+cw.s/2,ty+HH/2,{s:22,w:'800',a:'center'});lcT(ctx,'TOTAL',x+TW-cw.t/2,ty+HH/2,{s:20,w:'800',a:'center'});
+      m.sd[t].forEach(function(r,p){var ry=ty+HH+RH*p,cy=ry+RH/2;if(p)line(x,ry,x+TW,ry,1.5);lcT(ctx,sdName(m,t,p),x+12,cy,{s:26,w:'600',c:INK,max:cw.n-20});
+        for(var h2=0;h2<6&&h2<sdc;h2++){var cc=sdCell(m,t,p,h2);if(!cc)continue;lcT(ctx,lcCell(cc),x+cw.n+cw.h*h2+cw.h/2,cy,{s:cc.vc?20:26,w:'600',c:INK,a:'center'});if(cc.sp)lcSpare(ctx,x+cw.n+cw.h*h2,x+cw.n+cw.h*(h2+1),ry,ry+RH,p===0,p===n-1,INK);}
+        lcT(ctx,sdRowPins(m,t,p),x+cw.n+cw.h*6+cw.s/2,cy,{s:28,w:'700',c:INK,a:'center'});});
+      lcT(ctx,fs?sdTeamTot(m,t):sdTeamTot(m,t),x+TW-cw.t/2,ty+HH+RH*n-RH/2,{s:30,w:'800',c:INK,a:'center'});
+      if(sst.winner===t)lcT(ctx,fs?'Won on the 5th set':'Won on the sudden-death hand',x+TW,ty+HH+RH*n+30,{s:24,w:'700',c:INK,a:'right'});
+      hy=ty+HH+RH*n+90;}
+    var hi=lcHigh(m,t);
     lcT(ctx,lb.hiScorer,x,hy,{s:28,w:'700'});dots(x+230,x+TW,hy+18);lcT(ctx,hi.names,x+246,hy,{s:30,w:'700',c:INK,max:TW-260});
     lcT(ctx,lb.hiScore,x,hy+70,{s:28,w:'700'});dots(x+230,x+TW,hy+88);lcT(ctx,hi.score,x+246,hy+70,{s:30,w:'700',c:INK});
     return hy+70;};
@@ -1133,9 +1233,14 @@ function leagueCard(){var f=curFx(),m=S.matches[f.id];if(!m)return;var sg=m.sig|
       '<button class="btn gold" data-act="sendleague">'+(m.leagueSent?'Resend to league':'Send to league')+'</button><button class="btn ghost" data-act="copyleague">Copy league email address</button>'+
       '<div class="note">Send to league copies '+esc(S.rules.general.leagueEmail)+' and opens the share sheet. Choose Mail, then paste the address into To. If sharing isn’t offered, press and hold the image to save it, then attach it to an email.</div>'+(m.leagueSent?'':'<button class="btn ghost" data-act="leaguemark">Mark as sent (sent another way)</button>')+'<button class="btn ghost" data-act="close">Close</button>');
     T.img={c:c,fname:fname};T.lfile=null;c.toBlob(function(b){try{T.lfile=new File([b],fname,{type:'image/png'});}catch(e){}},'image/png');});}
-function leagueMailText(){var f=curFx(),m=S.matches[f.id],R=result(m),hT=homeT(m),nm=function(t){return t==='L'?LEAGUE_CARD.team:oppTeam(m);};
-  var aT=awayT(m),pts=m.rules.result==='sets'?' ('+(hT==='L'?R.l:R.o)+' – '+(aT==='L'?R.l:R.o)+' pts)':'';
-  return LEAGUE_CARD.name+' result, '+lcDiv(f)+', '+ordDate(f.date)+': '+nm(hT)+' '+matchTot(m,hT)+' v '+matchTot(m,aT)+' '+nm(aT)+pts+'. Completed scorecard attached.';}
+function leagueMailText(){var f=curFx(),m=S.matches[f.id],R=result(m),hT=homeT(m),aT=awayT(m),g=S.rules.general,pins=m.rules.result==='pins',line;
+  var nm=function(t){return t==='L'?'Lions':oppTeam(m);},wp=function(t){return t==='L'?R.l:R.o;},tp=function(t){return t==='L'?R.A:R.B;};
+  if(!R.done)line='Match not finished yet.';
+  else if(R.winner==='L'||R.winner==='O'){var w=R.winner,lo=w==='L'?'O':'L';
+    if(R.A===R.B)line=nm(w)+' won '+(R.sd&&R.sd.winner?'on the '+(R.sd.final?'5th set':'sudden-death hand'):'on the tie-break')+', '+R.A+' pins each.';
+    else line=pins?nm(w)+' won, '+tp(w)+' pins to '+tp(lo)+'.':nm(w)+' won, '+wp(w)+' – '+wp(lo)+'.';}
+  else line=pins?'Tied on pins, '+R.A+' each.':R.l===R.o?'Match drawn, '+R.l+' – '+R.o+'.':'Tied on pins, '+wp(hT)+' – '+wp(aT)+' points.';
+  return 'Hi '+(g.leagueContact||'John')+'\n\nScorecard for match on '+ordDate(f.date)+', '+nm(hT)+' vs '+nm(aT)+'.\n\n'+line+'\n\nMany thanks\n\n'+meTag().name+', The Lions.';}
 function sendLeague(){var e=S.rules.general.leagueEmail;try{navigator.clipboard&&navigator.clipboard.writeText(e).catch(function(){});}catch(x){}
   var go=function(file){try{if(file&&navigator.canShare&&navigator.canShare({files:[file]})){toast('Address copied: paste it into To');navigator.share({files:[file],title:'League result',text:leagueMailText()}).then(function(){var mm=curMatch();if(mm){markSent(mm);var el=document.getElementById('lcSent');if(el){el.textContent=sentLine(mm);el.style.display='';}var bt=document.querySelector('#mbox [data-act="sendleague"]');if(bt)bt.textContent='Resend to league';var mk=document.querySelector('#mbox [data-act="leaguemark"]');if(mk)mk.remove();renderSoon();}}).catch(function(){});}else toast('Press and hold the image to save it');}catch(x){toast('Press and hold the image to save it');}};
   if(T.lfile)go(T.lfile);else T.img.c.toBlob(function(b){try{go(new File([b],T.img.fname,{type:'image/png'}));}catch(x){go(null);}},'image/png');}
@@ -1278,32 +1383,32 @@ function leagueImg(){var t=leagueTbl();if(!t)return;var cols=t.cols,others=cols.
 function fitTxt(ctx,t,x,y,o){var sz=o.s;font(ctx,o.w||'700',sz,o.f);while(sz>o.min&&ctx.measureText(String(t)).width>o.max){sz-=2;font(ctx,o.w||'700',sz,o.f);}txt(ctx,t,x,y,Object.assign({},o,{s:sz,max:o.max}));}
 function teamSheetImg(){var f=curFx(),sel=selFor(f.id),line=(S.matches[f.id]?S.matches[f.id].lineup:sel.lineup);
   var res=(sel.reserves||[]).filter(function(p){return line.indexOf(p)<0;});
-  // big, easy-to-read names that still fit one phone screen (Andy, 10 Nov): aim for 1080 x 1920
-  var G=14,RG=6,two=res.length>1,rr2=two?Math.ceil(res.length/2):res.length,RRH=64,RES=res.length?50+rr2*(RRH+RG)+12:0;
-  var avail=1920-248-90-(RES?RES+G:0)-4*G,SH0=avail/4,RH=Math.max(70,Math.min(104,Math.floor((SH0-60)/3)-RG)),SH=60+3*(RH+RG)+4,NS=Math.min(76,Math.round(RH*0.7));
+  // v3.12 (Andy 17 Nov): names in Inter SemiBold 50% bigger, rows 14 px apart, reserves one under the other
+  var G=14,RG=14,RH=88,NS=75,RRH=76,RS=60,NX=110,NN=56,SH=58+3*(RH+RG)+4,RES=res.length?50+res.length*(RRH+RG)+12:0;
   fontsReady().then(function(){var H=248+4*(SH+G)+(RES?RES+G:0)+76,o=canvasFor(H),ctx=o.ctx;
     var y=header(ctx,fxTitle(f),'TEAM SHEET · '+fxComp(f).toUpperCase(),fdate(f.date,true)+' · '+(f.home?'Home':'Away')+(f.venue?' · '+f.venue:''));
     y+=20;var bx=40,bw=1000;
     for(var s=0;s<4;s++){var by=y+s*(SH+G);ctx.fillStyle=PANEL;rr(ctx,bx,by,bw,SH,20);ctx.fill();
-      txt(ctx,'SET '+(s+1)+(s===3?' · ANCHOR SET':''),bx+28,by+42,{s:28,w:'700',c:GOLD,f:'o'});
-      for(var k=0;k<3;k++){var i=s*3+k,ry=by+58+k*(RH+RG);ctx.fillStyle=k%2?'#0E2048':'#1A3466';rr(ctx,bx+12,ry,bw-24,RH,14);ctx.fill();
-        txt(ctx,String(i+1),bx+62,ry+RH/2+Math.round(NS*0.2),{s:Math.round(NS*0.6),w:'700',c:GOLD,a:'center',f:'o'});
-        var anc=i===11,maxw=bw-24-(anc?320:140);
-        fitTxt(ctx,line[i]?outName(line[i],'teamsheet'):'TBC',bx+116,ry+RH/2+Math.round(NS*0.36),{s:NS,min:40,w:'400',f:'o',c:line[i]?WHITE:MUTED,max:maxw});
-        if(anc){ctx.fillStyle=GOLD;rr(ctx,bx+bw-12-196,ry+RH/2-24,176,48,24);ctx.fill();txt(ctx,'ANCHOR',bx+bw-12-108,ry+RH/2+10,{s:26,w:'700',c:NAVY,a:'center',f:'o'});}}}
-    if(res.length){var ry0=y+4*(SH+G);ctx.fillStyle=PANEL;rr(ctx,bx,ry0,bw,RES,20);ctx.fill();txt(ctx,'RESERVES',bx+28,ry0+38,{s:26,w:'700',c:GOLD,f:'o'});
-      var cw=two?(bw-24-RG)/2:bw-24;
-      res.forEach(function(pid,i){var col=two?(i<rr2?0:1):0,row=two?(i%rr2):i,xx=bx+12+col*(cw+RG),yy=ry0+50+row*(RRH+RG);
-        ctx.fillStyle=row%2?'#0E2048':'#1A3466';rr(ctx,xx,yy,cw,RRH,12);ctx.fill();
-        txt(ctx,'R'+(i+1),xx+40,yy+RRH/2+10,{s:28,w:'700',c:MUTED,a:'center',f:'o'});
-        fitTxt(ctx,outName(pid,'teamsheet'),xx+80,yy+RRH/2+16,{s:46,min:30,w:'400',f:'o',max:cw-96});});}
+      txt(ctx,'SET '+(s+1)+(s===3?' · ANCHOR SET':''),bx+24,by+40,{s:26,w:'700',c:GOLD,f:'o'});
+      for(var k=0;k<3;k++){var i=s*3+k,ry=by+56+k*(RH+RG);ctx.fillStyle=k%2?'#0E2048':'#1A3466';rr(ctx,bx+10,ry,bw-20,RH,12);ctx.fill();
+        txt(ctx,String(i+1),bx+NN,ry+RH/2+Math.round(NS*0.25),{s:Math.round(NS*0.62),w:'700',c:GOLD,a:'center',f:'o'});
+        var anc=i===11,maxw=bw-20-(anc?300:100)-(NX-84);
+        fitTxt(ctx,line[i]?outName(line[i],'teamsheet'):'TBC',bx+NX,ry+RH/2+Math.round(NS*0.36),{s:NS,min:30,w:'600',c:line[i]?WHITE:MUTED,max:maxw});
+        if(anc){ctx.fillStyle=GOLD;rr(ctx,bx+bw-12-176,ry+RH/2-22,160,44,22);ctx.fill();txt(ctx,'ANCHOR',bx+bw-12-96,ry+RH/2+9,{s:24,w:'700',c:NAVY,a:'center',f:'o'});}}}
+    if(res.length){var ry0=y+4*(SH+G);ctx.fillStyle=PANEL;rr(ctx,bx,ry0,bw,RES,20);ctx.fill();txt(ctx,'RESERVES',bx+24,ry0+38,{s:26,w:'700',c:GOLD,f:'o'});
+      var cw=bw-24;
+      res.forEach(function(pid,i){var xx=bx+12,yy=ry0+50+i*(RRH+RG);
+        ctx.fillStyle=i%2?'#0E2048':'#1A3466';rr(ctx,xx,yy,cw,RRH,12);ctx.fill();
+        txt(ctx,'R'+(i+1),xx+36,yy+RRH/2+10,{s:26,w:'700',c:MUTED,a:'center',f:'o'});
+        fitTxt(ctx,outName(pid,'teamsheet'),xx+NX-12,yy+RRH/2+Math.round(RS*0.36),{s:RS,min:26,w:'600',max:cw-110});});}
     txt(ctx,'Up the Lions',1032,H-34,{s:26,w:'700',c:GOLD,a:'right',f:'o'});txt(ctx,'The Lions Den',48,H-34,{s:20,c:MUTED});
     showImage(o.c,'lions-team-sheet-'+f.date+'.png','Team sheet');});}
 
 function resultsImg(){var f=curFx(),m=S.matches[f.id],r=m.rules,R=result(m),pins=r.result==='pins',per=r.per,sets=r.sets;
   fontsReady().then(function(){
     var tableH=function(){return 70+44+sets*(per*48+2*34+14);};
-    var H=228+20+280+40+150+40+tableH()*2+40+40+60;
+    var sdH=(m.sd&&pinsTie(m))?90+2*(56+3*48+20):0;
+    var H=228+20+280+40+150+40+tableH()*2+40+40+60+sdH;
     var o=canvasFor(H),ctx=o.ctx,home=homeT(m);
     var title=f.home?'Lions v '+oppTeam(m):oppTeam(m)+' v Lions';
     var y=header(ctx,title,(S.rules.general.league+' · '+fxComp(f)).toUpperCase(),fdate(f.date,true)+' · '+(f.home?'Home':'Away')+(f.venue?' · '+f.venue:''));
@@ -1319,6 +1424,7 @@ function resultsImg(){var f=curFx(),m=S.matches[f.id],r=m.rules,R=result(m),pins
     var setsWon=0,setsLost=0;for(var s=0;s<sets;s++){if(!setDone(m,s))continue;var a=setTot(m,'L',s),b=setTot(m,'O',s);if(a>b)setsWon++;else if(b>a)setsLost++;}
     var banner=!R.done?'In progress':R.winner==='L'?'Lions win by '+(R.A-R.B)+' pins'+(pins?'':' · '+setsWon+' sets to '+setsLost):R.winner==='O'?oppTeam(m)+' win by '+(R.B-R.A)+' pins':R.winner==='D'?'Draw':'Tied on pins';
     if(R.done&&R.A===R.B&&R.winner==='L')banner='Level on pins · Lions win';if(R.done&&R.A===R.B&&R.winner==='O')banner='Level on pins · '+oppTeam(m)+' win';
+    if(R.done&&R.A===R.B&&R.sd&&R.sd.winner)banner='Level on pins · '+(R.sd.winner==='L'?'Lions':oppTeam(m))+' win on '+(R.sd.final?'the 5th set':'sudden death');
     txt(ctx,banner.toUpperCase(),540,y+266,{s:26,w:'700',f:'o',c:NAVY,a:'center',max:950});
     ctx.save();rr(ctx,48,y,984,280,22);ctx.restore();
     y+=320;
@@ -1329,8 +1435,17 @@ function resultsImg(){var f=curFx(),m=S.matches[f.id],r=m.rules,R=result(m),pins
     tsBox(homeT(m),48);tsBox(awayT(m),550);
     y+=170;
     [homeT(m),awayT(m)].forEach(function(t,i){y=teamTable(ctx,m,t,t==='L'?'Lions':oppTeam(m),i===0?'Home':'Away',y)+(i===0?40:30);});
+    if(sdH)y=sdImgBlock(ctx,m,y);
     txt(ctx,'Gold ring = spare · V/C = very close (0) · BYM = beat your man · / = behind',48,H-40,{s:18,c:MUTED,max:800});txt(ctx,'Up the Lions',1032,H-40,{s:20,w:'700',c:GOLD,a:'right'});
     showImage(o.c,'lions-result-'+f.date+'.png','Results image');});}
+function sdImgBlock(ctx,m,y){var cols=sdCols(m),fin=!!m.sd.final,s=sdState(m),colW=56,gx=64,nameW=360,hx=function(x){return gx+nameW+x*(colW+6)+colW/2;},tx=1000;
+  txt(ctx,fin?'5TH SET (FINAL)':'SUDDEN DEATH',48,y+34,{s:34,w:'600',f:'o',c:GOLD});y+=60;
+  [homeT(m),awayT(m)].forEach(function(t){var isL=t==='L',tot=sdTeamTot(m,t);
+    ctx.fillStyle=s.winner===t?GOLD:PANEL;rr(ctx,48,y,984,44,10);ctx.fill();txt(ctx,(isL?'Lions':oppTeam(m)).toUpperCase(),gx,y+30,{s:22,w:'700',c:s.winner===t?NAVY:WHITE,max:500});txt(ctx,String(tot),tx,y+31,{s:26,w:'700',f:'o',c:s.winner===t?NAVY:GOLD,a:'right'});y+=56;
+    m.sd[t].forEach(function(r,i){ctx.fillStyle=i%2?'#10234A':ROW;ctx.fillRect(48,y,984,48);txt(ctx,sdName(m,t,i,'results'),gx,y+32,{s:21,w:'600',max:nameW-12});
+      for(var x=0;x<cols;x++){var c=sdCell(m,t,i,x),cx=hx(x);if(!c)continue;if(c.vc)txt(ctx,'V/C',cx,y+31,{s:16,c:MUTED,a:'center'});else if(c.sp){ctx.strokeStyle=GOLD;ctx.lineWidth=2.5;rr(ctx,cx-colW/2+2,y+8,colW-4,32,16);ctx.stroke();txt(ctx,String(c.v),cx,y+32,{s:21,w:'700',c:GOLD,a:'center'});}else txt(ctx,String(c.v),cx,y+32,{s:21,a:'center'});}
+      txt(ctx,String(sdRowPins(m,t,i)),tx,y+33,{s:23,w:'700',c:GOLD,a:'right'});y+=48;});y+=20;});
+  return y;}
 function sumSetPts(m,t){var r=m.rules,n=0;for(var s=0;s<r.sets;s++){if(!setDone(m,s))continue;var a=setTot(m,'L',s),b=setTot(m,'O',s);var mine=t==='L'?a:b,their=t==='L'?b:a;if(mine>their)n+=r.setWin;else if(mine===their)n+=r.setTie;}return n;}
 function pt(ctx,x,y,p){if(p){ctx.fillStyle=GOLD;rr(ctx,x-34,y-20,68,38,19);ctx.fill();txt(ctx,'+'+p,x,y+9,{s:22,w:'700',c:NAVY,a:'center'});}else txt(ctx,'0',x,y+9,{s:22,c:MUTED,a:'center'});}
 function teamTable(ctx,m,t,title,side,y){var r=m.rules,per=r.per,hands=r.hands,W=984,setW=104,gx=48+16,colW=56,scW=74,isL=t==='L',bymW=64,RH=48,SH=34;
@@ -1360,7 +1475,7 @@ function avgImg(){var lg=!cupsOn(),a=averages(curSeason(),lg),BD=bands(a,curSeas
   var X=lg?{g:430,p:520,a:622,h:725,w:818,c:0,n:915,b:1000}:{g:400,p:482,a:574,h:668,w:750,c:832,n:922,b:1004};var cols=[[48,'PLAYER','left'],[X.g,'GAMES','center'],[X.p,'PINS','center'],[X.a,'AVG','center'],[X.h,'HOME','center'],[X.w,'AWAY','center']].concat(lg?[]:[[X.c,'CUP','center']]).concat([[X.n,'HAND','center'],[X.b,'BEST','center']]);
   cols.forEach(function(c){txt(ctx,c[1],c[0],y+20,{s:15,c:MUTED,a:c[2]});});y+=40;
   var line=function(){ctx.save();ctx.strokeStyle=GOLD;ctx.lineWidth=2;ctx.setLineDash([10,8]);ctx.beginPath();ctx.moveTo(40,y+10);ctx.lineTo(1040,y+10);ctx.stroke();ctx.restore();txt(ctx,'FEWER THAN '+TOP_MIN+' MATCHES',48,y+32,{s:14,c:GOLD});y+=40;};
-  BD.main.concat(BD.low).forEach(function(x,i){var lo=i>=BD.main.length;if(lo&&i===BD.main.length)line();ctx.globalAlpha=lo?0.7:1;ctx.fillStyle=i%2?'#10234A':ROW;rr(ctx,40,y,1000,48,8);ctx.fill();txt(ctx,(lo?'\u2013 ':(i+1)+'. ')+outName(x.pid,'averages'),60,y+33,{s:23,w:'600',max:lg?320:290});txt(ctx,String(x.games),X.g,y+33,{s:22,a:'center'});txt(ctx,String(x.pins),X.p,y+33,{s:22,a:'center'});txt(ctx,x.avgGame.toFixed(2),X.a,y+33,{s:25,w:'700',c:GOLD,a:'center'});txt(ctx,haTxt(x.hg,x.hp),X.h,y+33,{s:21,a:'center'});txt(ctx,haTxt(x.ag,x.ap),X.w,y+33,{s:21,a:'center'});if(!lg)txt(ctx,haTxt(x.cg,x.cp),X.c,y+33,{s:21,a:'center'});txt(ctx,x.avgHand.toFixed(2),X.n,y+33,{s:20,c:MUTED,a:'center'});txt(ctx,String(x.high),X.b,y+33,{s:22,a:'center'});ctx.globalAlpha=1;y+=52;});
+  BD.main.concat(BD.low).forEach(function(x,i){var lo=i>=BD.main.length;if(lo&&i===BD.main.length)line();ctx.globalAlpha=lo?0.7:1;ctx.fillStyle=i%2?'#10234A':ROW;rr(ctx,40,y,1000,48,8);ctx.fill();txt(ctx,(lo?'\u2013 ':(i+1)+'. ')+outName(x.pid,'averages'),60,y+33,{s:23,w:'600',max:lg?320:290});txt(ctx,String(x.games),X.g,y+33,{s:22,a:'center'});txt(ctx,String(x.pinsAll!=null?x.pinsAll:x.pins),X.p,y+33,{s:22,a:'center'});txt(ctx,x.avgGame.toFixed(2),X.a,y+33,{s:25,w:'700',c:GOLD,a:'center'});txt(ctx,haTxt(x.hg,x.hp),X.h,y+33,{s:21,a:'center'});txt(ctx,haTxt(x.ag,x.ap),X.w,y+33,{s:21,a:'center'});if(!lg)txt(ctx,haTxt(x.cg,x.cp),X.c,y+33,{s:21,a:'center'});txt(ctx,x.avgHand.toFixed(2),X.n,y+33,{s:20,c:MUTED,a:'center'});txt(ctx,String(x.high),X.b,y+33,{s:22,a:'center'});ctx.globalAlpha=1;y+=52;});
   txt(ctx,'Avg = average per match \u00b7 Home/Away = league'+(lg?'':' \u00b7 Cup = cups')+' \u00b7 Front Pin not included',48,H-40,{s:18,c:MUTED});txt(ctx,'Up the Lions',1032,H-40,{s:20,w:'700',c:GOLD,a:'right'});
   showImage(o.c,'lions-averages-'+today()+'.png','Averages image');});}
 
@@ -1371,6 +1486,8 @@ function reportText(){var f=curFx(),m=S.matches[f.id],r=m.rules,R=result(m),L=[]
   var won=[],lost=[];for(var s=0;s<r.sets;s++){var a=setTot(m,'L',s),b=setTot(m,'O',s);if(a>b)won.push(s+1);else if(b>a)lost.push(s+1);}
   var lst=function(x){return x.length>1?x.slice(0,-1).join(', ')+' and '+x.slice(-1):String(x[0]);};
   if(!R.done)L.push('Match still in progress.');
+  else if(R.A===R.B&&R.sd&&R.sd.winner){var sw2=R.sd.winner;L.push('Tied '+R.A+' – '+R.B+'; '+(sw2==='L'?'Lions':opp)+' won the '+(R.sd.final?'5th set ':'sudden-death hand ')+sdTeamTot(m,sw2)+' – '+sdTeamTot(m,sw2==='L'?'O':'L')+'.');}
+  else if(R.A===R.B&&(R.winner==='L'||R.winner==='O'))L.push('Level on '+R.A+' pins; '+(R.winner==='L'?'Lions':opp)+' won on the tie-break.');
   else if(R.winner==='L')L.push(pins?'Lions won by '+(R.A-R.B)+' pins.':'Lions won '+R.l+'–'+R.o+' on points'+(won.length?', taking set'+(won.length>1?'s ':' ')+lst(won):'')+' and the match by '+(R.A-R.B)+' pins.');
   else if(R.winner==='O')L.push(pins?opp+' won by '+(R.B-R.A)+' pins.':opp+' won '+R.o+'–'+R.l+' on points.'+(won.length?' Lions took set'+(won.length>1?'s ':' ')+lst(won)+'.':''));
   else L.push('Level on '+R.A+' pins'+(pins?'.':', '+R.l+'–'+R.o+' on points.'));
@@ -1391,6 +1508,9 @@ function scoresText(){var f=curFx(),m=S.matches[f.id],R=result(m),opp=oppTeam(m)
   L.push(fxTitle(f)+' – '+fxComp(f)+' – '+f.date+' ('+(f.home?'Home':'Away')+')');L.push(nm(hT)+' '+tot(hT)+' – '+tot(aT)+' '+nm(aT)+(m.rules.result==='sets'?' · Points '+pt(hT)+'–'+pt(aT):''));
   for(var s=0;s<m.rules.sets;s++)L.push('Set '+(s+1)+': '+nm(hT)+' '+setTot(m,hT,s)+' – '+setTot(m,aT,s)+' '+nm(aT));
   [[hT,nm(hT).toUpperCase()+' (HOME)'],[aT,nm(aT).toUpperCase()+' (AWAY)']].forEach(function(x){L.push('');L.push(x[1]);for(var p=0;p<mP(m);p++){if(p%m.rules.per===0)L.push('Set '+(p/m.rules.per+1)+':');L.push((p+1)+'. '+slotName(m,x[0],p)+': '+m[x[0]][p].map(cellText).join(' ')+' = '+pTot(m,x[0],p));}});
+  if(m.sd&&pinsTie(m)){var fs=!!m.sd.final,s3=sdState(m);L.push('');L.push(fs?'5TH SET (FINAL)':'SUDDEN DEATH');
+    [hT,aT].forEach(function(t){L.push(nm(t)+':');m.sd[t].forEach(function(r,i){var cs=[];for(var x=0;x<sdCols(m);x++)cs.push(cellText(sdCell(m,t,i,x)));L.push(sdName(m,t,i)+': '+cs.join(' ')+' = '+sdRowPins(m,t,i));});});
+    if(s3.winner)L.push((s3.winner==='L'?'Lions':opp)+' won the '+(fs?'5th set ':'sudden death ')+sdTeamTot(m,hT)+' – '+sdTeamTot(m,aT));}
   L.push('');L.push('[n] = spare · V/C = very close (0)');return L.join('\n');}
 function textModal(title,t){modal('<h4>'+esc(title)+'</h4><textarea class="out" id="outText" readonly>'+esc(t)+'</textarea><button class="btn gold" data-act="copytext">Copy</button><button class="btn ghost" data-act="sharetext">Share</button><button class="btn ghost" data-act="close">Close</button>');T.text=t;}
 function copyText(t){try{navigator.clipboard.writeText(t).then(function(){toast('Copied');},function(){toast('Press and hold the text to copy');});}catch(e){toast('Press and hold the text to copy');}}
@@ -1413,6 +1533,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     T.pick=null;emptySync(f.id);save();render();return;}
   if(d.v!==undefined){enter(+d.v,false,false);return;}
   if(d.sp!==undefined){enter(+d.sp,true,false);return;}
+  if(d.sdcell){var sq2=d.sdcell.split(',');T.sel={sd:true,t:sq2[0],i:+sq2[1],h:+sq2[2]};T.spare=false;S.ui.tab='score';render();window.scrollTo(0,0);return;}
   if(d.cell){var a=d.cell.split(','),cm=curMatch();if(cm&&lsLocked(cm,a[0],+a[1])){toast('L/S copies the lowest score from the earlier sets');return;}T.sel={t:a[0],p:+a[1],h:+a[2]};T.spare=false;S.ui.tab='score';render();window.scrollTo(0,0);return;}
   if(d.name){var nn=d.name.split(',');if(nn[0]==='L'){var p=+nn[1];if(slotLocked(m,p)){toast((p+1)+'. '+slotName(m,'L',p)+' has thrown in this set, so the slot is locked');return;}pickPlayerModal(p,'match');}else oppNamesModal(Math.floor(+nn[1]/m.rules.per));return;}
   if(d.tw){m.tieWinner=d.tw;logChange(m,'Tie result set');save();render();return;}
@@ -1435,7 +1556,14 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'vdseen':S.feedSeen=S.feedSeen||{draws:{}};S.feedSeen.vd=S.feedSeen.vd||{};S.feedSeen.vd[d.dk]=1;save();render();break;
     case 'imseen':S.feedSeen=S.feedSeen||{draws:{}};S.feedSeen.draws=S.feedSeen.draws||{};S.feedSeen.draws[d.ik]=1;save();render();break;
     case 'drawignore':S.feedSeen=S.feedSeen||{draws:{}};S.feedSeen.dr=S.feedSeen.dr||{};S.feedSeen.dr[d.dk]=1;save();render();break;
-    case 'lockm':m.lock={at:Date.now(),by:meTag().name};if(!m.pub)m.pub={at:m.lock.at,by:m.lock.by};if(m.everLocked)logChange(m,'Published again');m.unlockedAt=null;T.sel=null;save();render();toast('Results published');break;
+    case 'sdstart':if(!pinsTie(m)){toast('Only when the pins are level');break;}sdPickModal();break;
+    case 'sdgo':var pk={L:[],O:[]};document.querySelectorAll('[data-sdpick]').forEach(function(cb){if(cb.checked){var z=cb.dataset.sdpick.split(',');pk[z[0]].push(+z[1]);}});
+      if(pk.L.length!==3||pk.O.length!==3){toast('Pick 3 players for each team');break;}
+      var mk=function(a){return a.sort(function(x,y){return x-y;}).map(function(p){return {p:p,h:[]};});};
+      m.sd={final:isFinalFx(f),n:1,L:mk(pk.L),O:mk(pk.O)};m.tieWinner=null;logChange(m,m.sd.final?'5th set started':'Sudden death started');T.sel=null;closeModal();save();render();window.scrollTo(0,0);break;
+    case 'sdmore':var sv=m.sd&&sdState(m);if(!sv||!sv.level||m.sd.final)break;m.sd.n=sdCols(m)+1;logChange(m,'Sudden death round '+m.sd.n);T.sel=null;save();render();break;
+    case 'sdcancel':if(m.sd&&!sdAny(m)){m.sd=null;T.sel=null;save();render();}break;
+    case 'lockm':if(pinsTie(m)&&!result(m).winner){toast('Settle the tie first: sudden death (league rule 42)');break;}m.lock={at:Date.now(),by:meTag().name};if(!m.pub)m.pub={at:m.lock.at,by:m.lock.by};if(m.everLocked)logChange(m,'Published again');m.unlockedAt=null;T.sel=null;save();render();toast('Results published');break;
     case 'unlockm':if(!m.pub)m.pub={at:Date.now(),by:'auto'};m.lock=null;m.unlockedAt=Date.now();m.everLocked=true;logChange(m,'Unlocked');T.sel=null;save();render();toast('Unlocked: changes are recorded');break;
     case 'fxf':S.ui.fxf=S.ui.fxf||{c:'all',s:'up'};S.ui.fxf[d.fk]=d.fv;localSave();render();break;
     case 'approve':case 'decline':accessAct(d.act,d.id);break;
@@ -1457,11 +1585,11 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'suggest':var w=suggest(f.id);emptySync(f.id);save();render();if(w.length)modal('<h4>Team suggested</h4>'+w.map(function(x){return '<div class="warn">'+esc(x)+'</div>';}).join('')+'<button class="btn gold" data-act="close">OK</button>');else toast('Team suggested');break;
     case 'lockin':var sl1=selFor(f.id);if(!sl1.lineup.filter(Boolean).length){toast('Pick the team first');break;}sl1.lockin={at:Date.now(),by:meTag().name};T.pick=null;save();render();window.scrollTo(0,0);toast('Team locked in');break;
     case 'unlockin':selFor(f.id).lockin=null;save();render();toast('Team unlocked');break;
-    case 'newplayer':modal('<h4>New player (N/P)</h4><div class="field"><label for="nnFull">Full name</label><input id="nnFull" placeholder="e.g. John Smith" autocapitalize="words" autocomplete="off"></div><div class="field"><label for="nnName">Name on team sheets (filled in for you)</label><input id="nnName" placeholder="e.g. J. Smith" autocomplete="off"></div><div class="note">He joins the squad and goes into '+(+d.slot>=12?'reserve '+(+d.slot-11):'slot '+(+d.slot+1))+'. (N/P) appears after his name on tonight\u2019s league scorecard only.</div><button class="btn gold" data-act="savenp" data-slot="'+d.slot+'" data-mode="'+d.mode+'">Add and put in</button><button class="btn ghost" data-act="close">Cancel</button>');setTimeout(function(){var nf=document.getElementById('nnFull');if(!nf)return;nf.focus();nf.oninput=function(){document.getElementById('nnName').value=shortName(nf.value);};},50);break;
+    case 'newplayer':modal('<h4>New player (NR)</h4><div class="field"><label for="nnFull">Full name</label><input id="nnFull" placeholder="e.g. John Smith" autocapitalize="words" autocomplete="off"></div><div class="field"><label for="nnName">Name on team sheets (filled in for you)</label><input id="nnName" placeholder="e.g. J. Smith" autocomplete="off"></div><div class="note">He joins the squad and goes into '+(+d.slot>=12?'reserve '+(+d.slot-11):'slot '+(+d.slot+1))+'. (NR) appears after his name on tonight\u2019s league scorecard only. New registrations cost £1 after 31 Oct; the last date to register is 1 March (league rules 1, 2, 4).</div><button class="btn gold" data-act="savenp" data-slot="'+d.slot+'" data-mode="'+d.mode+'">Add and put in</button><button class="btn ghost" data-act="close">Cancel</button>');setTimeout(function(){var nf=document.getElementById('nnFull');if(!nf)return;nf.focus();nf.oninput=function(){document.getElementById('nnName').value=shortName(nf.value);};},50);break;
     case 'savenp':var nnF=document.getElementById('nnFull').value.trim(),nnN=document.getElementById('nnName').value.trim()||shortName(nnF);if(!nnN){toast('Type his name');break;}var npid=uid('p'),sn=selFor(f.id),nsl=+d.slot;S.players.push({id:npid,name:nnN,full:nnF||nnN,nick:'',role:'',active:true});sn.avail[npid]='in';sn.np=(sn.np||[]).concat([npid]);
       if(d.mode==='match'&&m){logChange(m,'New player added');var oldn=m.lineup[nsl];m.lineup[nsl]=npid;if(oldn&&oldn!=='LS')sn.reserves.push(oldn);sn.lineup=m.lineup.slice();lsFill(m);}else{if(nsl>=12)sn.reserves.push(npid);else setSlot(sn,nsl,npid);emptySync(f.id);}
-      closeModal();save();render();toast(nnN+' added (N/P)');break;
-    case 'nptoggle':var sq=selFor(f.id);sq.np=sq.np||[];var qi=sq.np.indexOf(d.id);if(qi>-1)sq.np.splice(qi,1);else sq.np.push(d.id);if(m)logChange(m,'N/P marker changed');closeModal();save();render();toast(qi>-1?'(N/P) removed':'(N/P) on the league scorecard');break;
+      closeModal();save();render();toast(nnN+' added (NR)');break;
+    case 'nptoggle':var sq=selFor(f.id);sq.np=sq.np||[];var qi=sq.np.indexOf(d.id);if(qi>-1)sq.np.splice(qi,1);else sq.np.push(d.id);if(m)logChange(m,'NR marker changed');closeModal();save();render();toast(qi>-1?'(NR) removed':'(NR) on the league scorecard');break;
     case 'clearteam':selFor(f.id).lineup=Array(12).fill(null);selFor(f.id).reserves=[];T.pick=null;emptySync(f.id);save();render();break;
     case 'tput':var s1=selFor(f.id),ts=+d.slot;if(ts>=12&&ts-12>=s1.reserves.length)s1.reserves.push(d.id);else setSlot(s1,ts,d.id);closeModal();emptySync(f.id);save();render();break;
     case 'addres':var sr=selFor(f.id);pickPlayerModal(12+sr.reserves.length,'team');break;
@@ -1476,12 +1604,18 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'vc':enter(0,false,true);break;
     case 'undo':undo();break;
     case 'cancelsel':T.sel=null;render();break;
-    case 'skip':var tg=target(m);if(!tg)break;var o=order(m),ix=o.findIndex(function(x){return x.t===tg.t&&x.p===tg.p&&x.h===tg.h;});T.sel=o[(ix+1)%o.length];render();break;
+    case 'skip':var sk=sdTarget(m);if(sk){var so=sdOrder(m),si=so.findIndex(function(x){return x.t===sk.t&&x.i===sk.i&&x.h===sk.h;});T.sel=so[(si+1)%so.length];render();break;}
+      var tg=target(m);if(!tg)break;var o=order(m),ix=o.findIndex(function(x){return x.t===tg.t&&x.p===tg.p&&x.h===tg.h;});T.sel=o[(ix+1)%o.length];render();break;
     case 'allsets':T.allsets=!T.allsets;render();break;
     case 'other':modal('<h4>Other score</h4><div class="field"><label for="oVal">Hand total</label><input id="oVal" type="number" inputmode="numeric" min="0" max="'+m.rules.maxHand+'"></div><label style="display:flex;gap:10px;align-items:center;min-height:44px"><input type="checkbox" id="oSp" style="width:22px;height:22px"> Mark as spare</label><button class="btn gold" data-act="otherok">Enter</button><button class="btn ghost" data-act="close">Cancel</button>');setTimeout(function(){var i=document.getElementById('oVal');if(i)i.focus();},50);break;
     case 'otherok':var n=parseInt(document.getElementById('oVal').value,10);if(isNaN(n)||n<0||n>m.rules.maxHand){toast('Enter 0 to '+m.rules.maxHand);break;}var spc=document.getElementById('oSp').checked;closeModal();enter(n,spc,false);break;
     case 'oppnames':oppNamesModal(+d.set);break;
-    case 'saveopp':logChange(m,'Opposition names edited');var team=oppTeam(m),known=S.oppNames[team]||(S.oppNames[team]=[]);document.querySelectorAll('[data-onp]').forEach(function(inp){var v=inp.value.trim();m.opp[+inp.dataset.onp]=v;if(v&&known.indexOf(v)<0&&!/^l\s*\/\s*s$/i.test(v))known.push(v);});var onp=(m.onp||[]).slice();document.querySelectorAll('[data-onpx]').forEach(function(cb){var q=+cb.dataset.onpx,qi=onp.indexOf(q);if(cb.checked&&qi<0)onp.push(q);if(!cb.checked&&qi>-1)onp.splice(qi,1);});m.onp=onp;lsFill(m);closeModal();save();render();break;
+    case 'saveopp':var po=m.opp.slice(),isl=function(v){return /^l\s*\/\s*s$/i.test(String(v||'').trim());},lsBad='';document.querySelectorAll('[data-onp]').forEach(function(inp){po[+inp.dataset.onp]=inp.value.trim();});
+      po.forEach(function(v,p){if(isl(v)&&p<m.rules.per)lsBad='No L/S in set 1: it copies a score from an earlier set.';});
+      if(!lsBad&&lsCount(po)&&noLSround(f))lsBad='No lowest score in a Semi-Final or Final (league rule 41).';
+      if(!lsBad&&lsCount(po)>2)lsBad='Only 2 L/S allowed (league rule 14).';
+      if(lsBad){toast(lsBad);break;}
+      logChange(m,'Opposition names edited');var team=oppTeam(m),known=S.oppNames[team]||(S.oppNames[team]=[]);document.querySelectorAll('[data-onp]').forEach(function(inp){var v=inp.value.trim();m.opp[+inp.dataset.onp]=v;if(v&&known.indexOf(v)<0&&!/^l\s*\/\s*s$/i.test(v))known.push(v);});var onp=(m.onp||[]).slice();document.querySelectorAll('[data-onpx]').forEach(function(cb){var q=+cb.dataset.onpx,qi=onp.indexOf(q);if(cb.checked&&qi<0)onp.push(q);if(!cb.checked&&qi>-1)onp.splice(qi,1);});m.onp=onp;lsFill(m);closeModal();save();render();break;
     case 'resimg':resultsImg();break;
     case 'avgimg':avgImg();break;
     case 'shareimg':shareImg();break;
@@ -1529,7 +1663,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
       // apply to in-progress (not finished) matches of this type with the same format
       Object.keys(S.matches).forEach(function(fid){var mm=S.matches[fid];if(mm.type===k&&!allDone(mm)&&mm.rules.sets===rr0.sets&&mm.rules.per===rr0.per&&mm.rules.hands===rr0.hands)mm.rules=JSON.parse(JSON.stringify(rr0));});
       closeModal();save();render();toast('Rules saved');break;
-    case 'savegeneral':var g=S.rules.general;g.leagueEmail=document.getElementById('gEmail').value.trim();g.sendWhen=document.getElementById('gWhen').value;g.home=document.getElementById('gHome').value.trim()||'Golden Lion';g.awayWeeks=Math.max(1,parseInt(document.getElementById('gAway').value,10)||3);save();toast('Saved');break;
+    case 'savegeneral':var g=S.rules.general;g.leagueEmail=document.getElementById('gEmail').value.trim();g.leagueContact=(document.getElementById('gContact').value.trim()||'John');g.sendWhen=document.getElementById('gWhen').value;g.home=document.getElementById('gHome').value.trim()||'Golden Lion';g.awayWeeks=Math.max(1,parseInt(document.getElementById('gAway').value,10)||3);save();toast('Saved');break;
     case 'export':var js=JSON.stringify(S);try{var file=new File([js],'lions-hub-backup-'+today()+'.json',{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[file]}))navigator.share({files:[file]}).catch(function(){});else textModal('Backup',js);}catch(x){textModal('Backup',js);}break;
     case 'exportcopy':textModal('Backup',JSON.stringify(S));break;
     case 'importpaste':modal('<h4>Paste backup</h4><textarea class="out" id="impText"></textarea><button class="btn gold" data-act="doimport">Restore</button><button class="btn ghost" data-act="close">Cancel</button>');break;
@@ -1578,7 +1712,9 @@ function applyDoc(k,v){if(v==null)return;
 function blankSel(v){return !!v&&!Object.keys(v.avail||{}).length&&!Object.keys(v.req||{}).length&&!(v.lineup||[]).some(Boolean)&&!(v.reserves||[]).length&&Object.keys(v).every(function(x){return ['avail','req','lineup','reserves'].indexOf(x)>-1;});}
 function dirtyMap(){var r={};if(!SY.ready)return r;var o=docsOf();Object.keys(o).forEach(function(k){if(SY.base[k]===undefined&&k.indexOf('sel:')===0&&blankSel(o[k]))return;if(writable(k)&&hsh(JSON.stringify(o[k]))!==SY.base[k])r[k]=1;});return r;} // an untouched new team sheet isn't 'to send'
 function dirtyKeys(){return Object.keys(dirtyMap());}
-function fixups(){if(SB&&SY.ready&&!canEdit()&&Object.keys(S.sel).length)dropSel();if((S.squadV||0)<SQUAD.v)syncSquad(S);seasonFixups(S);var g=S.rules.general;if(!g.nickOn)g.nickOn={teamsheet:false,live:false,results:false,report:false,averages:false};if(!S.subs)S.subs={};if(!S.oppNames)S.oppNames={};if(S.comps&&S.comps.length&&!compById('cs')){var gi=S.comps.map(function(c){return c.id;}).indexOf('gd');S.comps.splice(gi<0?S.comps.length:gi+1,0,{id:'cs',name:'Chairman’s Shield',type:'cup',archived:false});}}
+function fixups(){if(SB&&SY.ready&&!canEdit()&&Object.keys(S.sel).length)dropSel();if((S.squadV||0)<SQUAD.v)syncSquad(S);seasonFixups(S);var g=S.rules.general;if(!g.nickOn)g.nickOn={teamsheet:false,live:false,results:false,report:false,averages:false};if(!S.subs)S.subs={};if(!S.oppNames)S.oppNames={};var ty=S.rules.types;if(ty&&!ty.group)ty.group=defaultRules().types.group;['cup','frontpin'].forEach(function(k){if(ty&&ty[k]&&ty[k].tie==='captains')ty[k].tie='sudden';});if(ty&&ty.cup&&/Tie rule to confirm/.test(ty.cup.notes||''))ty.cup.notes=CUP_TIE_NOTE; // v3.12 league rules 42 + 51
+  var gdc=compById('gdt');if(gdc&&gdc.type==='cup')gdc.type='group';
+  if(S.comps&&S.comps.length&&!compById('cs')){var gi=S.comps.map(function(c){return c.id;}).indexOf('gd');S.comps.splice(gi<0?S.comps.length:gi+1,0,{id:'cs',name:'Chairman’s Shield',type:'cup',archived:false});}}
 function setBase(keys){var o=docsOf();keys.forEach(function(k){if(o[k]!==undefined){var j=JSON.stringify(o[k]);SY.base[k]=hsh(j);BJ[k]=j;}});}
 /* ---- 3-way merge: base = last synced copy, m = this phone, t = the shared copy now ---- */
 function jeq(a,b){return JSON.stringify(a)===JSON.stringify(b);}
@@ -1765,10 +1901,10 @@ function subsText(){var t=subsTable(),out='Lions subs (from '+fdate(subsFrom())+
 /* who can do what: every button is checked here, and the database checks again */
 var VIEW_ACTS={cups:1,season:1,phist:1,printsheet:1,doprint:1,closeprint:1,vdseen:1,clashmine:1,clashtheirs:1,close:1,choosefx:1,pickfx:1,allsets:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,imseen:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,fxf:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
 var SCORE_ACTS={spare:1,nospare:1,vc:1,undo:1,cancelsel:1,skip:1,other:1,otherok:1};
-var EDIT_ACTS={clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,stopscore:1,stopscoreok:1,lockm:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1,leaguemark:1,newplayer:1,savenp:1,nptoggle:1,leaguecard:1,sendleague:1,copyleague:1};
+var EDIT_ACTS={clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,stopscore:1,stopscoreok:1,lockm:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1,leaguemark:1,sdstart:1,sdgo:1,sdmore:1,sdcancel:1,newplayer:1,savenp:1,nptoggle:1,leaguecard:1,sendleague:1,copyleague:1};
 var ADMIN_HIDE=['teamsheet','resimg','report','copyres','addfx','comps','bulkadd','editrule','addrule','savegeneral','importpaste','seedforce','subtick','lockin','unlockin'];
-function lockBlocked(d){return !!(d.cell||d.name||d.tw||d.v!==undefined||d.sp!==undefined||['spare','nospare','vc','undo','skip','other','otherok','oppnames','saveopp','mput','mclear','mswap','newplayer','savenp','nptoggle','takeover','stopscore','stopscoreok'].indexOf(d.act)>-1);}
-function needFor(d){if(d.tab)return 'view';if(d.v!==undefined||d.sp!==undefined||d.cell)return 'score';
+function lockBlocked(d){return !!(d.cell||d.sdcell||d.name||d.tw||['sdstart','sdgo','sdmore','sdcancel'].indexOf(d.act)>-1||d.v!==undefined||d.sp!==undefined||['spare','nospare','vc','undo','skip','other','otherok','oppnames','saveopp','mput','mclear','mswap','newplayer','savenp','nptoggle','takeover','stopscore','stopscoreok'].indexOf(d.act)>-1);}
+function needFor(d){if(d.tab)return 'view';if(d.v!==undefined||d.sp!==undefined||d.cell||d.sdcell)return 'score';
   if((d.slot!==undefined&&!d.act)||d.name||d.tw)return 'edit';if(d.av||d.req!==undefined||d.nick)return 'admin';
   var a=d.act;if(!a||VIEW_ACTS[a])return 'view';if(SCORE_ACTS[a])return 'score';if(EDIT_ACTS[a])return 'edit';return 'admin';}
 function denied(nd,m){if(nd==='view')return false;
@@ -1792,7 +1928,7 @@ render();
 sbInit();
 feedFetch(false);window.addEventListener('online',function(){feedFetch(false);});document.addEventListener('visibilitychange',function(){if(!document.hidden)feedFetch(false);});
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude|anthropic/.test(location.hostname)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
-window.__hub={published:published,sentLine:sentLine,lcSpare:lcSpare,lcCell:lcCell,lcT:lcT,lockedIn:lockedIn,npMark:npMark,avgMap:avgMap,suggest:suggest,tacticOf:tacticOf,earlyLate:earlyLate,bands:bands,applyDraw:applyDraw,drawFx:drawFx,allTimePins:allTimePins,cupsOn:cupsOn,SV:SV,sheetData:sheetData,seasonList:seasonList,curSeason:curSeason,seasonAverages:seasonAverages,openPrintSheet:openPrintSheet,isFrozenFx:isFrozenFx,averages31:averages,save:save,merge3:merge3,teamStats:teamStats,clashKeys:clashKeys,viewerDraws:viewerDraws,SY:function(){return SY;},NET:NET,docsOf:docsOf,dirtyKeys:dirtyKeys,needFor:needFor,subsTable:subsTable,myRole:myRole,pull:pull,push:push,people:function(){return PEOPLE;},render:render,T:T,S:function(){return S;},result:result,averages:averages,suggest:suggest,enter:enter,target:function(){return target(curMatch());},curMatch:curMatch,reportText:reportText,scoresText:scoresText,seed:seed,isLS:isLS,lsFill:lsFill,syncPast:syncPast,averages:averages,parseTable:parseTable,feedFetch:feedFetch,lionsPos:lionsPos,feedNews:feedNews,leagueImg:leagueImg,leagueCardCanvas:leagueCardCanvas,leagueMailText:leagueMailText,setS:function(x){S=x;render();}};
+window.__hub={sdState:sdState,pinsTie:pinsTie,leagueMailText:leagueMailText,reportText:reportText,scoresText:scoresText,cardNote:cardNote,isFinalFx:isFinalFx,published:published,sentLine:sentLine,lcSpare:lcSpare,lcCell:lcCell,lcT:lcT,lockedIn:lockedIn,npMark:npMark,avgMap:avgMap,suggest:suggest,tacticOf:tacticOf,earlyLate:earlyLate,bands:bands,applyDraw:applyDraw,drawFx:drawFx,allTimePins:allTimePins,cupsOn:cupsOn,SV:SV,sheetData:sheetData,seasonList:seasonList,curSeason:curSeason,seasonAverages:seasonAverages,openPrintSheet:openPrintSheet,isFrozenFx:isFrozenFx,averages31:averages,save:save,merge3:merge3,teamStats:teamStats,clashKeys:clashKeys,viewerDraws:viewerDraws,SY:function(){return SY;},NET:NET,docsOf:docsOf,dirtyKeys:dirtyKeys,needFor:needFor,subsTable:subsTable,myRole:myRole,pull:pull,push:push,people:function(){return PEOPLE;},render:render,T:T,S:function(){return S;},result:result,averages:averages,suggest:suggest,enter:enter,target:function(){return target(curMatch());},curMatch:curMatch,reportText:reportText,scoresText:scoresText,seed:seed,isLS:isLS,lsFill:lsFill,syncPast:syncPast,averages:averages,parseTable:parseTable,feedFetch:feedFetch,lionsPos:lionsPos,feedNews:feedNews,leagueImg:leagueImg,leagueCardCanvas:leagueCardCanvas,leagueMailText:leagueMailText,setS:function(x){S=x;render();}};
 })();
 </script>
 </body>
