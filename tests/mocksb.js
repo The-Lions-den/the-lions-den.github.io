@@ -4,7 +4,7 @@ function Backend(){const B={docs:{},people:{p10:{pid:'p10',role:'admin',uid:null
   B.roleOf=uid=>{if(!uid)return null;const p=Object.values(B.people).find(x=>x.uid===uid&&!x.requested);return p?p.role:null;};
   B.isAdmin=uid=>B.roleOf(uid)==='admin';B.isEditor=uid=>['admin','scorer'].includes(B.roleOf(uid));
   B.scorerKey=k=>k==='players'||k==='oppNames'||k.startsWith('sel:')||k.startsWith('match:');
-  B.canRead=(uid,k)=>!k.startsWith('subs:')||B.isAdmin(uid);
+  B.canRead=(uid,k)=>(!k.startsWith('subs:')||B.isAdmin(uid))&&(!k.startsWith('sel:')||B.isEditor(uid));
   B.canWrite=(uid,k)=>B.isAdmin(uid)||(B.isEditor(uid)&&B.scorerKey(k));
   B.emit=(table,row)=>{setTimeout(()=>B.chans.forEach(c=>{if(c.dead||c.client.off)return;if(table==='docs'&&!B.canRead(c.client.uid(),row.key))return;(c.h[table]||[]).forEach(f=>f({new:JSON.parse(JSON.stringify(row))}));}),5);};
   return B;}

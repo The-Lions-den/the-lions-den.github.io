@@ -39,8 +39,8 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   // a viewer's phone, brand new
   const V=phone('Viewer');await wait(150);
   ok(V.H.myRole()==='viewer'&&Object.keys(V.H.S().matches).length===Object.keys(A.H.S().matches).length,'viewer phone pulled all matches');
-  ok(V.H.S().sel.L9&&V.H.S().sel.L9.lineup.join()===A.H.S().sel.L9.lineup.join(),'viewer sees the L9 team');
-  V.go('team','L9');ok(!V.has('[data-av]')&&/Set 1/.test(V.d.getElementById('view').textContent)&&!V.has('[data-act="teamsheet"]'),'viewer sees read-only team, no availability, no team sheet image');
+  ok(A.H.S().sel.L9.lineup.some(Boolean)&&!(V.H.S().sel.L9&&V.H.S().sel.L9.lineup.some(Boolean))&&!Object.keys(V.H.S().sel).some(k=>(V.H.S().sel[k].lineup||[]).some(Boolean)),'viewer phone gets no team selections (scorers and admins only)');
+  V.go('team','L9');ok(!V.has('[data-av]')&&/will be published after the match has finished, this site is public, and we don’t want to give any secrets away before a match! 😉/.test(V.d.getElementById('view').textContent)&&!/Set 1/.test(V.d.getElementById('view').textContent)&&!V.has('[data-act="teamsheet"]'),'viewer: team hidden until the results are published');snap(V,'vhide');
   ok(!/Avg/.test(V.d.getElementById('view').textContent),'viewer team view has no averages');
   A.go('team','L9');ok(/Avg \d+\.\d · \d+ game/.test(A.d.getElementById('view').textContent),'availability shows match average: '+(A.d.getElementById('view').textContent.match(/Avg [\d.]+ · \d+ games?/)||[''])[0]);
   A.go('fixtures');ok(/Competition setup/.test(A.d.getElementById('view').textContent),'Competition setup button');
@@ -107,14 +107,14 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   ok(A.has('#view button.c.sel'),'tapped cell stays highlighted');
   A.click('[data-v="'+((curV.v+1)%10)+'"]');await wait(100);
   A.click('[data-act="lockm"]');await wait(150);
-  const lg=A.H.S().matches.L8.log||[];ok(lg.length===3&&/Unlocked/.test(lg[0].what)&&/→/.test(lg[1].what)&&/Locked again/.test(lg[2].what),'change log: '+lg.map(x=>x.what).join(' | '));
-  V.go('score','L8');await wait(20);ok(!/Changes after locking/.test(V.d.getElementById('view').textContent),'viewer does not see the change log');A.go('score','L8');ok(/Changes after locking/.test(A.d.getElementById('view').textContent)&&/A\. Nancollis|Andy Nancollis/.test(A.d.getElementById('view').textContent),'admin sees the change log');
-  C.go('score','L8');ok(!C.has('[data-act="unlockm"]')&&/Match locked/.test(C.d.getElementById('view').textContent),'scorer cannot unlock');
+  const lg=A.H.S().matches.L8.log||[];ok(lg.length===3&&/Unlocked/.test(lg[0].what)&&/→/.test(lg[1].what)&&/Published again/.test(lg[2].what),'change log: '+lg.map(x=>x.what).join(' | '));
+  V.go('score','L8');await wait(20);ok(!/Changes after publishing/.test(V.d.getElementById('view').textContent),'viewer does not see the change log');A.go('score','L8');ok(/Changes after publishing/.test(A.d.getElementById('view').textContent)&&/A\. Nancollis|Andy Nancollis/.test(A.d.getElementById('view').textContent),'admin sees the change log');
+  C.go('score','L8');ok(!C.has('[data-act="unlockm"]')&&/Results published/.test(C.d.getElementById('view').textContent),'scorer cannot unlock');
   // finish L9 then lock as scorer
   A.go('score','L9');let guard=0;while(A.has('[data-v="5"]')&&guard++<200)A.click('[data-v="5"]');await wait(200);
   ok(A.has('[data-act="lockm"]')&&/Match finished/.test(A.d.getElementById('view').textContent),'finished: Lock match offered');
   ok(!A.H.S().matches.L9.lock&&A.H.S().matches.L9.doneAt>0,'not locked until tapped (auto 6am)');
-  A.click('[data-act="lockm"]');await wait(150);C.go('score','L9');await wait(20);ok(/Locked by Andy Nancollis/.test(C.d.getElementById('view').textContent),'lock shared: Locked by Andy Nancollis');
+  A.click('[data-act="lockm"]');await wait(150);C.go('score','L9');await wait(20);ok(/Published by Andy Nancollis/.test(C.d.getElementById('view').textContent),'lock shared: Locked by Andy Nancollis');
   ok(!C.has('#view [data-cell]'),'scorer tables read-only after lock');
   A.go('fixtures');ok(/Competition setup/.test(A.d.getElementById('view').textContent),'Fixtures tab works from the bottom bar');
   // v2.5: More page by role, past Team tab, cup draws, date box, no subs export
@@ -225,7 +225,7 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
   V.go('averages');{const t=V.d.getElementById('view').textContent;ok(/Team stats/.test(t)&&/Total pins hit/.test(t)&&/Average team score/.test(t)&&/Total team spares/.test(t)&&/Player averages/.test(t)&&!/\/hand/.test(t),'Statistics page: team stats + player table, Hand header');}
   // v3.1: lock card/log hidden from viewers; 50+; seasons; print sheet; close season
   V.go('score','L8');{const t=V.d.getElementById('view').textContent;ok(!/Match locked/.test(t)&&!/Changes after locking/.test(t)&&/Set 1/.test(t),'viewer: finished match shows scores but no lock card or change log');}
-  A.go('score','L8');ok(/Match locked/.test(A.d.getElementById('view').textContent),'admin: lock card shown');
+  A.go('score','L8');ok(/Results published/.test(A.d.getElementById('view').textContent),'admin: lock card shown');
   {const sc=[C].find(p=>p.H.myRole()==='scorer');if(sc){sc.go('score','L8');ok(/Match locked/.test(sc.d.getElementById('view').textContent),'scorer: lock card shown');}else ok(true,'(no scorer phone left at this point)');}
   V.go('averages');{const t=V.d.getElementById('view').textContent;ok(/50\+/.test(t)&&V.has('[data-act="printsheet"]')&&V.has('[data-act="season"][data-s="2025-26"]'),'Statistics: 50+ column, Print season sheet, season picker');}
   ok(A.H.averages31().every(a=>typeof a.f50==='number'),'averages carry 50+ counts');
@@ -369,6 +369,35 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    cbs[1].checked=true;A.click('[data-act="saveopp"]');await wait(100);ok(JSON.stringify(m.onp)==='[4]'&&A.H.npMark(m,'O',4)===' (N/P)'&&A.H.npMark(m,'O',3)==='','opposition N/P saved for that name only');
    A.click('[data-act="oppnames"][data-set="1"]');A.d.querySelectorAll('[data-onpx]')[1].checked=false;A.click('[data-act="saveopp"]');ok(!m.onp.length,'opposition N/P can be cleared');
    ok(A.H.needFor({act:'savenp'})==='edit'&&A.H.needFor({act:'lockin'})==='admin','permissions: new player for scorers + admins, lock for admins');}
+  // v3.11: team selection hidden from viewers until Publish results; Sent to league / Resend
+  {const S=A.H.S(),used=['L10','L12','L14','L15'],fx=S.fixtures.filter(f=>/^L/.test(f.id)&&f.status==='scheduled'&&!S.matches[f.id]&&!used.includes(f.id)),fid=fx[fx.length-1].id,fid2=fx[fx.length-2].id;
+   const sel=A.H.S().sel[fid]||(S.sel[fid]={avail:{},req:{},lineup:Array(12).fill(null),reserves:[]});S.players.filter(p=>p.active).forEach(p=>sel.avail[p.id]='in');A.H.suggest(fid);A.H.save();await wait(250);
+   ok(B.docs['sel:'+fid]&&B.docs['sel:'+fid].data.lineup.some(Boolean),'team selection shared ('+fid+')');
+   await V.H.pull(true);await wait(100);ok(!V.H.S().sel[fid]||!V.H.S().sel[fid].lineup.some(Boolean),'viewer phone does not get it, even on a full reload');
+   await R.H.pull(true);await wait(100);ok(R.H.S().sel[fid]&&R.H.S().sel[fid].lineup.join()===S.sel[fid].lineup.join(),'scorer phone gets it');
+   V.go('team',fid);const vt=()=>V.d.getElementById('view').textContent;ok(/will be published after the match has finished/.test(vt())&&!/Set 1/.test(vt()),'viewer Team tab: hidden message');
+   V.go('home');{const c=V.d.querySelector('.card.now');ok(c&&!/available|picked|locked in/.test(c.textContent),'viewer Home card: no available / picked / locked in chips');}
+   A.go('home');{const c=A.d.querySelector('.card.now');ok(c&&/available/.test(c.textContent)&&/picked/.test(c.textContent),'admin Home card keeps the chips');}
+   const mk=(id,doneAt)=>{const m=JSON.parse(JSON.stringify(S.matches.L8));Object.assign(m,{fid:id,lock:null,unlockedAt:null,everLocked:false,log:[],doneAt,scorer:null});delete m.pub;delete m.leagueSent;S.matches[id]=m;return m;};
+   const m=mk(fid,Date.now());A.H.save();await wait(250);await V.H.pull(false);await wait(100);
+   V.go('team',fid);ok(V.H.S().matches[fid]&&/will be published after the match has finished/.test(vt()),'match finished but not published: still hidden');
+   V.go('score',fid);ok(/Lions/.test(V.d.getElementById('view').textContent)&&!/Not started yet/.test(V.d.getElementById('view').textContent),'viewer still sees the scores');
+   A.go('score',fid);ok(A.has('[data-act="lockm"]')&&/Publish results/.test(A.d.querySelector('[data-act="lockm"]').textContent)&&/shows the team on the app/.test(A.d.getElementById('view').textContent),'Publish results button (was Lock match)');snap(A,'pubbtn');
+   A.click('[data-act="lockm"]');await wait(250);ok(m.pub&&m.lock&&/Results published/.test(A.toast()),'Publish results: published and locked');
+   await V.H.pull(false);await wait(100);V.go('team',fid);ok(/Team as played/.test(vt())&&/Set 1/.test(vt())&&!/Reserves/.test(vt())&&!/will be published/.test(vt()),'viewer sees the team as played, no reserves');snap(V,'vteam');
+   A.go('score',fid);ok(/🔒 Results published/.test(A.d.getElementById('view').textContent)&&/Published by Andy Nancollis/.test(A.d.getElementById('view').textContent),'lock card: Results published · Published by');
+   R.go('score',fid);await R.H.pull(false);await wait(80);R.go('score',fid);ok(!R.has('[data-act="unlockm"]'),'scorer cannot unlock');
+   A.click('[data-act="unlockm"]');await wait(250);await V.H.pull(false);await wait(100);V.go('team',fid);ok(!S.matches[fid].lock&&/Team as played/.test(vt()),'unlocked by an admin: team stays visible');
+   A.click('[data-act="lockm"]');await wait(100);ok(S.matches[fid].log.some(x=>/Published again/.test(x.what)),'publish again logged');
+   const m2=mk(fid2,Date.now()-2*86400000);A.H.save();await wait(250);await V.H.pull(false);await wait(100);V.go('team',fid2);ok(/Team as played/.test(vt()),'6am auto-lock counts as published');
+   A.go('score',fid2);A.click('[data-act="unlockm"]');await wait(200);ok(m2.pub&&m2.pub.by==='auto','unlocking an auto-published match keeps it published');await V.H.pull(false);await wait(100);V.go('team',fid2);ok(/Team as played/.test(vt()),'…and visible to viewers');
+   // Sent to league
+   A.go('score',fid);ok(/Create league card/.test(A.d.getElementById('view').textContent)&&!/Sent to league/.test(A.d.getElementById('view').textContent),'not sent yet');
+   S.matches[fid].leagueSent={at:Date.now(),by:'Andy Nancollis',n:1};A.H.save();await wait(250);
+   await R.H.pull(false);await wait(100);R.go('score',fid);ok(/Sent to league by Andy Nancollis/.test(R.d.getElementById('view').textContent)&&/League card \(sent\)/.test(R.d.getElementById('view').textContent),'sent line on another phone');snap(R,'sent');
+   A.go('score',fid);A.d.getElementById('view').insertAdjacentHTML('beforeend','<button id="tsl" data-act="sendleague"></button>');A.click('#tsl');ok(/Send it again\?/.test(A.modal())&&/Sent to league by Andy Nancollis/.test(A.modal())&&A.has('#mbox [data-act="sendleague"][data-ok="1"]'),'Resend asks first');ok(A.has('#mbox [data-act="leaguecard"]'),'Cancel goes back to the card');A.d.getElementById('modal').click();
+   ok(A.H.needFor({act:'leaguemark'})==='edit','Mark as sent: scorers and admins');
+   ok(A.H.lcCell({v:7,sp:true})==='7','spares drawn without brackets');}
   ok(/Close season 2026\/27/.test((A.go('backup'),A.d.getElementById('view').textContent))&&!C.H.needFor({act:'closeseasonok'})!=='admin','Close season on Backup page for admins');
   A.click('[data-act="closeseason"]');A.set('csName','2026/28');A.click('[data-act="closeseasonok"]');ok(A.H.curSeason()==='2026-27','wrong confirmation text: season not closed');
   A.set('csName','2026/27');A.click('[data-act="closeseasonok"]');await wait(300);

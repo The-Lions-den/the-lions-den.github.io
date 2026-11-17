@@ -60,7 +60,8 @@ alter table public.people enable row level security;
 
 drop policy if exists docs_read on public.docs;
 create policy docs_read on public.docs for select
-  using (key not like 'subs:%' or public.is_admin());
+  using ((key not like 'subs:%' or public.is_admin())
+     and (key not like 'sel:%' or public.is_editor()));  -- v3.11: team selections (availability, line-up, reserves) for scorers and admins only
 drop policy if exists docs_insert on public.docs;
 create policy docs_insert on public.docs for insert
   with check (public.is_admin() or (public.is_editor() and public.scorer_key(key)));

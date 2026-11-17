@@ -13,7 +13,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.ico" sizes="any">
 <title>The Lions Den</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@400;500;700&family=Patrick+Hand&display=swap">
 <style>
 :root{--navy:#0B1A38;--panel:#12264D;--row:#152C57;--line:#22396A;--gold:#F6B630;--muted:#A9B8D6;--white:#fff;--red:#FF8A80;--green:#7BD88F}
 *{box-sizing:border-box}
@@ -369,8 +369,10 @@ function order(m){var o=[],r=m.rules;for(var s=0;s<r.sets;s++)for(var h=0;h<r.ha
 function nextEmpty(m){var o=order(m);for(var i=0;i<o.length;i++)if(!m[o[i].t][o[i].p][o[i].h])return o[i];return null;}
 function target(m){return T.sel||nextEmpty(m);}
 function next6(t){var d=new Date(t);d.setHours(6,0,0,0);if(d.getTime()<=t)d.setDate(d.getDate()+1);return d.getTime();}
+function published(m){return !!(m&&(m.pub||isLocked(m)));} // v3.11: Publish results (or the 6am auto-lock) shows the team to viewers
+function dropSel(){Object.keys(S.sel).forEach(function(k){var kk='sel:'+k;delete SY.at[kk];delete SY.base[kk];delete BJ[kk];});S.sel={};} // viewers never keep team selections
 function isLocked(m){if(!m||!allDone(m))return false;if(m.lock)return true;var b=m.unlockedAt||m.doneAt;if(!b)return true;return Date.now()>=next6(b);}
-function lockLine(m){var l=m.lock;if(l)return 'Locked by '+l.by+' · '+clock(l.at);var b=m.unlockedAt||m.doneAt;return b?'Locked automatically · '+clock(next6(b)):'Locked';}
+function lockLine(m){var l=m.lock;if(l)return 'Published by '+l.by+' · '+clock(l.at);var b=m.unlockedAt||m.doneAt;return b?'Published automatically · '+clock(next6(b)):'Published';}
 function clock(t){var d=new Date(t),p=function(n){return (n<10?'0':'')+n;},td=new Date();var same=d.toDateString()===td.toDateString();return (same?'':fdate(d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()))+' ')+p(d.getHours())+':'+p(d.getMinutes());}
 function logChange(m,what){if(!m.everLocked)return;m.log=(m.log||[]).concat([{at:Date.now(),by:meTag().name,what:what}]).slice(-200);}
 function handLabel(m,tg){return 'Set '+(Math.floor(tg.p/m.rules.per)+1)+' · '+slotName(m,tg.t,tg.p)+' hand '+(tg.h+1);}
@@ -732,9 +734,9 @@ var TOP_MIN=3;
 function vHome(){var f=nextFx(),h=clashAlert()+feedAlerts(),rq=requestCount(),at=allTimePins(),tp=at.pins;if(rq)h='<div class="feedalert"><div><b>'+esc(requestTitle().t)+'</b><div class="small">'+(requestTitle().sub?esc(requestTitle().sub)+' \u00b7 ':'')+'Approve or decline in Squad</div></div><button class="btn gold sm" data-tab="squad">View</button></div>'+h;
   if(tp)h='<button class="tagline" data-tab="averages">We\u2019ve hit <b>'+n0(tp)+'</b> pins'+(at.since?' since '+esc(at.since):'')+'!</button>'+h;
   h+='<div class="sec">Next match</div>';
-  if(f){var m=S.matches[f.id],sel=selFor(f.id),ins=Object.keys(sel.avail).filter(function(k){return sel.avail[k]==='in';}).length,picked=sel.lineup.filter(Boolean).length;
+  if(f){var m=S.matches[f.id],sel=canEdit()?selFor(f.id):{avail:{},lineup:[]},ins=Object.keys(sel.avail).filter(function(k){return sel.avail[k]==='in';}).length,picked=sel.lineup.filter(Boolean).length;
     h+='<div class="card now"><div class="small muted">'+esc(fxComp(f))+'</div><div class="who">'+esc(fxTitle(f))+'</div><div class="small muted">'+esc(fdate(f.date,true)+' · '+(f.home?'Home, Lions throw first':'Away, Lions chase')+venTxt(f))+'</div>'+
-      '<div class="chips"><span class="chip">'+ins+' available</span><span class="chip">'+picked+'/12 picked</span>'+(hasHands(m)?'<span class="chip o">Scoring started</span>':lockedIn(f.id)?'<span class="chip g">Team locked in</span>':'')+'</div>'+
+      '<div class="chips">'+(canEdit()?'<span class="chip">'+ins+' available</span><span class="chip">'+picked+'/12 picked</span>':'')+(hasHands(m)?'<span class="chip o">Scoring started</span>':canEdit()&&lockedIn(f.id)?'<span class="chip g">Team locked in</span>':'')+'</div>'+
       '<div class="btns"><button class="btn ghost" data-tab="team" data-fx="'+f.id+'">'+(canEdit()?'Availability &amp; team':'Team')+'</button><button class="btn gold" data-tab="score" data-fx="'+f.id+'">Score</button></div>'+
       (isAdmin()?'<button class="btn ghost" data-act="editfx" data-id="'+f.id+'">Edit fixture</button>':'')+'</div>';}
   else h+='<div class="card muted">No more fixtures scheduled.</div>';
@@ -779,8 +781,10 @@ function vTeam(){var f=curFx();if(!f)return '<div class="card">Choose a fixture 
   h+=subsCard(f);
   return h;}
 
-function vTeamView(f){var sel=selFor(f.id),m=S.matches[f.id],line=m?m.lineup:sel.lineup,per=3,n=line.filter(Boolean).length;
-  var ttl=fxPast(f)?'Team as played':'Team';
+var TEAM_HIDDEN='The team for this match will be published after the match has finished, this site is public, and we don\u2019t want to give any secrets away before a match! \ud83d\ude09';
+function vTeamView(f){var m=S.matches[f.id];if(!canEdit()&&!published(m))return '<div class="card"><h2>Team</h2><div class="small" style="line-height:1.5">'+esc(TEAM_HIDDEN)+'</div></div>';
+  var sel=canEdit()?selFor(f.id):{reserves:[]},line=m?m.lineup:sel.lineup,per=3,n=line.filter(Boolean).length;
+  var ttl=fxPast(f)||published(m)?'Team as played':'Team';
   if(!n)return '<div class="card"><h2>'+ttl+'</h2><div class="small muted">'+(fxPast(f)?'No team was recorded for this match.':'The team for this match hasn’t been picked yet.')+'</div></div>';
   var h='<div class="card"><h2>'+ttl+'</h2>';
   for(var s=0;s<4;s++){h+='<div class="sec" style="margin-top:'+(s?'14':'0')+'px">Set '+(s+1)+'</div><div class="list">';
@@ -848,14 +852,14 @@ function finishedHTML(f,m){var R=result(m),r=m.rules,lk=isLocked(m),ed=canEdit()
     if(r.tie==='captains')h+='<div class="small muted">Pins are level. Who did the captains agree won?</div><div class="btns" style="grid-template-columns:1fr 1fr 1fr"><button class="btn '+(m.tieWinner==='L'?'gold':'ghost')+'" data-tw="L">Lions</button><button class="btn '+(m.tieWinner==='D'?'gold':'ghost')+'" data-tw="D">Draw</button><button class="btn '+(m.tieWinner==='O'?'gold':'ghost')+'" data-tw="O">'+esc(oppTeam(m))+'</button></div>';
     else h+='<div class="warn">Pins are level. Game Rules say play '+r.extraHands+' extra hand(s). Record the outcome once played.</div><div class="btns" style="grid-template-columns:1fr 1fr"><button class="btn '+(m.tieWinner==='L'?'gold':'ghost')+'" data-tw="L">Lions won</button><button class="btn '+(m.tieWinner==='O'?'gold':'ghost')+'" data-tw="O">'+esc(oppTeam(m))+' won</button></div>';
     h+='</div>';}
-  if(lk&&canEdit())h+='<div class="card lockc"><div class="between"><div><div class="name">🔒 Match locked</div><div class="small muted">'+esc(lockLine(m))+'</div></div>'+(isAdmin()&&!isFrozenFx(f)?'<button class="btn ghost sm" data-act="unlockm">Unlock</button>':'')+'</div>'+(isFrozenFx(f)?'<div class="note">Season '+esc(seasonLabel(fxSeason(f)))+' is closed: these scores are final.</div>':isAdmin()?'<div class="note">Unlock to correct a score. Every change is recorded below.</div>':'')+'</div>';
-  else if(canEdit())h+='<div class="card now" style="text-align:center"><div class="h1 gold" style="font-size:20px">Match finished</div><div class="small muted">Check the scores against the board, then lock the match. Tap any score below to correct it first.</div><div class="btns"><button class="btn gold" data-act="lockm">Lock match</button><button class="btn ghost" data-act="undo">Undo last</button></div><div class="note">If nobody locks it, it locks itself at 6am tomorrow.</div></div>';
+  if(lk&&canEdit())h+='<div class="card lockc"><div class="between"><div><div class="name">🔒 Results published</div><div class="small muted">'+esc(lockLine(m))+'</div></div>'+(isAdmin()&&!isFrozenFx(f)?'<button class="btn ghost sm" data-act="unlockm">Unlock</button>':'')+'</div>'+(isFrozenFx(f)?'<div class="note">Season '+esc(seasonLabel(fxSeason(f)))+' is closed: these scores are final.</div>':isAdmin()?'<div class="note">Unlock to correct a score. Every change is recorded below.</div>':'')+'</div>';
+  else if(canEdit())h+='<div class="card now" style="text-align:center"><div class="h1 gold" style="font-size:20px">Match finished</div><div class="small muted">Check the scores against the board, then publish the results. Tap any score below to correct it first.</div><div class="btns"><button class="btn gold" data-act="lockm">Publish results</button><button class="btn ghost" data-act="undo">Undo last</button></div><div class="note">Publishing closes the scores (after that only an admin can unlock them) and shows the team on the app. If nobody publishes, it happens at 6am tomorrow.</div></div>';
   for(var st=0;st<r.sets;st++)h+=ed?setTable(m,st):roTable(m,st);
   if(isAdmin())h+='<div class="card"><h2>Share</h2><button class="btn gold" data-act="resimg" style="margin-top:0">Results image</button><button class="btn ghost" data-act="report">Match report text</button><button class="btn ghost" data-act="copyres">Copy all scores as text</button></div>';
   var sg=m.sig||{},ns=(sg.away?1:0)+(sg.home?1:0);
   if(canEdit())h+='<div class="card"><h2>League result card</h2><div class="note" style="margin-top:0">'+(f.home?'Home match: the away captain normally sends the card in, but you can still make one.':'Away match: send the completed card to '+esc(S.rules.general.leagueEmail)+'.')+'</div>'+
-    '<button class="btn ghost" data-act="sign">'+(ns===2?'Captains signed ✓ (re-sign)':ns===1?'Captains sign (1 of 2 done)':'Captains sign')+'</button><button class="btn gold" data-act="leaguecard">Create league card</button></div>';
-  if(canEdit()&&m.log&&m.log.length)h+='<div class="card"><h2>Changes after locking</h2><div class="list">'+m.log.slice().reverse().map(function(x){return '<div><div class="grow"><div class="small">'+esc(x.what)+'</div><div class="small muted">'+esc(x.by)+' · '+esc(clock(x.at))+'</div></div></div>';}).join('')+'</div></div>';
+    (m.leagueSent?'<div class="note gold">\u2709\ufe0f '+esc(sentLine(m))+'</div>':'')+'<button class="btn ghost" data-act="sign">'+(ns===2?'Captains signed ✓ (re-sign)':ns===1?'Captains sign (1 of 2 done)':'Captains sign')+'</button><button class="btn gold" data-act="leaguecard">'+(m.leagueSent?'League card (sent)':'Create league card')+'</button></div>';
+  if(canEdit()&&m.log&&m.log.length)h+='<div class="card"><h2>Changes after publishing</h2><div class="list">'+m.log.slice().reverse().map(function(x){return '<div><div class="grow"><div class="small">'+esc(x.what)+'</div><div class="small muted">'+esc(x.by)+' · '+esc(clock(x.at))+'</div></div></div>';}).join('')+'</div></div>';
   return h;}
 function vResults(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';var m=S.matches[f.id];
   if(!m)return '<div class="card">No scores recorded for this fixture yet.</div>';
@@ -865,7 +869,7 @@ function vResults(){var f=curFx();if(!f)return '<div class="card">Choose a fixtu
     '</div>';
   var sg=m.sig||{},ns=(sg.away?1:0)+(sg.home?1:0);
   if(canEdit())h+='<div class="card"><h2>League result card</h2><div class="note" style="margin-top:0">'+(f.home?'Home match: the away captain normally sends the card in, but you can still make one.':'Away match: send the completed card to '+esc(S.rules.general.leagueEmail)+'.')+'</div>'+
-    '<button class="btn ghost" data-act="sign">'+(ns===2?'Captains signed ✓ (re-sign)':ns===1?'Captains sign (1 of 2 done)':'Captains sign')+'</button><button class="btn gold" data-act="leaguecard">Create league card</button></div>';
+    (m.leagueSent?'<div class="note gold">\u2709\ufe0f '+esc(sentLine(m))+'</div>':'')+'<button class="btn ghost" data-act="sign">'+(ns===2?'Captains signed ✓ (re-sign)':ns===1?'Captains sign (1 of 2 done)':'Captains sign')+'</button><button class="btn gold" data-act="leaguecard">'+(m.leagueSent?'League card (sent)':'Create league card')+'</button></div>';
   if(!R.done)h+='<div class="note">Match not finished yet: images and averages use the scores so far.</div>';
   return h;}
 
@@ -883,6 +887,8 @@ var ABOUT={
   intro:'Our own Lions app: live scores, fixtures, the league table and everyone’s averages, all in one place. Add it to your phone like an app, or visit it as a website on any computer.',
   install:'On your phone, open the-lions-den.com and tap Share → Add to Home Screen (iPhone) or ⋮ → Add to Home screen (Android). No sign-in needed to view.',
   news:[ /* newest first: [version, date, role, text] */
+    ['v3.11','17 Nov 2026','all','The team for each match now appears on the app once the results are published. Before a match it\u2019s on WhatsApp only.'],
+    ['v3.11','17 Nov 2026','scorer','Publish results replaces Lock match. The league card is filled in in handwriting, spares marked in the corners, and shows when it was sent.'],
     ['v3.4','11 Nov 2026','scorer','Live scoring: bigger tap boxes, a header bar for each team with the set total, no Set column, and labels that stay put when the table scrolls.'],
     ['v3.3','10 Nov 2026','all','2024/25 season added, so Statistics now goes back to 2023/24. Home shows all the pins we\u2019ve hit since our first records (September 2023).'],
     ['v3.2','10 Nov 2026','all','2023/24 season added (league and cup). Statistics: a League + Cups / League only switch, and a Cup average column next to Home and Away.'],
@@ -905,7 +911,7 @@ var ABOUT={
   sections:[
     ['all','What’s in it',[
       ['🏠','Home','next match, upcoming fixtures, top 5 averages and the league table'],
-      ['👥','Team','who’s playing on the night, and the team as played for past matches'],
+      ['👥','Team','the team as played, once the results are published (the team is announced on WhatsApp before a match)'],
       ['🎳','Scores','follow the match live, hand by hand, from anywhere'],
       ['📅','Fixtures','every league and cup fixture, filter by competition'],
       ['📊','League table','updated automatically from the league website, with ▲▼ position changes, last week’s results and cup draws'],
@@ -915,7 +921,9 @@ var ABOUT={
       ['🔁','','Take over scoring from another phone if needed'],
       ['👥','','Change the line-up on the night and add opposition names'],
       ['✍️','','Get both captains to sign on the phone and send the league result card'],
-      ['🔒','','Lock the match when done (it locks itself at 6am the next day)']]],
+      ['👥','','See the team selection before the match'],
+      ['🔒','','Publish the results when done (it happens at 6am the next day if nobody does)'],
+      ['✉️','','See when the league card was sent, so it only goes once']]],
     ['admin','Admins also can',[
       ['✅','','Set availability and pick the team (with a suggested line-up)'],
       ['📅','','Add/edit fixtures – new cup draws are read from the league site and offered to add'],
@@ -1052,7 +1060,7 @@ function txt(ctx,t,x,y,o){o=o||{};font(ctx,o.w||'400',o.s||22,o.f);ctx.fillStyle
 function drawLogo(ctx,x,y,h){var p=getLogo();if(!p)return;ctx.save();ctx.translate(x,y);var k=h/1000;ctx.scale(k,k);ctx.fillStyle=GOLD;ctx.fill(p,'evenodd');ctx.restore();}
 function canvasFor(h){var c=document.createElement('canvas');c.width=1080;c.height=h;var ctx=c.getContext('2d');ctx.fillStyle=NAVY;ctx.fillRect(0,0,1080,h);return {c:c,ctx:ctx};}
 function header(ctx,title,line1,line2){drawLogo(ctx,48,48,140);var tx=48+LOGO_W*0.14+32;txt(ctx,line1,tx,84,{s:20,w:'700',c:GOLD,max:1080-tx-48});txt(ctx,title.toUpperCase(),tx,146,{s:54,w:'700',f:'o',max:1080-tx-48});txt(ctx,line2,tx,184,{s:22,c:MUTED,max:1080-tx-48});return 228;}
-function fontsReady(){try{return Promise.all([document.fonts.load('700 40px Oswald'),document.fonts.load('400 40px Oswald'),document.fonts.load('400 20px Inter'),document.fonts.load('700 20px Inter')]).catch(function(){});}catch(e){return Promise.resolve();}}
+function fontsReady(){try{return Promise.all([document.fonts.load('700 40px Oswald'),document.fonts.load('400 40px Oswald'),document.fonts.load('400 30px "Patrick Hand"'),document.fonts.load('400 20px Inter'),document.fonts.load('700 20px Inter')]).catch(function(){});}catch(e){return Promise.resolve();}}
 function showImage(c,fname,caption){
   var url=c.toDataURL('image/png');
   modal('<h4>'+esc(caption)+'</h4><img class="imgout" src="'+url+'" alt="'+esc(caption)+'"><button class="btn gold" data-act="shareimg">Share / save image</button><div class="note">If sharing isn’t offered, press and hold the image and choose Save to Photos, then post it from WhatsApp.</div><button class="btn ghost" data-act="close">Close</button>');
@@ -1067,8 +1075,11 @@ var LEAGUE_CARD={v:'2026-27',title:'CENTRAL SKITTLE LEAGUE',name:'Central Skittl
     email:'Please email a copy of the completed scorecard to '}};
 function ordDate(s){if(!s)return '';var d=new Date(s+'T12:00:00'),n=d.getDate(),x=(n%100>10&&n%100<14)?'th':({1:'st',2:'nd',3:'rd'}[n%10]||'th');return n+x+' '+MON[d.getMonth()]+' '+d.getFullYear();}
 function lcDiv(f){var c=compById(f.comp),n=c?c.name:'';if(c&&c.type==='league')return n.replace(/^league\s+/i,'');return n+(f.round?' – '+f.round:'');}
-function lcCell(c){if(!c)return '';if(c.vc)return 'V/C';if(c.sp)return '('+c.v+')';return String(c.v);}
-function lcT(ctx,t,x,y,o){o=o||{};ctx.font=(o.w||'400')+' '+(o.s||26)+'px Inter, Helvetica, Arial, sans-serif';ctx.fillStyle=o.c||'#000';ctx.textAlign=o.a||'left';ctx.textBaseline='middle';
+function lcSpare(ctx,l,r,t,b,firstRow,lastRow,ink){var F=12,L0=l+1.5,R0=r-1.5,T0=t+(firstRow?2.5:1),B0=b-(lastRow?2.5:1);ctx.save();ctx.fillStyle=ink; // spare: a small solid fillet in each corner of the hand box
+  [[L0,T0,1,1],[R0,T0,-1,1],[L0,B0,1,-1],[R0,B0,-1,-1]].forEach(function(q){ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(q[0]+q[2]*F,q[1]);ctx.lineTo(q[0],q[1]+q[3]*F);ctx.closePath();ctx.fill();});ctx.restore();}
+function lcCell(c){if(!c)return '';if(c.vc)return 'V/C';return String(c.v);}
+var LC_HAND={f:'Patrick Hand',k:1.15}; // v3.11: the filled-in ink looks handwritten
+function lcT(ctx,t,x,y,o){o=o||{};if(o.c===LEAGUE_CARD.ink){o=Object.assign({},o,{s:Math.round((o.s||26)*LC_HAND.k)});ctx.font='400 '+o.s+'px "'+LC_HAND.f+'", Inter, Helvetica, Arial, sans-serif';}else ctx.font=(o.w||'400')+' '+(o.s||26)+'px Inter, Helvetica, Arial, sans-serif';ctx.fillStyle=o.c||'#000';ctx.textAlign=o.a||'left';ctx.textBaseline='middle';
   t=String(t==null?'':t);if(o.max)while(ctx.measureText(t).width>o.max&&t.length>1)t=t.slice(0,-2)+'…';ctx.fillText(t,x,y);}
 function lcHigh(m,t){var best=-1,who=[];for(var p=0;p<mP(m);p++){if(isLS(m,t,p))continue;var v=pTot(m,t,p);if(v>best){best=v;who=[p];}else if(v===best)who.push(p);}
   return {names:who.map(function(p){return slotName(m,t,p);}).join(' / '),score:best>0?best:''};}
@@ -1092,7 +1103,7 @@ function leagueCardCanvas(m,f,sigs){var L=LEAGUE_CARD,lb=L.labels,INK=L.ink,r=m.
     for(var p=0;p<12;p++){var ry=y+HH+RH*p,cy=ry+RH/2;if(p)line(x,ry,x+TW,ry,p%per===0?5:1.5);
       if(p>=mP(m))continue;
       lcT(ctx,slotName(m,t,p)+npMark(m,t,p),x+12,cy,{s:26,w:'600',c:INK,max:cw.n-20});
-      var any=false;for(var h2=0;h2<r.hands&&h2<6;h2++){var cc=m[t][p][h2];if(cc)any=true;lcT(ctx,lcCell(cc),x+cw.n+cw.h*h2+cw.h/2,cy,{s:cc&&cc.vc?20:26,w:'600',c:INK,a:'center'});}
+      var any=false;for(var h2=0;h2<r.hands&&h2<6;h2++){var cc=m[t][p][h2];if(cc)any=true;lcT(ctx,lcCell(cc),x+cw.n+cw.h*h2+cw.h/2,cy,{s:cc&&cc.vc?20:26,w:'600',c:INK,a:'center'});if(cc&&cc.sp)lcSpare(ctx,x+cw.n+cw.h*h2,x+cw.n+cw.h*(h2+1),ry,ry+RH,p%per===0,(p+1)%per===0,INK);}
       if(any)lcT(ctx,pTot(m,t,p),x+cw.n+cw.h*6+cw.s/2,cy,{s:28,w:'700',c:INK,a:'center'});
       if(p%per===per-1){var s=Math.floor(p/per);if(setFilled(m,t,s))lcT(ctx,setTot(m,t,s),x+TW-cw.t/2,cy,{s:30,w:'800',c:INK,a:'center'});}}
     var by=TY+HH+RH*12+16,bx=x+TW-cw.t;
@@ -1111,19 +1122,22 @@ function leagueCardCanvas(m,f,sigs){var L=LEAGUE_CARD,lb=L.labels,INK=L.ink,r=m.
   sig(60,lb.sigAway,sigs&&sigs.away);sig(1040,lb.sigHome,sigs&&sigs.home);
   lcT(ctx,lb.email+S.rules.general.leagueEmail,W/2,H-60,{s:28,w:'700',a:'center'});
   return c;}
+function sentLine(m){var s=m&&m.leagueSent;return s?'Sent to league by '+s.by+' \u00b7 '+clock(s.at)+(s.n>1?' (sent '+s.n+' times)':''):'';}
+function markSent(m){m.leagueSent={at:Date.now(),by:meTag().name,n:((m.leagueSent&&m.leagueSent.n)||0)+1};save();}
 function leagueCard(){var f=curFx(),m=S.matches[f.id];if(!m)return;var sg=m.sig||{};
   Promise.all([fontsReady(),loadImg(sg.away),loadImg(sg.home)]).then(function(a){var c=leagueCardCanvas(m,f,{away:a[1],home:a[2]});
     var fname='CSL-'+f.date+'-'+(f.home?'Lions-v-'+oppTeam(m):oppTeam(m)+'-v-Lions').replace(/[^A-Za-z0-9-]+/g,'-')+'.png',url=c.toDataURL('image/png');
     modal('<h4>League result card</h4><img class="imgout" src="'+url+'" alt="League result card" style="background:#fff">'+
       (!m.sig||!m.sig.away||!m.sig.home?'<div class="note">Not signed by both captains yet.</div>':'')+
-      '<button class="btn gold" data-act="sendleague">Send to league</button><button class="btn ghost" data-act="copyleague">Copy league email address</button>'+
-      '<div class="note">Send to league copies '+esc(S.rules.general.leagueEmail)+' and opens the share sheet. Choose Mail, then paste the address into To. If sharing isn’t offered, press and hold the image to save it, then attach it to an email.</div><button class="btn ghost" data-act="close">Close</button>');
+      (m.leagueSent?'<div class="note gold" id="lcSent">'+esc(sentLine(m))+'</div>':'<div class="note gold" id="lcSent" style="display:none"></div>')+
+      '<button class="btn gold" data-act="sendleague">'+(m.leagueSent?'Resend to league':'Send to league')+'</button><button class="btn ghost" data-act="copyleague">Copy league email address</button>'+
+      '<div class="note">Send to league copies '+esc(S.rules.general.leagueEmail)+' and opens the share sheet. Choose Mail, then paste the address into To. If sharing isn’t offered, press and hold the image to save it, then attach it to an email.</div>'+(m.leagueSent?'':'<button class="btn ghost" data-act="leaguemark">Mark as sent (sent another way)</button>')+'<button class="btn ghost" data-act="close">Close</button>');
     T.img={c:c,fname:fname};T.lfile=null;c.toBlob(function(b){try{T.lfile=new File([b],fname,{type:'image/png'});}catch(e){}},'image/png');});}
 function leagueMailText(){var f=curFx(),m=S.matches[f.id],R=result(m),hT=homeT(m),nm=function(t){return t==='L'?LEAGUE_CARD.team:oppTeam(m);};
   var aT=awayT(m),pts=m.rules.result==='sets'?' ('+(hT==='L'?R.l:R.o)+' – '+(aT==='L'?R.l:R.o)+' pts)':'';
   return LEAGUE_CARD.name+' result, '+lcDiv(f)+', '+ordDate(f.date)+': '+nm(hT)+' '+matchTot(m,hT)+' v '+matchTot(m,aT)+' '+nm(aT)+pts+'. Completed scorecard attached.';}
 function sendLeague(){var e=S.rules.general.leagueEmail;try{navigator.clipboard&&navigator.clipboard.writeText(e).catch(function(){});}catch(x){}
-  var go=function(file){try{if(file&&navigator.canShare&&navigator.canShare({files:[file]})){toast('Address copied: paste it into To');navigator.share({files:[file],title:'League result',text:leagueMailText()}).catch(function(){});}else toast('Press and hold the image to save it');}catch(x){toast('Press and hold the image to save it');}};
+  var go=function(file){try{if(file&&navigator.canShare&&navigator.canShare({files:[file]})){toast('Address copied: paste it into To');navigator.share({files:[file],title:'League result',text:leagueMailText()}).then(function(){var mm=curMatch();if(mm){markSent(mm);var el=document.getElementById('lcSent');if(el){el.textContent=sentLine(mm);el.style.display='';}var bt=document.querySelector('#mbox [data-act="sendleague"]');if(bt)bt.textContent='Resend to league';var mk=document.querySelector('#mbox [data-act="leaguemark"]');if(mk)mk.remove();renderSoon();}}).catch(function(){});}else toast('Press and hold the image to save it');}catch(x){toast('Press and hold the image to save it');}};
   if(T.lfile)go(T.lfile);else T.img.c.toBlob(function(b){try{go(new File([b],T.img.fname,{type:'image/png'}));}catch(x){go(null);}},'image/png');}
 function sigModal(){var m=curMatch();if(!m)return;var f=curFx(),aw=f.home?oppTeam(m):LEAGUE_CARD.team,hm=f.home?LEAGUE_CARD.team:oppTeam(m);
   var pad=function(k,who){return '<div class="field"><label>'+esc(LEAGUE_CARD.labels.sig)+' – '+esc(who)+' captain '+(k==='away'?'(away team)':'(home team)')+'</label><canvas class="sigpad" data-sig="'+k+'"></canvas><button class="btn ghost" data-act="sigclear" data-k="'+k+'" style="min-height:38px">Clear</button></div>';};
@@ -1388,7 +1402,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(denied(needFor(d),m))return;
   if(m&&f&&isFrozenFx(f)&&(lockBlocked(d)||d.act==='unlockm'||d.act==='lockm')){frozenMsg();return;}
   if((d.act==='editfx'||d.act==='savefx'||d.act==='delfx')&&d.id&&isFrozenFid(d.id)){frozenMsg();return;}
-  if(m&&isLocked(m)&&lockBlocked(d)){toast(isAdmin()?'Match locked. Tap Unlock on the Scores tab to correct it.':'Match locked. Ask an admin to unlock it.');return;}
+  if(m&&isLocked(m)&&lockBlocked(d)){toast(isAdmin()?'Results published. Tap Unlock on the Scores tab to correct them.':'Results published. Ask an admin to unlock them.');return;}
   if(d.tab){if(d.fx)S.ui.fx=d.fx;S.ui.tab=d.tab;T.sel=null;T.spare=false;T.pick=null;closeModal();save();render();window.scrollTo(0,0);return;}
   if(d.av){var sel=selFor(f.id);if(d.av==='in')sel.avail[d.id]='in';else delete sel.avail[d.id];if(d.av!=='in'){var i=sel.lineup.indexOf(d.id);if(i>-1&&!hasHands(S.matches[f.id]))sel.lineup[i]=null;var ri0=sel.reserves.indexOf(d.id);if(ri0>-1)sel.reserves.splice(ri0,1);}emptySync(f.id);save();render();return;}
   if(d.req!==undefined){var sl=selFor(f.id);sl.req[d.id]=+d.req;save();render();return;}
@@ -1421,8 +1435,8 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'vdseen':S.feedSeen=S.feedSeen||{draws:{}};S.feedSeen.vd=S.feedSeen.vd||{};S.feedSeen.vd[d.dk]=1;save();render();break;
     case 'imseen':S.feedSeen=S.feedSeen||{draws:{}};S.feedSeen.draws=S.feedSeen.draws||{};S.feedSeen.draws[d.ik]=1;save();render();break;
     case 'drawignore':S.feedSeen=S.feedSeen||{draws:{}};S.feedSeen.dr=S.feedSeen.dr||{};S.feedSeen.dr[d.dk]=1;save();render();break;
-    case 'lockm':m.lock={at:Date.now(),by:meTag().name};if(m.everLocked)logChange(m,'Locked again');m.unlockedAt=null;T.sel=null;save();render();toast('Match locked');break;
-    case 'unlockm':m.lock=null;m.unlockedAt=Date.now();m.everLocked=true;logChange(m,'Unlocked');T.sel=null;save();render();toast('Unlocked: changes are recorded');break;
+    case 'lockm':m.lock={at:Date.now(),by:meTag().name};if(!m.pub)m.pub={at:m.lock.at,by:m.lock.by};if(m.everLocked)logChange(m,'Published again');m.unlockedAt=null;T.sel=null;save();render();toast('Results published');break;
+    case 'unlockm':if(!m.pub)m.pub={at:Date.now(),by:'auto'};m.lock=null;m.unlockedAt=Date.now();m.everLocked=true;logChange(m,'Unlocked');T.sel=null;save();render();toast('Unlocked: changes are recorded');break;
     case 'fxf':S.ui.fxf=S.ui.fxf||{c:'all',s:'up'};S.ui.fxf[d.fk]=d.fv;localSave();render();break;
     case 'approve':case 'decline':accessAct(d.act,d.id);break;
     case 'saveaccess':case 'unlink':accessAct(d.act,d.id);break;
@@ -1479,7 +1493,9 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     case 'leagueimg':leagueImg();break;
     case 'ltfull':T.ltFull=!T.ltFull;render();break;
     case 'leaguecard':leagueCard();break;
-    case 'sendleague':sendLeague();break;
+    case 'sendleague':if(m&&m.leagueSent&&!d.ok){T.resend=true;modal('<h4>Send it again?</h4><div class="small">'+esc(sentLine(m))+'. The league normally only needs it once.</div><button class="btn gold" data-act="sendleague" data-ok="1">Send again</button><button class="btn ghost" data-act="leaguecard">Cancel</button>');break;}
+      sendLeague();if(d.ok)setTimeout(leagueCard,400);break;
+    case 'leaguemark':if(m){markSent(m);render();leagueCard();toast('Marked as sent to the league');}break;
     case 'copyleague':copyText(S.rules.general.leagueEmail);break;
     case 'sign':sigModal();break;
     case 'sigclear':var sp=T.sig&&T.sig[d.k];if(sp){var cx=sp.cv.getContext('2d');cx.save();cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,sp.cv.width,sp.cv.height);cx.restore();sp.st.inked=false;sp.st.old=false;}break;
@@ -1559,9 +1575,10 @@ function applyDoc(k,v){if(v==null)return;
   else if(k.indexOf('sel:')===0)S.sel[k.slice(4)]=v;
   else if(k.indexOf('match:')===0)S.matches[k.slice(6)]=v;
   else if(k.indexOf('subs:')===0){S.subs=S.subs||{};S.subs[k.slice(5)]=v;}}
-function dirtyMap(){var r={};if(!SY.ready)return r;var o=docsOf();Object.keys(o).forEach(function(k){if(writable(k)&&hsh(JSON.stringify(o[k]))!==SY.base[k])r[k]=1;});return r;}
+function blankSel(v){return !!v&&!Object.keys(v.avail||{}).length&&!Object.keys(v.req||{}).length&&!(v.lineup||[]).some(Boolean)&&!(v.reserves||[]).length&&Object.keys(v).every(function(x){return ['avail','req','lineup','reserves'].indexOf(x)>-1;});}
+function dirtyMap(){var r={};if(!SY.ready)return r;var o=docsOf();Object.keys(o).forEach(function(k){if(SY.base[k]===undefined&&k.indexOf('sel:')===0&&blankSel(o[k]))return;if(writable(k)&&hsh(JSON.stringify(o[k]))!==SY.base[k])r[k]=1;});return r;} // an untouched new team sheet isn't 'to send'
 function dirtyKeys(){return Object.keys(dirtyMap());}
-function fixups(){if((S.squadV||0)<SQUAD.v)syncSquad(S);seasonFixups(S);var g=S.rules.general;if(!g.nickOn)g.nickOn={teamsheet:false,live:false,results:false,report:false,averages:false};if(!S.subs)S.subs={};if(!S.oppNames)S.oppNames={};if(S.comps&&S.comps.length&&!compById('cs')){var gi=S.comps.map(function(c){return c.id;}).indexOf('gd');S.comps.splice(gi<0?S.comps.length:gi+1,0,{id:'cs',name:'Chairman’s Shield',type:'cup',archived:false});}}
+function fixups(){if(SB&&SY.ready&&!canEdit()&&Object.keys(S.sel).length)dropSel();if((S.squadV||0)<SQUAD.v)syncSquad(S);seasonFixups(S);var g=S.rules.general;if(!g.nickOn)g.nickOn={teamsheet:false,live:false,results:false,report:false,averages:false};if(!S.subs)S.subs={};if(!S.oppNames)S.oppNames={};if(S.comps&&S.comps.length&&!compById('cs')){var gi=S.comps.map(function(c){return c.id;}).indexOf('gd');S.comps.splice(gi<0?S.comps.length:gi+1,0,{id:'cs',name:'Chairman’s Shield',type:'cup',archived:false});}}
 function setBase(keys){var o=docsOf();keys.forEach(function(k){if(o[k]!==undefined){var j=JSON.stringify(o[k]);SY.base[k]=hsh(j);BJ[k]=j;}});}
 /* ---- 3-way merge: base = last synced copy, m = this phone, t = the shared copy now ---- */
 function jeq(a,b){return JSON.stringify(a)===JSON.stringify(b);}
@@ -1605,7 +1622,7 @@ function timeOf(iso){var d=new Date(iso);if(isNaN(d))return '';var p=function(n)
 
 /* pull: remote wins for anything this phone hasn't changed and not yet sent */
 var pullAgain=false;
-function pull(full){if(!SB)return Promise.resolve();if(NET.pulling){pullAgain=true;return Promise.resolve();}
+function pull(full){if(!SB)return Promise.resolve();if(NET.pulling){pullAgain=(pullAgain==='full'||full)?'full':true;return Promise.resolve();}
   var first=!SY.ready,q=SB.from('docs').select('key,data,updated_at,updated_by');
   if(!first&&!full&&SY.pulled)q=q.gt('updated_at',SY.pulled);
   NET.pulling=true;
@@ -1616,7 +1633,7 @@ function pull(full){if(!SB)return Promise.resolve();if(NET.pulling){pullAgain=tr
     SY.pulled=maxAt;if(first)SY.ready=true;fixups();setBase(got);NET.err='';localSave();
     if(got.length||first)renderSoon();else topStatus();
     if(dirtyKeys().length)syncKick();
-    if(pullAgain){pullAgain=false;pull(false);}})
+    if(pullAgain){var pf=pullAgain==='full';pullAgain=false;pull(pf);}})
   .catch(function(e){NET.pulling=false;NET.err=errMsg(e);topStatus();});}
 /* push: send what this phone has changed and is allowed to change */
 var pushT=null;
@@ -1649,14 +1666,14 @@ function loadPeople(){if(!SB)return Promise.resolve();
   return SB.from('people').select('pid,role,requested,name,uid').then(function(r){if(r.error)throw r.error;PEOPLE=r.data||[];
     var mine=SY.uid?PEOPLE.filter(function(p){return p.uid===SY.uid;})[0]:null,was=myRole();
     SY.me=mine&&SY.session?{pid:mine.pid,role:mine.role,requested:mine.requested,name:mine.name}:null;sySave();
-    if(myRole()!==was){render();if(SY.ready&&dirtyKeys().length)syncKick();if(!SY.ready&&NET.empty&&isAdmin())seedAsk();}else renderSoon();})
+    if(myRole()!==was){if(SY.ready&&!canEdit())dropSel();else if(SY.ready&&was==='viewer'){dropSel();pull(true);}localSave();render();if(SY.ready&&dirtyKeys().length)syncKick();if(!SY.ready&&NET.empty&&isAdmin())seedAsk();}else renderSoon();})
   .catch(function(e){NET.err=errMsg(e);topStatus();});}
 function seedAsk(){if(T.seedAsked)return;T.seedAsked=true;
   modal('<h4>Start the shared data?</h4><div class="small muted">The shared store is empty. This uploads this phone’s fixtures, squad, team sheets, results and rules, so every phone sees the same.</div><button class="btn gold" data-act="seedok">Start from this phone</button><button class="btn ghost" data-act="close">Not now</button>');}
 function sbInit(){if(!window.supabase||!window.supabase.createClient){NET.err='Sharing isn’t available in this copy of the app';return;}
   try{SB=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'lions-den-auth'}});}catch(e){SB=null;NET.err=errMsg(e);return;}
   SB.auth.onAuthStateChange(function(ev,ses){var had=SY.uid;SY.session=!!ses;SY.uid=ses&&ses.user?ses.user.id:null;SY.email=ses&&ses.user?ses.user.email:'';
-    if(ev==='SIGNED_OUT'){SY.me=null;sySave();render();}
+    if(ev==='SIGNED_OUT'){SY.me=null;if(SY.ready)dropSel();localSave();render();}
     if(ev==='PASSWORD_RECOVERY')newPwModal();
     if(SY.uid&&SY.uid!==had)loadPeople();});
   SB.auth.getSession().then(function(r){var ses=r&&r.data&&r.data.session;SY.session=!!ses;SY.uid=ses&&ses.user?ses.user.id:null;SY.email=ses&&ses.user?ses.user.email:'';if(!ses)SY.me=null;sySave();
@@ -1748,7 +1765,7 @@ function subsText(){var t=subsTable(),out='Lions subs (from '+fdate(subsFrom())+
 /* who can do what: every button is checked here, and the database checks again */
 var VIEW_ACTS={cups:1,season:1,phist:1,printsheet:1,doprint:1,closeprint:1,vdseen:1,clashmine:1,clashtheirs:1,close:1,choosefx:1,pickfx:1,allsets:1,avgimg:1,shareimg:1,draws:1,drawseen:1,fixchg:1,fixseen:1,feedrefresh:1,leagueimg:1,ltfull:1,imseen:1,copytext:1,sharetext:1,export:1,exportcopy:1,reset:1,resetok:1,fxf:1,signin:1,signup:1,signout:1,forgot:1,claim:1,newpw:1,pullall:1,acctmode:1};
 var SCORE_ACTS={spare:1,nospare:1,vc:1,undo:1,cancelsel:1,skip:1,other:1,otherok:1};
-var EDIT_ACTS={clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,stopscore:1,stopscoreok:1,lockm:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1,newplayer:1,savenp:1,nptoggle:1,leaguecard:1,sendleague:1,copyleague:1};
+var EDIT_ACTS={clearteam:1,tput:1,addres:1,tclear:1,mput:1,mclear:1,mswap:1,start:1,takeover:1,stopscore:1,stopscoreok:1,lockm:1,oppnames:1,saveopp:1,sign:1,sigclear:1,sigsave:1,addplayer:1,saveplayer:1,leaguemark:1,newplayer:1,savenp:1,nptoggle:1,leaguecard:1,sendleague:1,copyleague:1};
 var ADMIN_HIDE=['teamsheet','resimg','report','copyres','addfx','comps','bulkadd','editrule','addrule','savegeneral','importpaste','seedforce','subtick','lockin','unlockin'];
 function lockBlocked(d){return !!(d.cell||d.name||d.tw||d.v!==undefined||d.sp!==undefined||['spare','nospare','vc','undo','skip','other','otherok','oppnames','saveopp','mput','mclear','mswap','newplayer','savenp','nptoggle','takeover','stopscore','stopscoreok'].indexOf(d.act)>-1);}
 function needFor(d){if(d.tab)return 'view';if(d.v!==undefined||d.sp!==undefined||d.cell)return 'score';
@@ -1775,7 +1792,7 @@ render();
 sbInit();
 feedFetch(false);window.addEventListener('online',function(){feedFetch(false);});document.addEventListener('visibilitychange',function(){if(!document.hidden)feedFetch(false);});
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude|anthropic/.test(location.hostname)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
-window.__hub={lockedIn:lockedIn,npMark:npMark,avgMap:avgMap,suggest:suggest,tacticOf:tacticOf,earlyLate:earlyLate,bands:bands,applyDraw:applyDraw,drawFx:drawFx,allTimePins:allTimePins,cupsOn:cupsOn,SV:SV,sheetData:sheetData,seasonList:seasonList,curSeason:curSeason,seasonAverages:seasonAverages,openPrintSheet:openPrintSheet,isFrozenFx:isFrozenFx,averages31:averages,save:save,merge3:merge3,teamStats:teamStats,clashKeys:clashKeys,viewerDraws:viewerDraws,SY:function(){return SY;},NET:NET,docsOf:docsOf,dirtyKeys:dirtyKeys,needFor:needFor,subsTable:subsTable,myRole:myRole,pull:pull,push:push,people:function(){return PEOPLE;},render:render,T:T,S:function(){return S;},result:result,averages:averages,suggest:suggest,enter:enter,target:function(){return target(curMatch());},curMatch:curMatch,reportText:reportText,scoresText:scoresText,seed:seed,isLS:isLS,lsFill:lsFill,syncPast:syncPast,averages:averages,parseTable:parseTable,feedFetch:feedFetch,lionsPos:lionsPos,feedNews:feedNews,leagueImg:leagueImg,leagueCardCanvas:leagueCardCanvas,leagueMailText:leagueMailText,setS:function(x){S=x;render();}};
+window.__hub={published:published,sentLine:sentLine,lcSpare:lcSpare,lcCell:lcCell,lcT:lcT,lockedIn:lockedIn,npMark:npMark,avgMap:avgMap,suggest:suggest,tacticOf:tacticOf,earlyLate:earlyLate,bands:bands,applyDraw:applyDraw,drawFx:drawFx,allTimePins:allTimePins,cupsOn:cupsOn,SV:SV,sheetData:sheetData,seasonList:seasonList,curSeason:curSeason,seasonAverages:seasonAverages,openPrintSheet:openPrintSheet,isFrozenFx:isFrozenFx,averages31:averages,save:save,merge3:merge3,teamStats:teamStats,clashKeys:clashKeys,viewerDraws:viewerDraws,SY:function(){return SY;},NET:NET,docsOf:docsOf,dirtyKeys:dirtyKeys,needFor:needFor,subsTable:subsTable,myRole:myRole,pull:pull,push:push,people:function(){return PEOPLE;},render:render,T:T,S:function(){return S;},result:result,averages:averages,suggest:suggest,enter:enter,target:function(){return target(curMatch());},curMatch:curMatch,reportText:reportText,scoresText:scoresText,seed:seed,isLS:isLS,lsFill:lsFill,syncPast:syncPast,averages:averages,parseTable:parseTable,feedFetch:feedFetch,lionsPos:lionsPos,feedNews:feedNews,leagueImg:leagueImg,leagueCardCanvas:leagueCardCanvas,leagueMailText:leagueMailText,setS:function(x){S=x;render();}};
 })();
 </script>
 </body>
