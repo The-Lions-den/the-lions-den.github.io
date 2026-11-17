@@ -340,6 +340,35 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    const el=A.H.earlyLate('p11');ok(el.e.g+el.l.g>0,'early/late counted from app-scored matches ('+el.e.g+' early, '+el.l.g+' late)');
    A.go('averages');A.click('[data-act="phist"][data-id="p11"]');ok(/Early v late sets: shown once he has 5 matches in each/.test(A.modal())||/Early sets \(1–2\):/.test(A.modal()),'player history: early v late line');A.click('[data-act="close"]');
    sel.tactic=undefined;}
+  // v3.10: Lock in team, new player on the night (N/P), lighter team sheet names
+  {const S=A.H.S();A.go('home');const tb=A.d.querySelector('.card.now [data-tab="team"]'),fid=tb.dataset.fx;
+   const sel=S.sel[fid]||(S.sel[fid]={avail:{},req:{},lineup:Array(12).fill(null),reserves:[]});S.players.filter(p=>p.active).forEach(p=>sel.avail[p.id]='in');A.H.suggest(fid);
+   A.go('team',fid);const vt=()=>A.d.getElementById('view').textContent;ok(A.vis('[data-act="lockin"]')&&/1\. Availability/.test(vt()),'admin: Lock in team button, Availability shown ('+fid+')');
+   A.click('[data-act="lockin"]');await wait(200);snap(A,'locked');
+   ok(!/Availability/.test(vt())&&!A.has('[data-av]')&&!A.has('[data-act="suggest"]')&&!A.has('[data-act="clearteam"]')&&!A.has('[data-act="tactic"]')&&!A.has('[data-act="addres"]')&&/Team locked in by .+ · /.test(vt())&&A.vis('[data-act="unlockin"]'),'locked: availability, tactics, Suggest, Clear team and Add reserve hidden; note and Unlock team shown');
+   ok(/^Team/.test(A.d.querySelector('#view .sec').textContent)&&[...A.d.querySelectorAll('#view .slot')].every(b=>b.disabled)&&A.has('[data-act="teamsheet"]'),'team is the first section, slots fixed, team sheet still there');
+   ok(B.docs['sel:'+fid]&&B.docs['sel:'+fid].data.lockin&&B.docs['sel:'+fid].data.lockin.at,'lock shared');
+   A.go('home');ok(/Team locked in/.test(A.d.querySelector('.card.now').textContent),'Home: Team locked in chip');
+   R.go('team',fid);await wait(30);await R.H.pull(true);await wait(100);R.go('team',fid);ok(!R.vis('[data-act="unlockin"]')&&!/Availability/.test(R.d.getElementById('view').textContent),'scorer: sees the locked team, no Unlock button');
+   R.click('[data-act="unlockin"]');ok(/Only admins/.test(R.toast()),'scorer: unlock is admins only');
+   A.go('team',fid);A.click('[data-act="unlockin"]');await wait(150);ok(/1\. Availability/.test(vt())&&A.has('[data-av]')&&A.has('[data-act="suggest"]')&&![...A.d.querySelectorAll('#view .slot')].some(b=>b.disabled)&&A.vis('[data-act="lockin"]'),'unlocked: availability and editing back, Lock in team again');
+   A.go('home');ok(!/Team locked in/.test(A.d.querySelector('.card.now').textContent),'Home chip gone');
+   // new player in Team mode (reserve)
+   A.go('team',fid);A.click('[data-act="addres"]');ok(A.has('[data-act="newplayer"]')&&/New player \(N\/P\)/.test(A.modal()),'Team picker: New player (N/P) at the top of Bring in');
+   A.click('[data-act="newplayer"]');A.set('nnFull','Sam Newman');A.click('[data-act="savenp"]');await wait(150);
+   const sam=S.players.find(p=>p.full==='Sam Newman');ok(sam&&sam.active&&sam.name==='S. Newman'&&S.sel[fid].reserves.includes(sam.id)&&S.sel[fid].np.includes(sam.id),'new player added to the squad, reserve, marked N/P');
+   ok(JSON.stringify(B.docs.players.data).includes(sam.id),'new player shared');}
+  {const S=A.H.S(),m=S.matches.L12;A.go('score','L12');if(!A.has('[data-name="L,11"]'))A.click('[data-act="allsets"]');A.click('[data-name="L,11"]');ok(A.has('[data-act="newplayer"]'),'Score picker: New player (N/P)');snap(A,'pick');
+   A.click('[data-act="newplayer"]');snap(A,'npm');A.set('nnFull','Tom Fresh');A.click('[data-act="savenp"]');await wait(150);
+   const tom=S.players.find(p=>p.full==='Tom Fresh');ok(tom&&m.lineup[11]===tom.id&&S.sel.L12.np.includes(tom.id)&&S.sel.L12.lineup[11]===tom.id,'Score tab: new player put in slot 12, marked N/P');
+   ok(A.H.npMark(m,'L',11)===' (N/P)'&&A.H.npMark(m,'L',0)==='','league scorecard: (N/P) after his name only');
+   ok(!/N\/P/.test(A.d.getElementById('view').textContent),'no N/P on the score sheet');
+   A.click('[data-name="L,11"]');ok(/Remove the \(N\/P\) marker/.test(A.modal()),'picker offers to remove the marker');A.click('[data-act="nptoggle"]');ok(A.H.npMark(m,'L',11)==='','marker removed');
+   A.click('[data-name="L,11"]');A.click('[data-act="nptoggle"]');ok(A.H.npMark(m,'L',11)===' (N/P)','marker back on (any player can be marked)');
+   A.click('[data-act="oppnames"][data-set="1"]');const cbs=[...A.d.querySelectorAll('[data-onpx]')];ok(cbs.length===3&&cbs.every(c=>!c.checked),'opposition names: N/P tick per name, off by default');snap(A,'opp');
+   cbs[1].checked=true;A.click('[data-act="saveopp"]');await wait(100);ok(JSON.stringify(m.onp)==='[4]'&&A.H.npMark(m,'O',4)===' (N/P)'&&A.H.npMark(m,'O',3)==='','opposition N/P saved for that name only');
+   A.click('[data-act="oppnames"][data-set="1"]');A.d.querySelectorAll('[data-onpx]')[1].checked=false;A.click('[data-act="saveopp"]');ok(!m.onp.length,'opposition N/P can be cleared');
+   ok(A.H.needFor({act:'savenp'})==='edit'&&A.H.needFor({act:'lockin'})==='admin','permissions: new player for scorers + admins, lock for admins');}
   ok(/Close season 2026\/27/.test((A.go('backup'),A.d.getElementById('view').textContent))&&!C.H.needFor({act:'closeseasonok'})!=='admin','Close season on Backup page for admins');
   A.click('[data-act="closeseason"]');A.set('csName','2026/28');A.click('[data-act="closeseasonok"]');ok(A.H.curSeason()==='2026-27','wrong confirmation text: season not closed');
   A.set('csName','2026/27');A.click('[data-act="closeseasonok"]');await wait(300);
