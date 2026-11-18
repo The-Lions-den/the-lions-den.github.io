@@ -20,7 +20,7 @@
 html,body{margin:0;background:var(--navy);color:var(--white);font-family:Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
 input,select,textarea{font:inherit}
-.wrap{max-width:600px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))}
+.wrap{box-sizing:border-box;min-height:calc(100vh + 1px);min-height:calc(100lvh + 1px);max-width:600px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))}
 .top{display:flex;align-items:center;gap:12px;padding:4px 2px 12px}
 .logo{width:40px;height:52px;flex:none}
 .h1{font-family:Oswald,sans-serif;font-size:22px;font-weight:700;text-transform:uppercase;line-height:1.1}
@@ -1676,6 +1676,8 @@ function importData(t){try{var d=JSON.parse(t);if(!d||!d.players||!d.fixtures)th
 document.addEventListener('change',function(e){if(e.target.id==='fxSel'){if(e.target.value){S.ui.fx=e.target.value;T.sel=null;T.pick=null;T.spare=false;save();render();}return;}var fl=e.target.files&&e.target.files[0];if(!fl)return;
   if(e.target.id==='impFile'){if(!isAdmin()){toast('Only admins can restore a backup');return;}var r=new FileReader();r.onload=function(){importData(r.result);};r.readAsText(fl);}
 });
+/* v3.13: iOS 26 leaves fixed bars too high after the keyboard closes; nudge the page so the bottom bar drops back */
+document.addEventListener('focusout',function(e){var t=e.target;if(!t||!/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName))return;setTimeout(function(){var a=document.activeElement;if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))return;var y=window.scrollY||0;try{window.scrollTo(window.scrollX||0,y+1);window.scrollTo(window.scrollX||0,y);}catch(x){}},60);});
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.onp!==undefined){e.preventDefault();var ins=[].slice.call(document.querySelectorAll('[data-onp]')),i=ins.indexOf(e.target);if(i<ins.length-1)ins[i+1].focus();else document.querySelector('[data-act="saveopp"]').click();}});
 
 /* ---------------- shared data, sign-in and roles (v2.0) ---------------- */
