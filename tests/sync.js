@@ -1,9 +1,13 @@
+// Fixed test clock (v3.14): the fixtures are real 2026/27 dates, so run every phone and the test itself as if it were Wed 18 Nov 2026 10:00 UK
+const SHIFT=Date.UTC(2026,10,18,10,0,0)-Date.now();
+function shiftDate(D){const S=class extends D{constructor(...a){if(a.length)super(...a);else super(D.now()+SHIFT);}static now(){return D.now()+SHIFT;}};return S;}
+global.Date=shiftDate(Date);
 const {JSDOM}=require('jsdom');const fs=require('fs');const {Backend,client}=require('./mocksb');
 const html=fs.readFileSync(process.env.APP_HTML||require('path').join(__dirname,'../app/index.html'),'utf8');const B=Backend();B.bootstrap=['p10']; // Andy linked before approvals were required
 const wait=ms=>new Promise(r=>setTimeout(r,(ms||60)+350));
 const snap=(P,n)=>{if(process.env.SNAP)fs.writeFileSync(process.env.SNAP+'/'+n+'.html','<!DOCTYPE html>'+P.d.documentElement.outerHTML.replace(/<script[\s\S]*?<\/script>/g,''));};let fails=0;const ok=(c,msg)=>{console.log((c?'PASS ':'FAIL ')+msg);if(!c)fails++;};
 function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',url:'https://the-lions-den.github.io/',pretendToBeVisual:true,
-  beforeParse(w){w.print=()=>{};w.supabase={createClient:()=>(w.__c=client(B,w.localStorage))};w.scrollTo=()=>{};w.fetch=()=>Promise.reject(new Error('no net'));if(store)Object.keys(store).forEach(k=>w.localStorage.setItem(k,store[k]));}});
+  beforeParse(w){w.Date=shiftDate(w.Date);w.print=()=>{};w.supabase={createClient:()=>(w.__c=client(B,w.localStorage))};w.scrollTo=()=>{};w.fetch=()=>Promise.reject(new Error('no net'));if(store)Object.keys(store).forEach(k=>w.localStorage.setItem(k,store[k]));}});
   const w=dom.window,d=w.document;const P={name,w,d,H:w.__hub,
     click(sel){const b=d.querySelector(sel);if(!b)throw new Error(name+': no '+sel);b.click();},
     has(sel){return !!d.querySelector(sel);},vis(sel){const b=d.querySelector(sel);return !!b&&w.getComputedStyle(b).display!=='none';},
@@ -443,6 +447,23 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    ok(/5th set to decide it/.test(vt())&&/complete 5th set/.test(vt()),'Final: guide says 5th set');A.click('[data-act="sdstart"]');A.click('[data-act="sdgo"]');await wait(50);
    ok(mf.sd&&mf.sd.final&&/5th set \(Final\)/.test(vt())&&/5th set · Hand/.test(vt()),'Final: 5th set scored like a normal set');snap(A,'final5');
    A.click('[data-act="sdcancel"]');ok(!mf.sd,'cancel before any score');}
+  // v3.14: live scoring fixes
+  {const S=A.H.S(),vt=()=>A.d.getElementById('view').textContent;
+   const fid=S.fixtures.filter(f=>/^L/.test(f.id)&&f.status==='scheduled'&&!S.matches[f.id]&&f.date>'2026-11-18')[2].id;
+   const sel=S.sel[fid]||(S.sel[fid]={avail:{},req:{},lineup:Array(12).fill(null),reserves:[]});sel.lineup=S.matches.L8.lineup.slice();sel.lockin={at:Date.now(),by:'Andy Nancollis'};A.H.save();
+   A.go('team',fid);ok(!/Availability/.test(vt()),'locked in: no Availability section');
+   A.go('score',fid);A.click('[data-act="start"]');await wait(50);A.click('[data-v="5"]');await wait(50);
+   const m=S.matches[fid],ht=m.home?'L':'O';ok(m[ht][0][0]&&m[ht][0][0].v===5,'first hand scored');
+   A.go('team',fid);ok(!/Availability/.test(vt())&&/Scoring has started/.test(vt())&&/Team locked in by/.test(vt()),'scoring under way: Availability stays hidden, locked-in line kept');
+   A.go('score',fid);A.click('[data-cell="'+ht+',2,3"]');ok(/Not this turn yet: next up is/.test(A.toast())&&!/Changing/.test(vt())&&!m[ht][2][3],'future hand refused: '+A.toast());
+   A.click('[data-cell="'+ht+',0,0"]');ok(/Changing hand 1/.test(vt()),'filled hand can still be changed');
+   A.click('[data-act="skip"]');ok(!/Changing/.test(vt()),'Next › stops at the current turn, not a later empty hand');
+   A.click('[data-cell="'+ht+',1,0"]');ok(/Changing hand 1/.test(vt()),'current turn can be tapped');A.click('[data-v="6"]');await wait(30);ok(m[ht][1][0]&&m[ht][1][0].v===6,'current turn scored');
+   A.H.save();await wait(250);await V.H.pull(false);await wait(100);V.go('score',fid);const vv=V.d.getElementById('view'),cards=[...vv.children];
+   const wi=cards.findIndex(c=>/Scoring by/.test(c.textContent)),bi=cards.findIndex(c=>c.querySelector&&c.querySelector('.big')),ti=cards.findIndex(c=>c.querySelector&&c.querySelector('table'));
+   ok(wi>=0&&wi<bi&&bi<ti,'viewer: Scoring by card, then the totals, then the set table ('+wi+','+bi+','+ti+')');ok(vv.querySelector('.card.now .hint')&&/lead|trail|level|need/i.test(vv.querySelector('.card.now .hint').textContent),'viewer sees the what’s-needed line: '+(vv.querySelector('.card.now .hint')||{}).textContent);snap(V,'viewerlive');
+   A.go('score','L8');const cs=[...A.d.getElementById('view').querySelectorAll('.card')];ok(cs.length&&cs[cs.length-1].classList.contains('lockc'),'published card is the last card on the Scores page');snap(A,'pubbottom');
+   delete S.matches[fid];delete sel.lockin;A.H.save();await wait(150);}
   ok(/Close season 2026\/27/.test((A.go('backup'),A.d.getElementById('view').textContent))&&!C.H.needFor({act:'closeseasonok'})!=='admin','Close season on Backup page for admins');
   A.click('[data-act="closeseason"]');A.set('csName','2026/28');A.click('[data-act="closeseasonok"]');ok(A.H.curSeason()==='2026-27','wrong confirmation text: season not closed');
   A.set('csName','2026/27');A.click('[data-act="closeseasonok"]');await wait(300);
