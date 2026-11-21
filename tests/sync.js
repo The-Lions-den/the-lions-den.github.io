@@ -273,7 +273,7 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    const bars=[...d.querySelectorAll('.liveset tr.tbar .tbv')].map(x=>parseInt(x.textContent));ok(bars[0]===H.setTot?true:true,'bars rendered');
    const btn=()=>d.querySelector('[data-act="allsets"]').textContent;ok(btn()==='Show all sets','button: Show all sets');A.click('[data-act="allsets"]');ok(btn()==='Hide other sets'&&d.querySelectorAll('.liveset').length===4,'button: Hide other sets, all 4 sets shown');
    ok([...d.querySelectorAll('.liveset')].some(c=>c.querySelector('tr.tbar.win')&&/\+2 pts/.test(c.textContent)),'finished set: winner bar highlighted with +2 pts');A.click('[data-act="allsets"]');
-   Object.assign(m,JSON.parse(save));A.go('score','L8');ok(d.querySelector('.setc')&&!d.querySelector('.liveset'),'finished match keeps the Set column');}
+   Object.assign(m,JSON.parse(save));A.go('score','L8');ok(!d.querySelector('.setc')&&d.querySelectorAll('.liveset tr.tbar').length>=8,'finished match uses the live layout (team bars, no Set column) [v3.16]');}
   // v3.5: last year folded into the main tables; 3-match bands
   V.go('averages');snap(V,'stats');{const d=V.d,t=d.getElementById('view').textContent,pt=[...d.querySelectorAll('table.avg:not(.stat)')][0],th=[...pt.querySelectorAll('thead th')].map(x=>x.textContent);
    ok(!/This time last year/.test(t),'no separate This time last year card');
@@ -310,7 +310,7 @@ function phone(name,store){const dom=new JSDOM(html,{runScripts:'dangerously',ur
    A.click('[data-act="fxf"][data-fk="s"][data-fv="up"]');ok(A.has('#view .nomatch'),'Upcoming: No match rows');
    A.click('[data-act="fxf"][data-fk="c"][data-fv="league"]');ok(!A.has('#view .nomatch'),'single competition: no No match rows');S.ui.fxf={c:'all',s:'up'};}
   V.go('averages');{const th=V.d.querySelector('table.avg th.ud');ok(th&&V.w.getComputedStyle(th).textAlign==='center','± header centred');}
-  A.go('score','L8');snap(A,'l8');{const c=A.d.querySelector('#view .card:not(.board) table');const tb=c.closest('.card'),st=[...tb.querySelectorAll('.setc')].map(x=>parseInt(x.textContent)),lt=[...tb.querySelectorAll('tr.up td.lt')].map(x=>x.textContent);
+  A.go('score','L8');snap(A,'l8');{const c=A.d.querySelector('#view .card:not(.board) table');const tb=c.closest('.card'),st=[...tb.querySelectorAll('td.st')].map(x=>parseInt(x.textContent)),lt=[...tb.querySelectorAll('tr.up td.lt')].map(x=>x.textContent);
    ok(st.length===2&&lt.length===2&&lt.includes('/')&&lt.some(x=>x==='▲'+Math.abs(st[0]-st[1])),'Lead Tot: ▲'+Math.abs(st[0]-st[1])+' and / ('+lt.join(' | ')+')');
    ok([...tb.querySelectorAll('tr.up td.hc .lead')].length>0&&[...tb.querySelectorAll('tr.up td.hc')].every(x=>x.textContent===''||x.textContent==='/'||/^▲\d+$/.test(x.textContent)),'Lead hand cells: ▲n or /');}
   // v3.8: an empty score sheet doesn't lock the Team page

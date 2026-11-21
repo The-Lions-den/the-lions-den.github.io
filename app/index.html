@@ -69,6 +69,7 @@ button.tagline{display:block;width:100%}
 .liveset .tscroll th.n,.liveset .tscroll td.n{max-width:6em;overflow:hidden}
 .liveset .tscroll td.n .nm{max-width:6em;overflow:hidden;text-overflow:ellipsis}
 .liveset .tscroll th,.liveset .tscroll td{padding-left:4.25px;padding-right:4.25px}.liveset .tscroll td.hc,.liveset .tscroll th.hc{min-width:1.7em;width:1.7em}.liveset .lead{font-size:10.2px}.liveset .lead i{font-size:6.8px} /* v3.15: live table 15% narrower so a set fits an iPhone 16 Pro with Display Zoom */
+.liveset .tscroll table{table-layout:fixed;width:100%;min-width:300px}.liveset .tscroll th.n,.liveset .tscroll td.n{max-width:none;width:auto}.liveset .tscroll td.n .nm{max-width:100%;display:block}.liveset .tscroll th.hc{width:29px;min-width:0}.liveset .tscroll th.x{width:28px}.liveset .tscroll th.tt{width:34px}.liveset .tscroll td.hc{width:auto;min-width:0} /* v3.16: fixed columns, the name column takes the rest */
 .tscroll td.hc .c{min-width:100%}
 td.t.st{font-weight:700;color:var(--gold);font-size:15px}
 tr.tbar td{padding:0;border-top:0;background:none}
@@ -936,7 +937,7 @@ function vScore(){var f=curFx();if(!f)return '<div class="card">Choose a fixture
   if(T.allsets){for(var s2=0;s2<r.sets;s2++)if(s2!==s0)h+=setTable(m,s2,LV);}
   return h;}
 
-function roTable(m,st){return setTable(m,st).replace(/ data-(cell|name)="[^"]*"/g,'').replace(/<div style="padding-top:10px;text-align:center"><button class="btn ghost sm" data-act="oppnames"[^>]*>[^<]*<\/button><\/div>/,'');}
+function roTable(m,st,o){return setTable(m,st,o).replace(/ data-(cell|name)="[^"]*"/g,'').replace(/<div style="padding-top:10px;text-align:center"><button class="btn ghost sm" data-act="oppnames"[^>]*>[^<]*<\/button><\/div>/,'');}
 function finishedHTML(f,m,sdShown){var R=result(m),r=m.rules,lk=isLocked(m),ed=canEdit()&&!lk,h='',pt=pinsTie(m);
   if(pt){if(!m.sd)h+=tieGuide(m,f);else if(!sdShown)h+=sdTableHTML(m,ed);}
   if(R.tied&&r.result!=='pins'&&(r.tie==='captains'||r.tie==='extra')&&(ed||m.tieWinner)){h+='<div class="card now" style="text-align:center">';
@@ -945,7 +946,7 @@ function finishedHTML(f,m,sdShown){var R=result(m),r=m.rules,lk=isLocked(m),ed=c
     h+='</div>';}
   var lockCard='';if(lk&&canEdit())lockCard='<div class="card lockc"><div class="between"><div><div class="name">🔒 Results published</div><div class="small muted">'+esc(lockLine(m))+'</div></div>'+(isAdmin()&&!isFrozenFx(f)?'<button class="btn ghost sm" data-act="unlockm">Unlock</button>':'')+'</div>'+(isFrozenFx(f)?'<div class="note">Season '+esc(seasonLabel(fxSeason(f)))+' is closed: these scores are final.</div>':isAdmin()?'<div class="note">Unlock to correct a score. Every change is recorded below.</div>':'')+'</div>';
   if(!(lk&&canEdit())&&canEdit()&&!(pt&&!R.winner))h+='<div class="card now" style="text-align:center"><div class="h1 gold" style="font-size:20px">Match finished</div><div class="small muted">Check the scores against the board, then publish the results. Tap any score below to correct it first.</div><div class="btns"><button class="btn gold" data-act="lockm">Publish results</button><button class="btn ghost" data-act="undo">Undo last</button></div><div class="note">Publishing closes the scores (after that only an admin can unlock them) and shows the team on the app. If nobody publishes, it happens at 6am tomorrow.</div></div>';
-  for(var st=0;st<r.sets;st++)h+=ed?setTable(m,st):roTable(m,st);
+  for(var st=0;st<r.sets;st++)h+=ed?setTable(m,st,{live:true}):roTable(m,st,{live:true});
   if(isAdmin())h+='<div class="card"><h2>Share</h2><button class="btn gold" data-act="resimg" style="margin-top:0">Results image</button><button class="btn ghost" data-act="report">Match report text</button><button class="btn ghost" data-act="copyres">Copy all scores as text</button></div>';
   var sg=m.sig||{},ns=(sg.away?1:0)+(sg.home?1:0);
   if(canEdit())h+='<div class="card"><h2>League result card</h2><div class="note" style="margin-top:0">'+cardNote(f)+'</div>'+
@@ -956,7 +957,7 @@ function finishedHTML(f,m,sdShown){var R=result(m),r=m.rules,lk=isLocked(m),ed=c
 function vResults(){var f=curFx();if(!f)return '<div class="card">Choose a fixture above.</div>';var m=S.matches[f.id];
   if(!m)return '<div class="card">No scores recorded for this fixture yet.</div>';
   var R=result(m),h=boardHTML(m);
-  for(var st=0;st<m.rules.sets;st++)h+=setTable(m,st).replace(/ data-(cell|name)="[^"]*"/g,'');
+  for(var st=0;st<m.rules.sets;st++)h+=setTable(m,st,{live:true}).replace(/ data-(cell|name)="[^"]*"/g,'');
   if(m.sd&&pinsTie(m))h+=sdTableHTML(m,false);
   if(isAdmin())h+='<div class="card"><h2>Share</h2><button class="btn gold" data-act="resimg" style="margin-top:0">Results image</button><button class="btn ghost" data-act="report">Match report text</button><button class="btn ghost" data-act="copyres">Copy all scores as text</button>'+
     '</div>';
@@ -1098,7 +1099,8 @@ function vBackup(){return closeSeasonHTML()+'<div class="card"><h2>Backup</h2><d
   '<div class="card"><h2>Start again</h2><div class="small muted">Clears this phone’s copy and reloads the shared data.</div><button class="btn danger" data-act="reset" style="margin-top:0">Reset to starting data</button></div>';}
 
 function render(){if(S.ui.tab==='results')S.ui.tab='score';if(!tabAllowed(S.ui.tab))S.ui.tab='more';document.body.className='r-'+myRole();renderTop();renderNav();var v=document.getElementById('view'),t=S.ui.tab;
-  v.innerHTML=(['team','score'].indexOf(t)>-1?fxSelect():'')+(t==='home'?vHome():t==='team'?vTeam():t==='score'?vScore():t==='results'?vResults():t==='more'?vMore():t==='averages'?vAverages():t==='league'?vLeague():t==='fixtures'?vFixtures():t==='squad'?vSquad():t==='rules'?vRules():t==='backup'?vBackup():t==='settings'?vSettings():t==='account'?vAccount():t==='subs'?vSubs():t==='about'?vAbout():vHome());}
+  v.innerHTML=(['team','score'].indexOf(t)>-1?fxSelect():'')+(t==='home'?vHome():t==='team'?vTeam():t==='score'?vScore():t==='results'?vResults():t==='more'?vMore():t==='averages'?vAverages():t==='league'?vLeague():t==='fixtures'?vFixtures():t==='squad'?vSquad():t==='rules'?vRules():t==='backup'?vBackup():t==='settings'?vSettings():t==='account'?vAccount():t==='subs'?vSubs():t==='about'?vAbout():vHome());fitNames();}
+function fitNames(){try{document.querySelectorAll('.liveset td.n .nm').forEach(function(b){var cs=getComputedStyle(b),av=b.clientWidth-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0)-1,r=document.createRange();r.selectNodeContents(b);var s=13;b.style.fontSize=s+'px';if(!(av>0))return;while(r.getBoundingClientRect().width>av&&s>9){s-=0.5;b.style.fontSize=s+'px';}});}catch(e){}} // v3.16: long names shrink (13px → 9px) to fit the fixed name column
 
 /* ---------------- modals ---------------- */
 function chooseFxModal(){var l=sortedFx().filter(function(f){return f.status!=='vacant'&&f.status!=='bye';});var t=today(),idx=l.findIndex(function(f){return f.date>=t;});
@@ -1426,13 +1428,7 @@ function resultsImg(){var f=curFx(),m=S.matches[f.id],r=m.rules,R=result(m),pins
     ctx.fillStyle=PANEL;rr(ctx,48,y,984,PH,22);ctx.fill();
     var hT=homeT(m),aT=awayT(m),isL=function(t){return t==='L';},nm=function(t){return isL(t)?'LIONS':oppTeam(m).toUpperCase();},sc=function(t){return String(isL(t)?R.A:R.B);},pp=function(t){var n=isL(t)?R.l:R.o;return n+(n===1?' pt':' pts');};
     var nc=function(t){return isL(t)?GOLD:MUTED;},nw=function(t){return isL(t)?'700':'600';},sw=function(t){return isL(t)?'700':'400';},scc=function(t){return isL(t)?WHITE:MUTED;};
-    var scW=function(t){font(ctx,sw(t),76,'o');return ctx.measureText(sc(t)).width;},fitName=function(t,x,room,al){var n=nm(t),fits=function(str,sz){font(ctx,nw(t),sz);return ctx.measureText(str).width<=room;},sz=42,o={w:nw(t),c:nc(t),a:al||'left'};
-      while(sz>28&&!fits(n,sz))sz--;
-      if(fits(n,sz)){txt(ctx,n,x,y+66,Object.assign({s:sz},o));return;}
-      var w=n.split(' ');if(w.length>1){var best=null;for(var k=1;k<w.length;k++){var a=w.slice(0,k).join(' '),b=w.slice(k).join(' ');font(ctx,nw(t),30);var mw=Math.max(ctx.measureText(a).width,ctx.measureText(b).width);if(!best||mw<best.mw)best={a:a,b:b,mw:mw};}
-        var s2=30;while(s2>16&&!(fits(best.a,s2)&&fits(best.b,s2)))s2--;txt(ctx,best.a,x,y+42,Object.assign({s:s2,max:room},o));txt(ctx,best.b,x,y+42+Math.round(s2*1.05),Object.assign({s:s2,max:room},o));return;}
-      while(sz>16&&!fits(n,sz))sz--;txt(ctx,n,x,y+66,Object.assign({s:sz,max:room},o));}; // v3.14b: names shrink to fit beside the score (never above 42px); below 28px a multi-word name splits over 2 lines
-    fitName(hT,80,480-scW(hT)-24-80);fitName(aT,1000,1000-(600+scW(aT))-24,'right');
+    txt(ctx,nm(hT),80,y+66,{s:42,w:nw(hT),c:nc(hT),max:280});txt(ctx,nm(aT),1000,y+66,{s:42,w:nw(aT),c:nc(aT),a:'right',max:280});
     txt(ctx,sc(hT),480,y+96,{s:76,f:'o',w:sw(hT),c:scc(hT),a:'right'});txt(ctx,sc(aT),600,y+96,{s:76,f:'o',w:sw(aT),c:scc(aT),a:'left'});
     txt(ctx,'vs',540,y+79,{s:26,c:MUTED,a:'center'});
     if(!pins){txt(ctx,pp(hT),80,y+106,{s:26,w:isL(hT)?'700':'400',c:nc(hT)});txt(ctx,pp(aT),1000,y+106,{s:26,w:isL(aT)?'700':'400',c:nc(aT),a:'right'});}
