@@ -68,6 +68,7 @@ button.tagline{display:block;width:100%}
 .tscroll td.hc,.tscroll th.hc{min-width:2em;width:2em;box-sizing:border-box}
 .liveset .tscroll th.n,.liveset .tscroll td.n{max-width:6em;overflow:hidden}
 .liveset .tscroll td.n .nm{max-width:6em;overflow:hidden;text-overflow:ellipsis}
+.liveset .tscroll th,.liveset .tscroll td{padding-left:4.25px;padding-right:4.25px}.liveset .tscroll td.hc,.liveset .tscroll th.hc{min-width:1.7em;width:1.7em}.liveset .lead{font-size:10.2px}.liveset .lead i{font-size:6.8px} /* v3.15: live table 15% narrower so a set fits an iPhone 16 Pro with Display Zoom */
 .tscroll td.hc .c{min-width:100%}
 td.t.st{font-weight:700;color:var(--gold);font-size:15px}
 tr.tbar td{padding:0;border-top:0;background:none}
@@ -1425,7 +1426,13 @@ function resultsImg(){var f=curFx(),m=S.matches[f.id],r=m.rules,R=result(m),pins
     ctx.fillStyle=PANEL;rr(ctx,48,y,984,PH,22);ctx.fill();
     var hT=homeT(m),aT=awayT(m),isL=function(t){return t==='L';},nm=function(t){return isL(t)?'LIONS':oppTeam(m).toUpperCase();},sc=function(t){return String(isL(t)?R.A:R.B);},pp=function(t){var n=isL(t)?R.l:R.o;return n+(n===1?' pt':' pts');};
     var nc=function(t){return isL(t)?GOLD:MUTED;},nw=function(t){return isL(t)?'700':'600';},sw=function(t){return isL(t)?'700':'400';},scc=function(t){return isL(t)?WHITE:MUTED;};
-    txt(ctx,nm(hT),80,y+66,{s:42,w:nw(hT),c:nc(hT),max:280});txt(ctx,nm(aT),1000,y+66,{s:42,w:nw(aT),c:nc(aT),a:'right',max:280});
+    var scW=function(t){font(ctx,sw(t),76,'o');return ctx.measureText(sc(t)).width;},fitName=function(t,x,room,al){var n=nm(t),fits=function(str,sz){font(ctx,nw(t),sz);return ctx.measureText(str).width<=room;},sz=42,o={w:nw(t),c:nc(t),a:al||'left'};
+      while(sz>28&&!fits(n,sz))sz--;
+      if(fits(n,sz)){txt(ctx,n,x,y+66,Object.assign({s:sz},o));return;}
+      var w=n.split(' ');if(w.length>1){var best=null;for(var k=1;k<w.length;k++){var a=w.slice(0,k).join(' '),b=w.slice(k).join(' ');font(ctx,nw(t),30);var mw=Math.max(ctx.measureText(a).width,ctx.measureText(b).width);if(!best||mw<best.mw)best={a:a,b:b,mw:mw};}
+        var s2=30;while(s2>16&&!(fits(best.a,s2)&&fits(best.b,s2)))s2--;txt(ctx,best.a,x,y+42,Object.assign({s:s2,max:room},o));txt(ctx,best.b,x,y+42+Math.round(s2*1.05),Object.assign({s:s2,max:room},o));return;}
+      while(sz>16&&!fits(n,sz))sz--;txt(ctx,n,x,y+66,Object.assign({s:sz,max:room},o));}; // v3.14b: names shrink to fit beside the score (never above 42px); below 28px a multi-word name splits over 2 lines
+    fitName(hT,80,480-scW(hT)-24-80);fitName(aT,1000,1000-(600+scW(aT))-24,'right');
     txt(ctx,sc(hT),480,y+96,{s:76,f:'o',w:sw(hT),c:scc(hT),a:'right'});txt(ctx,sc(aT),600,y+96,{s:76,f:'o',w:sw(aT),c:scc(aT),a:'left'});
     txt(ctx,'vs',540,y+79,{s:26,c:MUTED,a:'center'});
     if(!pins){txt(ctx,pp(hT),80,y+106,{s:26,w:isL(hT)?'700':'400',c:nc(hT)});txt(ctx,pp(aT),1000,y+106,{s:26,w:isL(aT)?'700':'400',c:nc(aT),a:'right'});}
